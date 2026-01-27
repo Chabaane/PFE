@@ -1,0 +1,24 @@
+<div class="d-flex align-items-center gap-2">
+  <!-- Status Icon -->
+  <div [ngbTooltip]="getStatusText()" [class]="getStatusColor()">
+    <i class="fas fa-{{ getStatusIcon() }}"></i>
+  </div>
+
+  <!-- Pending Badge -->
+  <span *ngIf="status.pendingItems > 0 && !status.isSyncing"
+        class="badge bg-warning rounded-pill">
+    {{ status.pendingItems }}
+  </span>
+
+  <!-- Sync Button -->
+  <button *ngIf="status.pendingItems > 0 && isOnline && !status.isSyncing"
+          class="btn btn-sm btn-outline-success"
+          (click)="forceSync()">
+    <i class="fas fa-sync-alt"></i>
+  </button>
+
+  <!-- Last Sync -->
+  <small *ngIf="status.lastSync && !status.isSyncing" class="text-muted ms-2">
+    Dernière sync: {{ status.lastSync | date:'HH:mm' }}
+  </small>
+</div>

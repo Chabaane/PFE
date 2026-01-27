@@ -1,0 +1,8 @@
+1. Testez votre API :
+Ouvrez votre navigateur et allez sur :
+
+Swagger UI : http://localhost:5160/swagger
+
+Test API : http://localhost:5160/api/test
+
+Agriculteurs : http://localhost:5160/api/agriculteur

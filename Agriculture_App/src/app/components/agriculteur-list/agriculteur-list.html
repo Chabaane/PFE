@@ -1,0 +1,84 @@
+<div class="card shadow">
+  <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+    <h2 class="mb-0">👨‍🌾 Liste des Agriculteurs</h2>
+    <div>
+      <button class="btn btn-light btn-sm me-2" (click)="refresh()" [disabled]="loading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Actualiser
+      </button>
+      <a routerLink="/agriculteurs/nouveau" class="btn btn-light btn-sm">
+        <i class="fas fa-plus"></i> Ajouter
+      </a>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-success" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <p class="mt-2 text-muted">Chargement des agriculteurs...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error" class="alert alert-danger">
+      <strong>Erreur:</strong> {{ error }}
+      <button class="btn btn-sm btn-outline-danger ms-3" (click)="refresh()">
+        Réessayer
+      </button>
+    </div>
+
+    <!-- Liste -->
+    <div *ngIf="!loading && !error" class="row">
+      <div *ngFor="let agriculteur of agriculteurs" class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 border-success border-top-3">
+          <div class="card-body">
+            <h5 class="card-title text-success">
+              {{ agriculteur.prenom }} <strong>{{ agriculteur.nom }}</strong>
+            </h5>
+
+            <div class="mb-3">
+              <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-phone text-muted me-2"></i>
+                <span>{{ agriculteur.telephone || 'Non renseigné' }}</span>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                <span>{{ agriculteur.localisation || 'Non renseigné' }}</span>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <a [routerLink]="['/parcelles', agriculteur.idAgriculteur]"
+                 class="btn btn-outline-success">
+                <i class="fas fa-map me-1"></i> Voir parcelles
+              </a>
+              <a [routerLink]="['/dessiner-parcelle', agriculteur.idAgriculteur]"
+                 class="btn btn-success">
+                <i class="fas fa-draw-polygon me-1"></i> Ajouter parcelle
+              </a>
+            </div>
+          </div>
+
+          <div class="card-footer bg-transparent">
+            <small class="text-muted">
+              ID: {{ agriculteur.idAgriculteur }}
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aucun résultat -->
+    <div *ngIf="!loading && !error && agriculteurs.length === 0" class="text-center py-5">
+      <div class="mb-3">
+        <i class="fas fa-users fa-3x text-muted"></i>
+      </div>
+      <h4 class="text-muted">Aucun agriculteur</h4>
+      <p class="text-muted">Commencez par ajouter un agriculteur</p>
+      <a routerLink="/agriculteurs/nouveau" class="btn btn-success">
+        <i class="fas fa-plus me-1"></i> Ajouter un agriculteur
+      </a>
+    </div>
+  </div>
+</div>
