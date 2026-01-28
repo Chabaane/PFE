@@ -142,3 +142,4 @@ C:\Users\chaba\OneDrive\Desktop\PFE\AgricultureApp\obj\Debug\net8.0\refint\Agric
 C:\Users\chaba\OneDrive\Desktop\PFE\AgricultureApp\obj\Debug\net8.0\AgricultureApp.pdb
 C:\Users\chaba\OneDrive\Desktop\PFE\AgricultureApp\obj\Debug\net8.0\AgricultureApp.genruntimeconfig.cache
 C:\Users\chaba\OneDrive\Desktop\PFE\AgricultureApp\obj\Debug\net8.0\ref\AgricultureApp.dll
+C:\Users\chaba\OneDrive\Desktop\PFE\AgricultureApp\obj\Debug\net8.0\AgricultureApp.sourcelink.json
