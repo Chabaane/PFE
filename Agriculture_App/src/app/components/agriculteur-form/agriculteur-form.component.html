@@ -1,0 +1,87 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow">
+        <div class="card-header bg-success text-white">
+          <h2 class="mb-0">
+            {{ isEditMode ? '✏️ Modifier' : '👨‍🌾 Ajouter' }} un Agriculteur
+          </h2>
+        </div>
+
+        <div class="card-body">
+          <!-- Loading -->
+          <div *ngIf="loading" class="text-center py-5">
+            <div class="spinner-border text-success" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div *ngIf="error && !loading" class="alert alert-danger">
+            {{ error }}
+          </div>
+
+          <!-- Form -->
+          <form *ngIf="!loading" (ngSubmit)="onSubmit()" #form="ngForm">
+            <div class="mb-3">
+              <label for="nom" class="form-label">Nom *</label>
+              <input type="text"
+                     class="form-control"
+                     id="nom"
+                     name="nom"
+                     [(ngModel)]="formData.nom"
+                     required
+                     #nom="ngModel">
+              <div *ngIf="nom.invalid && (nom.dirty || nom.touched)" class="text-danger">
+                Le nom est requis
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="prenom" class="form-label">Prénom *</label>
+              <input type="text"
+                     class="form-control"
+                     id="prenom"
+                     name="prenom"
+                     [(ngModel)]="formData.prenom"
+                     required
+                     #prenom="ngModel">
+              <div *ngIf="prenom.invalid && (prenom.dirty || prenom.touched)" class="text-danger">
+                Le prénom est requis
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="telephone" class="form-label">Téléphone</label>
+              <input type="tel"
+                     class="form-control"
+                     id="telephone"
+                     name="telephone"
+                     [(ngModel)]="formData.telephone">
+            </div>
+
+            <div class="mb-4">
+              <label for="localisation" class="form-label">Localisation</label>
+              <input type="text"
+                     class="form-control"
+                     id="localisation"
+                     name="localisation"
+                     [(ngModel)]="formData.localisation">
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
+                Annuler
+              </button>
+              <button type="submit"
+                      class="btn btn-success"
+                      [disabled]="!form.form.valid || loading">
+                {{ isEditMode ? 'Modifier' : 'Ajouter' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

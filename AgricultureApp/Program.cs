@@ -60,6 +60,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Initialisation BD - CORRECTION ICI : Sans await
+// Initialisation BD
 try
 {
     using var scope = app.Services.CreateScope();
@@ -68,11 +69,10 @@ try
 
     logger.LogInformation("Création de la base de données...");
 
-    // Créer la base de données (sans await)
-    var created = dbContext.Database.EnsureCreated();
-    logger.LogInformation($"Base de données créée: {created}");
+    // Appliquer les migrations
+    dbContext.Database.Migrate();
 
-    // Ajout de données de test (sans await)
+    // Ajout de données de test si nécessaire
     if (!dbContext.Agriculteurs.Any())
     {
         dbContext.Agriculteurs.AddRange(
@@ -89,10 +89,16 @@ try
                 Prenom = "Pierre",
                 Telephone = "87654321",
                 Localisation = "Sousse"
+            },
+            new AgricultureApp.Models.Entities.Agriculteur
+            {
+                Nom = "Ben Ali",
+                Prenom = "Mohamed",
+                Telephone = "11223344",
+                Localisation = "Sfax"
             }
         );
 
-        // Utilisez SaveChanges() au lieu de SaveChangesAsync()
         dbContext.SaveChanges();
         logger.LogInformation("Données de test ajoutées!");
     }

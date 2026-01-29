@@ -39,6 +39,20 @@ export class AgriculteurListComponent implements OnInit {
       }
     });
   }
+  delete(id: number) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet agriculteur ?')) return;
+
+    this.agriculteurService.delete(id).subscribe({
+        next: () => {
+            this.refresh();
+            // Optionnel : afficher un message de succès
+        },
+        error: (err) => {
+            this.error = 'Erreur lors de la suppression';
+            console.error('Erreur:', err);
+        }
+    });
+}
 
   refresh(): void {
     this.loadAgriculteurs();

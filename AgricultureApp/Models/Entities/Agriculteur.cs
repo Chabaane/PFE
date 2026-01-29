@@ -8,7 +8,7 @@ namespace AgricultureApp.Models.Entities
     public class Agriculteur
     {
         [Key]
-        public int IdAgriculteur { get; set; }
+        public int idAgriculteur { get; set; }
 
         [Required]
         [StringLength(100)]

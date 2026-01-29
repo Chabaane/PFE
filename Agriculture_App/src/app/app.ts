@@ -13,7 +13,7 @@ import { AgriculteurService } from './services/api/agriculteur';
       <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow">
         <div class="container">
           <a class="navbar-brand fw-bold" routerLink="/">
-            🌾 AgricultureApp
+            🌾 AgriManager
           </a>
 
           <div class="collapse navbar-collapse">

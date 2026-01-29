@@ -13,9 +13,19 @@ export const routes: Routes = [
       .then(m => m.AgriculteurListComponent)
   },
   {
+    path: 'agriculteurs/nouveau',
+    loadComponent: () => import('./components/agriculteur-form/agriculteur-form.component')
+      .then(m => m.AgriculteurFormComponent)
+  },
+  {
+    path: 'agriculteurs/modifier/:id',
+    loadComponent: () => import('./components/agriculteur-form/agriculteur-form.component')
+      .then(m => m.AgriculteurFormComponent)
+  },
+  {
     path: 'parcelles/:agriculteurId',
     loadComponent: () => import('./components/carte-parcelle/carte-parcelle')
-      .then(m => m.CarteParcelleComponent ),
+      .then(m => m.CarteParcelleComponent),
     canActivate: [AuthGuard]
   },
   {

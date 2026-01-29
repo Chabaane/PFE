@@ -60,10 +60,21 @@
             </div>
           </div>
 
-          <div class="card-footer bg-transparent">
-            <small class="text-muted">
-              ID: {{ agriculteur.idAgriculteur }}
-            </small>
+          <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+              <small class="text-muted">
+                  ID: {{ agriculteur.idAgriculteur }}
+              </small>
+              <div class="btn-group btn-group-sm">
+                  <a [routerLink]="['/agriculteurs/modifier', agriculteur.idAgriculteur]"
+                    class="btn btn-outline-primary">
+                      <i class="fas fa-edit">modifier</i>
+                  </a>
+                  <button class="btn btn-outline-danger"
+                          (click)="delete(agriculteur.idAgriculteur)"
+                          title="Supprimer">supprimer
+                      <i class="fas fa-trash"></i>
+                  </button>
+              </div>
           </div>
         </div>
       </div>

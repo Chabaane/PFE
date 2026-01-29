@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using AgricultureApp.Data;
+using AgricultureApp.Models.Entities;
 
 namespace AgricultureApp.Controllers
 {
@@ -7,34 +11,93 @@ namespace AgricultureApp.Controllers
     [ApiController]
     public class AgriculteurController : ControllerBase
     {
+        private readonly ApplicationDbContext _context;
+
+        public AgriculteurController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
         // GET: api/agriculteur
         [HttpGet]
-        public IActionResult GetAgriculteurs()
+        public async Task<ActionResult<IEnumerable<Agriculteur>>> GetAgriculteurs()
         {
-            var agriculteurs = new[]
-            {
-                new { Id = 1, Nom = "Dupont", Prenom = "Jean", Telephone = "12345678", Localisation = "Tunis" },
-                new { Id = 2, Nom = "Martin", Prenom = "Pierre", Telephone = "87654321", Localisation = "Sousse" },
-                new { Id = 3, Nom = "Ben Ali", Prenom = "Mohamed", Telephone = "11223344", Localisation = "Sfax" }
-            };
-
-            return Ok(agriculteurs);
+            return await _context.Agriculteurs.ToListAsync();
         }
 
         // GET: api/agriculteur/5
         [HttpGet("{id}")]
-        public IActionResult GetAgriculteur(int id)
+        public async Task<ActionResult<Agriculteur>> GetAgriculteur(int id)
         {
-            var agriculteur = new
-            {
-                Id = id,
-                Nom = "Test",
-                Prenom = "Agriculteur",
-                Telephone = "00000000",
-                Localisation = "Test Location"
-            };
+            var agriculteur = await _context.Agriculteurs.FindAsync(id);
 
-            return Ok(agriculteur);
+            if (agriculteur == null)
+            {
+                return NotFound();
+            }
+
+            return agriculteur;
+        }
+
+        // POST: api/agriculteur
+        [HttpPost]
+        public async Task<ActionResult<Agriculteur>> PostAgriculteur(Agriculteur agriculteur)
+        {
+            _context.Agriculteurs.Add(agriculteur);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetAgriculteur), new { id = agriculteur.idAgriculteur }, agriculteur);
+        }
+
+        // PUT: api/agriculteur/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutAgriculteur(int id, Agriculteur agriculteur)
+        {
+            if (id != agriculteur.idAgriculteur)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(agriculteur).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!AgriculteurExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // DELETE: api/agriculteur/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAgriculteur(int id)
+        {
+            var agriculteur = await _context.Agriculteurs.FindAsync(id);
+            if (agriculteur == null)
+            {
+                return NotFound();
+            }
+
+            _context.Agriculteurs.Remove(agriculteur);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool AgriculteurExists(int id)
+        {
+            return _context.Agriculteurs.Any(e => e.idAgriculteur == id);
         }
     }
 }
