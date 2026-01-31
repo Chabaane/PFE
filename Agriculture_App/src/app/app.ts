@@ -25,19 +25,20 @@ import { AgriculteurService } from './services/api/agriculteur';
               </li>
               <li class="nav-item">
                 <a class="nav-link" routerLink="/meteo" routerLinkActive="active">
-                  ⛅ Météo
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" routerLink="/diagnostic" routerLinkActive="active">
-                  🛰️ Diagnostic
+                  🏡 Fermes
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" routerLink="/synchronisation" routerLinkActive="active">
-                  🔄 Synchronisation
+                   🗺️ Parcelles
                 </a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link" routerLink="/diagnostic" routerLinkActive="active">
+                  🛰️ Vue Satellite
+                </a>
+              </li>
+
             </ul>
           </div>
         </div>
