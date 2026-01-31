@@ -32,4 +32,5 @@ namespace AgricultureApp.Models.Entities
             Parcelles = new HashSet<Parcelle>();
         }
     }
+    
 }

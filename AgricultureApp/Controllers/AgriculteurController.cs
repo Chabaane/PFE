@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AgricultureApp.Data;
 using AgricultureApp.Models.Entities;
+using AgricultureApp.Models.DTOs;
 
 namespace AgricultureApp.Controllers
 {
@@ -51,18 +52,33 @@ namespace AgricultureApp.Controllers
 
         // PUT: api/agriculteur/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAgriculteur(int id, Agriculteur agriculteur)
+        public async Task<IActionResult> PutAgriculteur(int id, [FromBody] AgriculteurUpdateDto model)
         {
-            if (id != agriculteur.idAgriculteur)
+            if (id <= 0)
             {
-                return BadRequest();
+                return BadRequest("ID invalide");
             }
 
-            _context.Entry(agriculteur).State = EntityState.Modified;
+            var agriculteur = await _context.Agriculteurs.FindAsync(id);
+            if (agriculteur == null)
+            {
+                return NotFound();
+            }
+
+            // Mettre à jour les propriétés
+            if (!string.IsNullOrWhiteSpace(model.Nom))
+                agriculteur.Nom = model.Nom;
+
+            if (!string.IsNullOrWhiteSpace(model.Prenom))
+                agriculteur.Prenom = model.Prenom;
+
+            agriculteur.Telephone = model.Telephone ?? agriculteur.Telephone;
+            agriculteur.Localisation = model.Localisation ?? agriculteur.Localisation;
 
             try
             {
                 await _context.SaveChangesAsync();
+                return NoContent();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -75,8 +91,6 @@ namespace AgricultureApp.Controllers
                     throw;
                 }
             }
-
-            return NoContent();
         }
 
         // DELETE: api/agriculteur/5
