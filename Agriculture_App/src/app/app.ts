@@ -8,6 +8,7 @@ import { AgriculteurService } from './services/api/agriculteur';
   standalone: true,
   imports: [CommonModule, RouterModule, RouterOutlet],
   template: `
+  <div class="app-background">
     <div class="app-container">
       <!-- Navbar -->
       <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow">
@@ -48,7 +49,7 @@ import { AgriculteurService } from './services/api/agriculteur';
       <main class="container mt-4">
         <router-outlet></router-outlet>
       </main>
-
+</div>
       <!-- Footer -->
       <footer class="mt-5 py-4 bg-light border-top">
         <div class="container text-center text-muted">
@@ -79,6 +80,23 @@ import { AgriculteurService } from './services/api/agriculteur';
     footer {
       margin-top: auto;
     }
+        .app-background {
+      min-height: 100vh;
+      background:
+        /* Overlay vert très léger pour améliorer la lisibilité */
+        linear-gradient(rgba(37, 40, 37, 0.85), rgba(52, 80, 52, 0.9)),
+        /* Image d'agriculture */
+        url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      display: flex;
+      flex-direction: column;
+    }
+
+
   `]
 })
 export class App {

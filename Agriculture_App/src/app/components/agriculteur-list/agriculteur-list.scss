@@ -1,0 +1,13 @@
+.agriculteur-card {
+  background-image: url('/assets/images/I2.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #fff;
+}
+
+/* Pour lisibilité du texte */
+.agriculteur-card .card-body,
+.agriculteur-card .card-footer {
+  background-color: rgba(0, 0, 0, 0.55);
+}
