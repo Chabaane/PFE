@@ -4,8 +4,9 @@
     "\\Controllers",
     "\\Data",
     "\\Models",
+    "\\Models\\DTOs",
     "\\Models\\Entities"
   ],
-  "SelectedNode": "\\Program.cs",
+  "SelectedNode": "\\Models\\DTOs\\AgriculteurUpdateDto.cs",
   "PreviewInSolutionExplorer": false
 }
