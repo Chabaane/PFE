@@ -11,7 +11,7 @@ import { AgriculteurService } from './services/api/agriculteur';
   <div class="app-background">
     <div class="app-container">
       <!-- Navbar -->
-      <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
         <div class="container">
           <a class="navbar-brand fw-bold" routerLink="/">
             🌾 AgriManager
@@ -51,8 +51,8 @@ import { AgriculteurService } from './services/api/agriculteur';
       </main>
 </div>
       <!-- Footer -->
-      <footer class="mt-5 py-4 bg-light border-top">
-        <div class="container text-center text-muted">
+      <footer class="mt-5 py-4 bg-dark  border-top">
+        <div class="container text-center text-white">
           <p class="mb-0">
             AgricultureApp &copy; 2024 - Gestion des parcelles agricoles Offline/Online
           </p>
