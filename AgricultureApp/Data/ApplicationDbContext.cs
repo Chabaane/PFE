@@ -45,8 +45,9 @@ namespace AgricultureApp.Data
                 .HasDefaultValueSql("GETDATE()");
 
             modelBuilder.Entity<Utilisateur>()
-                .Property(u => u.DateInscription)
-                .HasDefaultValueSql("GETDATE()");
+                 .Property(u => u.DateCreation)
+                 .HasDefaultValueSql("GETDATE()");
+
         }
     }
 }

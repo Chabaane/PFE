@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, RouterOutlet } from '@angular/router';
 import { AgriculteurService } from './services/api/agriculteur';
+import { AuthService  } from './services/api/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -39,6 +40,24 @@ import { AgriculteurService } from './services/api/agriculteur';
                   🛰️ Vue Satellite
                 </a>
               </li>
+              <ng-container *ngIf="!isAuthenticated; else authenticatedMenu">
+      <a class="nav-link" routerLink="/login">Connexion</a>
+      <a class="nav-link" routerLink="/register">Inscription</a>
+    </ng-container>
+
+    <ng-template #authenticatedMenu>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+          👤 {{ (currentUser$ | async)?.prenom || 'Utilisateur' }}
+        </a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" routerLink="/profile">Mon profil</a></li>
+          <li *ngIf="isAdmin"><a class="dropdown-item" routerLink="/admin">Admin</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" (click)="logout()">Déconnexion</a></li>
+        </ul>
+      </li>
+    </ng-template>
 
             </ul>
           </div>
@@ -100,7 +119,24 @@ import { AgriculteurService } from './services/api/agriculteur';
   `]
 })
 export class App {
-  constructor(private agriculteurService: AgriculteurService) {}
+  currentUser$ = this.authService.currentUser$;
+
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
+  }
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+
+
+  constructor(private authService: AuthService, private agriculteurService: AgriculteurService) {}
+
+  logout(): void {
+    this.authService.logout();
+    // Optionnel: rediriger vers la page de login
+    window.location.href = '/login';
+  }
 
   ngOnInit() {
     console.log('AgricultureApp initialisée');

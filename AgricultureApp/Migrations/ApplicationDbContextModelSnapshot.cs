@@ -24,11 +24,11 @@ namespace AgricultureApp.Migrations
 
             modelBuilder.Entity("AgricultureApp.Models.Entities.Agriculteur", b =>
                 {
-                    b.Property<int>("IdAgriculteur")
+                    b.Property<int>("idAgriculteur")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdAgriculteur"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("idAgriculteur"));
 
                     b.Property<string>("Localisation")
                         .IsRequired()
@@ -50,7 +50,7 @@ namespace AgricultureApp.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.HasKey("IdAgriculteur");
+                    b.HasKey("idAgriculteur");
 
                     b.ToTable("Agriculteurs");
                 });
@@ -344,21 +344,34 @@ namespace AgricultureApp.Migrations
 
             modelBuilder.Entity("AgricultureApp.Models.Entities.Utilisateur", b =>
                 {
-                    b.Property<int>("IdUtilisateur")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdUtilisateur"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("DateInscription")
+                    b.Property<int?>("AgriculteurId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DateCreation")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<DateTime?>("DerniereConnexion")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("EstActif")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Localisation")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("MotDePasseHash")
                         .IsRequired()
@@ -369,12 +382,22 @@ namespace AgricultureApp.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("Prenom")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
-                    b.HasKey("IdUtilisateur");
+                    b.Property<string>("Telephone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgriculteurId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -424,6 +447,15 @@ namespace AgricultureApp.Migrations
                         .HasForeignKey("UtilisateurId");
 
                     b.Navigation("Utilisateur");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Utilisateur", b =>
+                {
+                    b.HasOne("AgricultureApp.Models.Entities.Agriculteur", "Agriculteur")
+                        .WithMany()
+                        .HasForeignKey("AgriculteurId");
+
+                    b.Navigation("Agriculteur");
                 });
 
             modelBuilder.Entity("AgricultureApp.Models.Entities.Agriculteur", b =>
