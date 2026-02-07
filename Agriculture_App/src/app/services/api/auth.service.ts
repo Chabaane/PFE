@@ -104,8 +104,16 @@ export class AuthService {
     this.currentUserSubject.next(user);
   }
 
-  getProfile() {
-  return this.http.get<any>('http://localhost:5160/api/profile');
-}
+  // Dans auth.service.ts
+    getProfile() {
+      return this.http.get(`${this.apiUrl}/profile`, {
+        headers: this.getHeaders()
+      });
+    }
 
+  private getHeaders() {    const token = this.getToken();
+    return {
+      Authorization: `Bearer ${token}`
+    };
+  }
 }

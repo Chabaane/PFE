@@ -1,192 +1,374 @@
 // components/auth/register/register.component.ts
 import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
+import { Router } from '@angular/router';
+import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
 import { AuthService, RegisterDto } from '../../../services/api/auth.service';
+import { RouterModule } from '@angular/router';
+
+// Validateur personnalisé pour vérifier la correspondance des mots de passe
+function passwordMatchValidator(control: AbstractControl) {
+  const password = control.get('motDePasse')?.value;
+  const confirmPassword = control.get('confirmMotDePasse')?.value;
+
+  if (password !== confirmPassword) {
+    control.get('confirmMotDePasse')?.setErrors({ mismatch: true });
+    return { mismatch: true };
+  } else {
+    control.get('confirmMotDePasse')?.setErrors(null);
+    return null;
+  }
+}
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [ReactiveFormsModule, CommonModule, RouterModule],
   template: `
-    <div class="container mt-5">
-      <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-          <div class="card shadow">
-            <div class="card-header bg-dark text-white text-center">
-              <h4>📝 Créer un compte</h4>
+    <div class="register-container">
+  <div class="register-card">
+    <!-- Register Header -->
+    <div class="register-header">
+      <h1>Créer un compte</h1>
+      <p class="welcome-text">Rejoignez AgriManager pour gérer vos parcelles agricoles</p>
+    </div>
+
+    <!-- Register Form -->
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="nom" class="form-label">Nom *</label>
+            <input
+              type="text"
+              id="nom"
+              formControlName="nom"
+              class="form-control"
+              [class.is-invalid]="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched"
+              placeholder="Votre nom">
+            <div *ngIf="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched"
+                 class="error-messages">
+              <small class="text-danger">Le nom est requis</small>
             </div>
-            <div class="card-body">
-              <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Nom *</label>
-                    <input type="text" class="form-control"
-                           [(ngModel)]="userData.nom"
-                           name="nom"
-                           required>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Prénom *</label>
-                    <input type="text" class="form-control"
-                           [(ngModel)]="userData.prenom"
-                           name="prenom"
-                           required>
-                  </div>
-                </div>
+          </div>
+        </div>
 
-                <div class="mb-3">
-                  <label class="form-label">Email *</label>
-                  <input type="email" class="form-control"
-                         [(ngModel)]="userData.email"
-                         name="email"
-                         required
-                         email>
-                </div>
-
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Mot de passe *</label>
-                    <input type="password" class="form-control"
-                           [(ngModel)]="userData.motDePasse"
-                           name="motDePasse"
-                           required
-                           minlength="6">
-                    <small class="text-muted">Minimum 6 caractères</small>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Confirmer le mot de passe *</label>
-                    <input type="password" class="form-control"
-                           [(ngModel)]="userData.confirmMotDePasse"
-                           name="confirmMotDePasse"
-                           required>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Téléphone</label>
-                    <input type="tel" class="form-control"
-                           [(ngModel)]="userData.telephone"
-                           name="telephone">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Localisation</label>
-                    <input type="text" class="form-control"
-                           [(ngModel)]="userData.localisation"
-                           name="localisation">
-                  </div>
-                </div>
-
-                <div class="mb-4">
-                  <label class="form-label">Rôle *</label>
-                  <select class="form-select"
-                          [(ngModel)]="userData.role"
-                          name="role"
-                          required>
-                    <option value="AGRICULTEUR">Agriculteur</option>
-                    <option value="AGENT">Agent agricole</option>
-                    <option value="OBSERVATEUR">Observateur</option>
-                  </select>
-                  <small class="text-muted">
-                    Agriculteur: Gère ses propres données<br>
-                    Agent: Gère tous les agriculteurs<br>
-                    Observateur: Consultation seulement
-                  </small>
-                </div>
-
-                <div *ngIf="error" class="alert alert-danger">
-                  {{ error }}
-                </div>
-
-                <div *ngIf="success" class="alert alert-success">
-                  {{ success }}
-                </div>
-
-                <div class="d-flex justify-content-between">
-                  <button type="button" class="btn btn-outline-secondary" routerLink="/login">
-                    ← Retour
-                  </button>
-                  <button type="submit" class="btn btn-dark" [disabled]="loading">
-                    <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
-                    S'inscrire
-                  </button>
-                </div>
-              </form>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="prenom" class="form-label">Prénom *</label>
+            <input
+              type="text"
+              id="prenom"
+              formControlName="prenom"
+              class="form-control"
+              [class.is-invalid]="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched"
+              placeholder="Votre prénom">
+            <div *ngIf="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched"
+                 class="error-messages">
+              <small class="text-danger">Le prénom est requis</small>
             </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Email *</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          [class.is-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+          placeholder="exemple@email.com">
+        <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+             class="error-messages">
+          <small *ngIf="registerForm.get('email')?.errors?.['required']" class="text-danger">
+            L'email est requis
+          </small>
+          <small *ngIf="registerForm.get('email')?.errors?.['email']" class="text-danger">
+            Veuillez entrer un email valide
+          </small>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="motDePasse" class="form-label">Mot de passe *</label>
+            <div class="password-input-container">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="motDePasse"
+                formControlName="motDePasse"
+                class="form-control"
+                [class.is-invalid]="registerForm.get('motDePasse')?.invalid && registerForm.get('motDePasse')?.touched"
+                placeholder="Minimum 6 caractères">
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePasswordVisibility()">
+                <span class="password-toggle-icon">{{ showPassword ? '👁️' : '👁️‍🗨️' }}</span>
+              </button>
+            </div>
+            <div *ngIf="registerForm.get('motDePasse')?.invalid && registerForm.get('motDePasse')?.touched"
+                 class="error-messages">
+              <small *ngIf="registerForm.get('motDePasse')?.errors?.['required']" class="text-danger">
+                Le mot de passe est requis
+              </small>
+              <small *ngIf="registerForm.get('motDePasse')?.errors?.['minlength']" class="text-danger">
+                Minimum 6 caractères
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="confirmMotDePasse" class="form-label">Confirmer le mot de passe *</label>
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              id="confirmMotDePasse"
+              formControlName="confirmMotDePasse"
+              class="form-control"
+              [class.is-invalid]="registerForm.get('confirmMotDePasse')?.invalid && registerForm.get('confirmMotDePasse')?.touched"
+              placeholder="Confirmez votre mot de passe">
+            <div *ngIf="registerForm.get('confirmMotDePasse')?.invalid && registerForm.get('confirmMotDePasse')?.touched"
+                 class="error-messages">
+              <small *ngIf="registerForm.get('confirmMotDePasse')?.errors?.['required']" class="text-danger">
+                La confirmation est requise
+              </small>
+              <small *ngIf="registerForm.get('confirmMotDePasse')?.errors?.['mismatch']" class="text-danger">
+                Les mots de passe ne correspondent pas
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="telephone" class="form-label">Téléphone</label>
+            <input
+              type="tel"
+              id="telephone"
+              formControlName="telephone"
+              class="form-control"
+              placeholder="Votre numéro">
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="localisation" class="form-label">Localisation</label>
+            <input
+              type="text"
+              id="localisation"
+              formControlName="localisation"
+              class="form-control"
+              placeholder="Votre région">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="role" class="form-label">Rôle *</label>
+        <select
+          id="role"
+          formControlName="role"
+          class="form-control"
+          [class.is-invalid]="registerForm.get('role')?.invalid && registerForm.get('role')?.touched">
+          <option value="">Sélectionnez un rôle</option>
+          <option value="AGRICULTEUR">Agriculteur</option>
+          <option value="AGENT">Agent agricole</option>
+          <option value="OBSERVATEUR">Observateur</option>
+        </select>
+        <div *ngIf="registerForm.get('role')?.invalid && registerForm.get('role')?.touched"
+             class="error-messages">
+          <small class="text-danger">Le rôle est requis</small>
+        </div>
+        <small class="text-muted d-block mt-2">
+          Agriculteur: Gère ses propres données<br>
+          Agent: Gère tous les agriculteurs<br>
+          Observateur: Consultation seulement
+        </small>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="successMessage" class="alert alert-success" role="alert">
+        {{ successMessage }}
+      </div>
+
+      <!-- Register Button -->
+      <div class="form-group mt-4">
+        <button
+          type="submit"
+          class="btn btn-primary w-100 register-button"
+          [disabled]="registerForm.invalid || isLoading">
+          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isLoading ? 'Création en cours...' : 'Créer mon compte' }}
+        </button>
+      </div>
+
+      <!-- Login Link -->
+      <div class="login-section text-center mt-3">
+        <p class="mb-0">
+          Vous avez déjà un compte ?
+          <a routerLink="/auth/login" class="login-link">Se connecter</a>
+        </p>
+      </div>
+    </form>
+  </div>
+</div>
   `,
   styles: [`
-    .card {
-      border-radius: 10px;
+    /* Styles similaires au login avec quelques ajustements */
+    .register-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .register-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .register-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .register-header h1 {
+      color: #333;
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    /* Ajouter les styles nécessaires */
+    .text-muted {
+      color: #6c757d !important;
+      font-size: 12px;
+    }
+
+    .alert-success {
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .register-button {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
       border: none;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: white;
     }
 
-    .card-header {
-      border-radius: 10px 10px 0 0 !important;
+    .register-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
     }
 
-    .form-label {
-      font-weight: 500;
+    .login-link {
+      color: #28a745;
+      font-weight: 600;
+      text-decoration: none;
     }
 
-    small.text-muted {
-      font-size: 0.85rem;
+    .login-link:hover {
+      text-decoration: underline;
     }
   `]
 })
 export class RegisterComponent {
-  userData: RegisterDto = {
-    nom: '',
-    prenom: '',
-    email: '',
-    motDePasse: '',
-    confirmMotDePasse: '',
-    telephone: '',
-    localisation: '',
-    role: 'AGRICULTEUR'
-  };
-
-  loading = false;
-  error = '';
-  success = '';
+  registerForm: FormGroup;
+  showPassword = false;
+  showConfirmPassword = false;
+  isLoading = false;
+  errorMessage = '';
+  successMessage = '';
 
   constructor(
+    private fb: FormBuilder,
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) {
+    this.registerForm = this.fb.group({
+      nom: ['', Validators.required],
+      prenom: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      motDePasse: ['', [Validators.required, Validators.minLength(6)]],
+      confirmMotDePasse: ['', Validators.required],
+      telephone: [''],
+      localisation: [''],
+      role: ['', Validators.required]
+    }, { validators: passwordMatchValidator });
+  }
 
   onSubmit(): void {
-    // Validation
-    if (this.userData.motDePasse !== this.userData.confirmMotDePasse) {
-      this.error = 'Les mots de passe ne correspondent pas';
+    if (this.registerForm.invalid) {
+      // Marquer tous les champs comme touchés
+      Object.keys(this.registerForm.controls).forEach(key => {
+        const control = this.registerForm.get(key);
+        control?.markAsTouched();
+      });
       return;
     }
 
-    if (this.userData.motDePasse.length < 6) {
-      this.error = 'Le mot de passe doit contenir au moins 6 caractères';
-      return;
-    }
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
 
-    this.loading = true;
-    this.error = '';
-    this.success = '';
+    const userData: RegisterDto = this.registerForm.value;
 
-    this.authService.register(this.userData).subscribe({
+    this.authService.register(userData).subscribe({
       next: (response) => {
-        this.success = 'Compte créé avec succès ! Redirection...';
+        this.isLoading = false;
+        this.successMessage = 'Compte créé avec succès ! Redirection...';
+
+        // Redirection après 2 secondes
         setTimeout(() => {
           this.router.navigate(['/agriculteurs']);
-        }, 1500);
+        }, 2000);
       },
-      error: (err) => {
-        this.error = err.error?.message || 'Erreur lors de la création du compte';
-        this.loading = false;
+      error: (error) => {
+        this.isLoading = false;
+
+        if (error.status === 400) {
+          this.errorMessage = error.error?.message || 'Données invalides';
+        } else if (error.status === 409) {
+          this.errorMessage = 'Cet email est déjà utilisé';
+        } else {
+          this.errorMessage = 'Erreur lors de la création du compte';
+        }
       }
     });
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 }

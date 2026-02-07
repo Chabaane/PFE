@@ -3,9 +3,11 @@
     "",
     "\\Controllers",
     "\\Data",
+    "\\Migrations",
     "\\Models",
     "\\Models\\DTOs",
-    "\\Models\\Entities"
+    "\\Models\\Entities",
+    "\\Services"
   ],
   "PreviewInSolutionExplorer": false
 }

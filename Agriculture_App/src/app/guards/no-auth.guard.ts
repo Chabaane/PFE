@@ -1,24 +1,24 @@
-// guards/auth.guard.ts
+// guards/no-auth.guard.ts
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { Router, CanActivate } from '@angular/router';
 import { AuthService } from '../services/api/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AuthGuard implements CanActivate {
+export class NoAuthGuard implements CanActivate {
   constructor(
     private authService: AuthService,
     private router: Router
   ) {}
 
   canActivate(): boolean {
-    if (this.authService.isAuthenticated()) {
+    if (!this.authService.isAuthenticated()) {
       return true;
     }
 
-    // Rediriger vers la page d'authentification
-    this.router.navigate(['/auth/login']);
+    // Si déjà authentifié, rediriger vers le dashboard
+    this.router.navigate(['/agriculteurs']);
     return false;
   }
 }
