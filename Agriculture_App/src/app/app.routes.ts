@@ -63,7 +63,7 @@ export const routes: Routes = [
       },
       {
         path: 'parcelles/:agriculteurId',
-        loadComponent: () => import('./components/carte-parcelle/carte-parcelle')
+        loadComponent: () => import('./components/carte-parcelle/carte-parcelle.component')
           .then(m => m.CarteParcelleComponent)
       },
       {

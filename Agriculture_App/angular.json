@@ -31,12 +31,22 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "node_modules/leaflet/dist/images",
+                "output": "/assets/leaflet/images"
+              }
             ],
             "styles": [
+               "node_modules/leaflet/dist/leaflet.css",
+              "node_modules/leaflet-draw/dist/leaflet.draw.css",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+               "node_modules/leaflet/dist/leaflet.js",
+               "node_modules/leaflet-draw/dist/leaflet.draw.js"
+            ]
           },
           "configurations": {
             "production": {

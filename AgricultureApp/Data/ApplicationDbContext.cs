@@ -25,11 +25,11 @@ namespace AgricultureApp.Data
             base.OnModelCreating(modelBuilder);
 
             // Configuration des relations
-            modelBuilder.Entity<Parcelle>()
-                .HasOne(p => p.Agriculteur)
-                .WithMany(a => a.Parcelles)
-                .HasForeignKey(p => p.AgriculteurId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Agriculteur>()
+               .HasMany(a => a.Parcelles)
+               .WithOne(p => p.Agriculteur)
+               .HasForeignKey(p => p.AgriculteurId)
+               .OnDelete(DeleteBehavior.Cascade);
 
             // Configuration des indexes
             modelBuilder.Entity<DonneesMeteo>()
