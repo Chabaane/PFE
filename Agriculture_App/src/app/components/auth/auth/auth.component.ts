@@ -12,7 +12,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
       <nav class="auth-navbar">
         <div class="auth-navbar-container">
           <a routerLink="/auth/login" class="navbar-brand">
-            🌾 AgriManager
+             AgriManager
           </a>
           <div class="nav-links">
             <a routerLink="/auth/login" class="nav-link" routerLinkActive="active" >Connexion</a>
@@ -45,7 +45,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #66ead4 0%, #333334 100%);
     }
 
     /* Navbar */
@@ -98,7 +98,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
     .nav-link {
       padding: 0.75rem 1.5rem;
       text-decoration: none;
-      color: #555;
+      color: #272222;
       font-weight: 500;
       border-radius: 6px;
       transition: all 0.3s;
@@ -108,14 +108,14 @@ import { RouterOutlet, RouterLink } from '@angular/router';
 
     .nav-link:hover {
       background: rgba(102, 126, 234, 0.1);
-      color: #667eea;
-      border-color: rgba(102, 126, 234, 0.2);
+      color: #28292e;
+      border-color: rgba(102, 234, 205, 0.2);
     }
 
     .nav-link.active {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #66dbea 0%, #4b8fa2 100%);
       color: white;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 4px 12px rgba(102, 219, 234, 0.3);
       border-color: transparent;
     }
     /* Dans les styles de AuthLayoutComponent */
@@ -299,7 +299,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
       left: 0;
       width: 100%;
       height: 2px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #32343c 0%, #4ba29b 100%);
       transform: translateX(-100%);
       transition: transform 0.3s ease;
     }

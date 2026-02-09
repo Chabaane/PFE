@@ -291,7 +291,7 @@ import { RouterModule } from '@angular/router';
 
     /* Login Button */
     .login-button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1e1f24 0%, #4ba293 100%);
       border: none;
       padding: 14px;
       font-size: 16px;

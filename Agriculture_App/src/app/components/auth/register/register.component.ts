@@ -272,7 +272,7 @@ function passwordMatchValidator(control: AbstractControl) {
     }
 
     .register-button {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      background: linear-gradient(135deg, #1e1f24 0%, #4ba293 100%);
       border: none;
       padding: 14px;
       font-size: 16px;

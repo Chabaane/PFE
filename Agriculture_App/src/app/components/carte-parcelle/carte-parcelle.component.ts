@@ -6,6 +6,11 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import * as L from 'leaflet';
 import 'leaflet-draw'; // Import pour le plugin leaflet-draw
 import { ParcelleService, Parcelle, DessinParcelleDto } from '../../services/api/parcelle.service';
+import area from '@turf/area';
+import { polygon } from '@turf/helpers';
+
+
+
 
 // Correction pour les icônes Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -30,7 +35,7 @@ L.Icon.Default.mergeOptions({
         <div class="col-md-8">
           <h3>
             <i class="fas fa-map-marked-alt me-2"></i>
-            Carte des Parcelles - Agriculteur #{{agriculteurId}}
+            Carte des Parcelles - Agriculteur {{agriculteurId}}
           </h3>
           <p class="text-muted">
             Visualisez et gérez les parcelles de l'agriculteur sur la carte
@@ -342,13 +347,28 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
 
   private initCarte(): void {
     // Initialiser la carte avec une vue centrée sur la Tunisie
-    this.map = L.map('map').setView([34.0, 9.0], 6);
+    this.map = L.map('map', {
+      zoomSnap: 0.25,
+      zoomDelta: 0.5,
+      preferCanvas: true
+    }).setView([34.0, 9.0], 6);
+
 
     // Ajouter la couche OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(this.map);
+    L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 20,
+        attribution: '© Esri'
+      }
+    ).addTo(this.map);
+    L.tileLayer(
+      'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 20,
+        attribution: '© Esri'
+      }
+    ).addTo(this.map);
 
     // Ajouter le groupe pour les dessins
     this.drawnItems.addTo(this.map);
@@ -368,6 +388,7 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
             color: '#e1e100',
             message: 'Polygone invalide'
           },
+          smoothFactor: 1,
           shapeOptions: {
             color: '#4CAF50',
             fillColor: '#4CAF50',
@@ -472,26 +493,16 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
 
   // Calcul de surface approximative
   private calculerSurfacePolygone(latlngs: L.LatLng[]): number {
-    // Formule simplifiée pour calculer la surface d'un polygone (en m²)
-    // Cette formule utilise la formule de l'aire de Gauss (shoelace formula)
-    if (!latlngs || latlngs.length < 3) return 0;
+    const coords = latlngs.map(p => [p.lng, p.lat]);
+    coords.push(coords[0]);
 
-    let area = 0;
-    const n = latlngs.length;
+    const poly = polygon([coords]);
+    const surfaceM2 = area(poly);
 
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
-      const xi = latlngs[i].lng * Math.PI / 180;
-      const yi = latlngs[i].lat * Math.PI / 180;
-      const xj = latlngs[j].lng * Math.PI / 180;
-      const yj = latlngs[j].lat * Math.PI / 180;
-
-      area += (xj - xi) * (2 + Math.sin(yi) + Math.sin(yj));
-    }
-
-    area = Math.abs(area * 6378137 * 6378137 / 2); // R² de la Terre en mètres
-    return parseFloat((area / 10000).toFixed(3)); // Convertir en hectares
+    return +(surfaceM2 / 10000).toFixed(3);
   }
+
+
 
   // Méthodes publiques
   dessinerNouvelleParcelle(): void {
