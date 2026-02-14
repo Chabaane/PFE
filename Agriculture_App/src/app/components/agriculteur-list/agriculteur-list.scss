@@ -11,3 +11,24 @@
 .agriculteur-card .card-footer {
   background-color: rgba(0, 0, 0, 0.55);
 }
+.card-header.bg-success.text-white.d-flex.justify-content-between.align-items-center {
+    background: linear-gradient(135deg, rgba(37, 40, 37, 0.85), rgba(52, 80, 52, 0.9)) !important;
+}
+.logo-header {
+    padding-left: 40px;  /* Espace pour le logo */
+    background-image: url('src/assets/images/f2.jpg');
+    background-position: left center;
+    background-size: 30px 30px;  /* Ajustez la taille */
+    background-repeat: no-repeat;
+}
+.header-logo {
+    height: 50px;  /* Ajustez selon la taille désirée */
+    width: auto;
+    object-fit: contain;
+}
+
+/* Optionnel : si vous voulez un effet */
+.header-logo:hover {
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}

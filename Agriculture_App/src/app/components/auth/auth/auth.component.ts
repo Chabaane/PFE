@@ -11,9 +11,11 @@ import { RouterOutlet, RouterLink } from '@angular/router';
       <!-- Header de l'auth -->
       <nav class="auth-navbar">
         <div class="auth-navbar-container">
-          <a routerLink="/auth/login" class="navbar-brand">
-             AgriManager
-          </a>
+          <li class="nav-item">
+            <a class="nav-link">
+              <img src="assets/images/logo-light.png" alt="Agriculteurs" class="nav-logo">
+            </a>
+          </li>
           <div class="nav-links">
             <a routerLink="/auth/login" class="nav-link" routerLinkActive="active" >Connexion</a>
             <a routerLink="/auth/register" class="nav-link" routerLinkActive="active">Inscription</a>
@@ -50,9 +52,9 @@ import { RouterOutlet, RouterLink } from '@angular/router';
 
     /* Navbar */
     .auth-navbar {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(18, 13, 13, 0.66);
       backdrop-filter: blur(10px);
-      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
       padding: 1rem 0;
       position: sticky;
       top: 0;
@@ -98,7 +100,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
     .nav-link {
       padding: 0.75rem 1.5rem;
       text-decoration: none;
-      color: #272222;
+      color: #f3f0f0;
       font-weight: 500;
       border-radius: 6px;
       transition: all 0.3s;
@@ -324,6 +326,11 @@ import { RouterOutlet, RouterLink } from '@angular/router';
       100% {
         transform: scale(1);
       }
+    }
+    .nav-logo {
+      height: 50px;
+      width: auto;
+      vertical-align: middle;
     }
   `]
 })
