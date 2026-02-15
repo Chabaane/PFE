@@ -8,7 +8,7 @@ import 'leaflet-draw'; // Import pour le plugin leaflet-draw
 import { ParcelleService, Parcelle, DessinParcelleDto } from '../../services/api/parcelle.service';
 import area from '@turf/area';
 import { polygon } from '@turf/helpers';
-
+import { MeteoPoint, MeteoService } from '@app/services/api/meteo.service';
 
 
 
@@ -30,135 +30,224 @@ L.Icon.Default.mergeOptions({
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="container-fluid mt-4">
-      <!-- En-tête -->
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h3>
-            <i class="fas fa-map-marked-alt me-2"></i>
-            Carte des Parcelles - Agriculteur {{agriculteurId}}
-          </h3>
-          <p class="text-muted">
-            Visualisez et gérez les parcelles de l'agriculteur sur la carte
-          </p>
+       <!-- En-tête -->
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <h3>
+              <i class="fas fa-map-marked-alt me-2"></i>
+              Carte des Parcelles - Agriculteur {{agriculteurId}}
+            </h3>
+            <p class="text-muted">
+              Visualisez et gérez les parcelles de l'agriculteur sur la carte
+            </p>
+          </div>
+          <div class="col-md-4 text-end">
+            <button class="btn btn-success me-2" (click)="dessinerNouvelleParcelle()">
+              <i class="fas fa-draw-polygon me-1"></i> Dessiner une parcelle
+            </button>
+            <button class="btn btn-primary" (click)="synchroniser()" [disabled]="!hasOfflineData">
+              <i class="fas fa-sync-alt me-1" [class.fa-spin]="synchronisationEnCours"></i>
+              Synchroniser ({{parcellesOfflineCount}})
+            </button>
+          </div>
         </div>
-        <div class="col-md-4 text-end">
-          <button class="btn btn-success me-2" (click)="dessinerNouvelleParcelle()">
-            <i class="fas fa-draw-polygon me-1"></i> Dessiner une parcelle
-          </button>
-          <button class="btn btn-primary" (click)="synchroniser()" [disabled]="!hasOfflineData">
-            <i class="fas fa-sync-alt me-1" [class.fa-spin]="synchronisationEnCours"></i>
-            Synchroniser ({{parcellesOfflineCount}})
-          </button>
-        </div>
-      </div>
 
-      <!-- Cartes de statistiques -->
-      <div class="row mb-4">
-        <div class="col-md-3">
-          <div class="card text-center border-success">
-            <div class="card-body">
-              <h5 class="card-title text-success">{{parcelles.length}}</h5>
-              <p class="card-text">Parcelles</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center border-info">
-            <div class="card-body">
-              <h5 class="card-title text-info">{{surfaceTotale}} ha</h5>
-              <p class="card-text">Surface totale</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center border-warning">
-            <div class="card-body">
-              <h5 class="card-title text-warning">{{parcellesOfflineCount}}</h5>
-              <p class="card-text">Non synchronisées</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center border-primary">
-            <div class="card-body">
-              <h5 class="card-title text-primary">{{connectionStatus}}</h5>
-              <p class="card-text">Connexion</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Carte et liste -->
-      <div class="row">
-        <!-- Carte Leaflet -->
-        <div class="col-md-8">
-          <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-              <div class="d-flex justify-content-between align-items-center">
-                <span>Carte Interactive</span>
-                <div>
-                  <button class="btn btn-sm btn-light me-2" (click)="centrerCarte()">
-                    <i class="fas fa-crosshairs"></i>
-                  </button>
-                  <button class="btn btn-sm btn-light" (click)="changerMode()">
-                    {{modeDessin ? 'Annuler le dessin' : 'Mode dessin'}}
-                  </button>
-                </div>
+        <!-- Cartes de statistiques -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="card text-center border-success">
+              <div class="card-body">
+                <h5 class="card-title text-success">{{parcelles.length}}</h5>
+                <p class="card-text">Parcelles</p>
               </div>
             </div>
-            <div class="card-body p-0">
-              <div id="map" style="height: 600px;"></div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center border-info">
+              <div class="card-body">
+                <h5 class="card-title text-info">{{surfaceTotale}} ha</h5>
+                <p class="card-text">Surface totale</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center border-warning">
+              <div class="card-body">
+                <h5 class="card-title text-warning">{{parcellesOfflineCount}}</h5>
+                <p class="card-text">Non synchronisées</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center border-primary">
+              <div class="card-body">
+                <h5 class="card-title text-primary">{{connectionStatus}}</h5>
+                <p class="card-text">Connexion</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Liste des parcelles -->
-        <div class="col-md-4">
-          <div class="card shadow-sm h-100">
-            <div class="card-header bg-dark text-white">
-              Liste des Parcelles
-            </div>
-            <div class="card-body p-0">
-              <div class="list-group list-group-flush" *ngIf="parcelles.length > 0">
-                <div *ngFor="let parcelle of parcelles"
-                     class="list-group-item list-group-item-action"
-                     [class.bg-light]="parcelle.id === parcelleSelectionnee?.id"
-                     (click)="selectionnerParcelle(parcelle)">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                      <h6 class="mb-1">
-                        <span class="badge me-2" [style.background-color]="parcelle.couleur">&nbsp;&nbsp;</span>
-                        {{parcelle.nom}}
-                      </h6>
-                      <small class="text-muted">
-                        {{parcelle.surface}} ha • {{parcelle.gouvernorat || 'Localisation inconnue'}}
-                      </small>
-                      <div>
-                        <small *ngIf="!parcelle.estSynchronise" class="badge bg-warning">
-                          <i class="fas fa-exclamation-triangle me-1"></i> Hors ligne
-                        </small>
-                        <small *ngIf="parcelle.culture" class="badge bg-info ms-1">
-                          {{parcelle.culture}}
-                        </small>
-                      </div>
-                    </div>
-                    <button class="btn btn-sm btn-outline-danger" (click)="supprimerParcelle(parcelle.id); $event.stopPropagation()">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div *ngIf="parcelles.length === 0" class="text-center py-5">
-                <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Aucune parcelle trouvée</p>
-                <button class="btn btn-success" (click)="dessinerNouvelleParcelle()">
-                  <i class="fas fa-plus me-1"></i> Créer la première parcelle
+
+
+    <!-- Carte et liste -->
+    <div class="row">
+      <!-- Carte Leaflet - 8 colonnes -->
+      <div class="col-md-8">
+        <div class="card shadow-sm position-relative">
+          <div class="card-header bg-dark text-white">
+            <div class="d-flex justify-content-between align-items-center">
+              <span>
+                <i class="fas fa-map me-2"></i>
+                Carte Interactive
+              </span>
+              <div>
+                <button class="btn btn-sm btn-light me-2" (click)="centrerCarte()">
+                  <i class="fas fa-crosshairs"></i>
+                </button>
+                <button class="btn btn-sm btn-light" (click)="changerMode()">
+                  {{modeDessin ? 'Annuler le dessin' : 'Mode dessin'}}
                 </button>
               </div>
             </div>
           </div>
+          <div class="card-body p-0 position-relative">
+            <div id="map" style="height: 600px;"></div>
+
+            <!-- Bouton pour ouvrir/fermer la météo -->
+            <button class="meteo-toggle-btn"
+                    [class.active]="showMeteoPanel"
+                    (click)="toggleMeteoPanel()">
+              <i class="fas" [class.fa-cloud-sun]="!showMeteoPanel" [class.fa-times]="showMeteoPanel"></i>
+              <span *ngIf="!showMeteoPanel">Météo</span>
+            </button>
+
+            <!-- Fenêtre météo latérale -->
+            <div class="meteo-side-panel" [class.open]="showMeteoPanel">
+              <div class="meteo-panel-header">
+                <h4>
+                  <i class="fas fa-cloud-sun me-2"></i>
+                  Météo
+                </h4>
+                <button class="btn-close" (click)="showMeteoPanel = false"></button>
+              </div>
+
+              <div class="meteo-panel-content" *ngIf="meteoData; else loadingMeteo">
+                <!-- Maintenant -->
+                <div class="meteo-section">
+                  <h5>Maintenant</h5>
+                  <div class="current-weather">
+                    <div class="current-temp">{{ meteoData.actuelle.temperature | number:'1.1-1' }}°C</div>
+                    <div class="current-details">
+                      <div><i class="fas fa-cloud"></i> Nuages: {{ meteoData.actuelle.nuages }}%</div>
+                      <div><i class="fas fa-tint"></i> Humidité: {{ meteoData.actuelle.humidite }}%</div>
+                      <div><i class="fas fa-wind"></i> Vent: {{ meteoData.actuelle.vent | number:'1.1-1' }} m/s</div>
+                      <div><i class="fas fa-compress-alt"></i> Pression: {{ meteoData.actuelle.pression }} hPa</div>
+                    </div>
+                  </div>
+                </div>
+
+                <hr>
+
+                <!-- Prévisions -->
+                <div class="meteo-section">
+                  <h5>Prévisions</h5>
+                  <div class="forecast-list">
+                    <div *ngFor="let prev of meteoData.previsions" class="forecast-item">
+                      <div class="forecast-day">{{ prev.jour }}.</div>
+                      <div class="forecast-temp">{{ prev.temperature | number:'1.1-1' }}°C</div>
+                      <div class="forecast-details">
+                        <div><i class="fas fa-cloud"></i> {{ prev.nuages }}%</div>
+                        <div><i class="fas fa-tint"></i> {{ prev.humidite }}%</div>
+                        <div><i class="fas fa-wind"></i> {{ prev.vent | number:'1.1-1' }}</div>
+                        <div><i class="fas fa-compress-alt"></i> {{ prev.pression }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Info parcelle si sélectionnée -->
+                <div class="parcelle-info-panel" *ngIf="parcelleSelectionnee">
+                  <h5>
+                    <i class="fas fa-tractor me-2"></i>
+                    {{ parcelleSelectionnee.nom }}
+                  </h5>
+                  <div class="parcelle-details">
+                    <div><strong>Agriculteur:</strong> Ben Fadhel Mohamed</div>
+                    <div><strong>Surface:</strong> {{ parcelleSelectionnee.surface }} ha</div>
+                    <div *ngIf="parcelleSelectionnee.culture"><strong>Culture:</strong> {{ parcelleSelectionnee.culture }}</div>
+                    <div><strong>Propriété:</strong> Propriété</div>
+                    <div><strong>Pépinière:</strong> Baddar_Agricole</div>
+                  </div>
+                </div>
+
+                <!-- Localisation -->
+                <div class="location-info">
+                  <i class="fas fa-map-marker-alt me-1"></i>
+                  Golfe de Tunis • طريق دويس
+                </div>
+              </div>
+
+              <ng-template #loadingMeteo>
+                <div class="meteo-loading-panel">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                  </div>
+                  <p>Chargement des données météo...</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
         </div>
       </div>
+
+          <!-- Liste des parcelles - 4 colonnes -->
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-dark text-white">
+                <i class="fas fa-list me-2"></i>
+                Liste des Parcelles
+              </div>
+              <div class="card-body p-0">
+                <div class="list-group list-group-flush" *ngIf="parcelles.length > 0">
+                  <div *ngFor="let parcelle of parcelles"
+                      class="list-group-item list-group-item-action parcelle-item"
+                      [class.active]="parcelle.id === parcelleSelectionnee?.id"
+                      (click)="selectionnerParcelle(parcelle)">
+                    <div class="parcelle-color" [style.background-color]="parcelle.couleur"></div>
+                    <div class="parcelle-info">
+                      <div class="parcelle-nom">
+                        {{parcelle.nom}}
+                        <span *ngIf="!parcelle.estSynchronise" class="badge bg-warning ms-2">Hors ligne</span>
+                      </div>
+                      <div class="parcelle-meta">
+                        <span>{{parcelle.surface}} ha</span>
+                        <span class="mx-2">•</span>
+                        <span>{{parcelle.gouvernorat || 'Localisation inconnue'}}</span>
+                      </div>
+                      <div *ngIf="parcelle.culture" class="parcelle-culture">
+                        <i class="fas fa-seedling me-1"></i>
+                        {{parcelle.culture}}
+                      </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger btn-delete"
+                            (click)="supprimerParcelle(parcelle.id); $event.stopPropagation()">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+                <div *ngIf="parcelles.length === 0" class="text-center py-5">
+                  <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                  <p class="text-muted">Aucune parcelle trouvée</p>
+                  <button class="btn btn-success" (click)="dessinerNouvelleParcelle()">
+                    <i class="fas fa-plus me-1"></i> Créer la première parcelle
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
       <!-- Modal d'édition de parcelle -->
       <div class="modal fade" [class.show]="modalVisible" [style.display]="modalVisible ? 'block' : 'none'">
@@ -264,33 +353,313 @@ L.Icon.Default.mergeOptions({
     </div>
   `,
   styles: [`
-    #map {
-      border-radius: 0 0 0.375rem 0.375rem;
+  #map {
+    border-radius: 0 0 0.375rem 0.375rem;
+    height: 600px;
+    width: 100%;
+  }
+
+  /* Bouton toggle météo */
+  .meteo-toggle-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: white;
+    border: none;
+    border-radius: 40px;
+    padding: 10px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .meteo-toggle-btn:hover {
+    background: #f8f9fa;
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+
+  .meteo-toggle-btn.active {
+    background: #1e3c72;
+    color: white;
+  }
+
+  .meteo-toggle-btn i {
+    font-size: 1.2rem;
+    color: #f39c12;
+  }
+
+  .meteo-toggle-btn.active i {
+    color: white;
+  }
+
+  /* Fenêtre météo latérale */
+  .meteo-side-panel {
+    position: absolute;
+    top: 80px;
+    left: -400px;
+    width: 380px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    z-index: 999;
+    transition: left 0.3s ease;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.98);
+  }
+
+  .meteo-side-panel.open {
+    left: 20px;
+  }
+
+  .meteo-panel-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .meteo-panel-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .meteo-panel-header .btn-close {
+    background: rgba(255,255,255,0.2);
+    opacity: 1;
+    padding: 8px;
+    border-radius: 50%;
+  }
+
+  .meteo-panel-header .btn-close:hover {
+    background: rgba(255,255,255,0.3);
+  }
+
+  .meteo-panel-content {
+    padding: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .meteo-section {
+    margin-bottom: 20px;
+  }
+
+  .meteo-section h5 {
+    color: #1e3c72;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .current-weather {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 15px;
+  }
+
+  .current-temp {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #1e3c72;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .current-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .current-details div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #333;
+  }
+
+  .current-details i {
+    color: #2a5298;
+    width: 20px;
+  }
+
+  hr {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .forecast-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .forecast-item {
+    display: grid;
+    grid-template-columns: 60px 80px 1fr;
+    align-items: center;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .forecast-day {
+    font-weight: 600;
+    color: #1e3c72;
+  }
+
+  .forecast-temp {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .forecast-details {
+    display: flex;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #6c757d;
+    flex-wrap: wrap;
+  }
+
+  .forecast-details div {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .forecast-details i {
+    color: #2a5298;
+    font-size: 0.7rem;
+  }
+
+  .parcelle-info-panel {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e8f4fd;
+    border-radius: 12px;
+    border-left: 4px solid #2a5298;
+  }
+
+  .parcelle-info-panel h5 {
+    color: #1e3c72;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .parcelle-details {
+    font-size: 0.9rem;
+    color: #333;
+    line-height: 1.6;
+  }
+
+  .location-info {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-align: center;
+    border: 1px dashed #dee2e6;
+  }
+
+  .meteo-loading-panel {
+    padding: 40px 20px;
+    text-align: center;
+    color: #6c757d;
+  }
+
+  .meteo-loading-panel .spinner-border {
+    margin-bottom: 10px;
+  }
+
+  /* Styles pour la liste des parcelles */
+  .parcelle-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+  }
+
+  .parcelle-item.active {
+    background-color: #e3f2fd;
+    border-left-color: #2196f3;
+  }
+
+  .parcelle-color {
+    width: 8px;
+    height: 40px;
+    border-radius: 4px;
+    margin-right: 12px;
+  }
+
+  .parcelle-info {
+    flex: 1;
+  }
+
+  .parcelle-nom {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+  }
+
+  .parcelle-meta {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 2px;
+  }
+
+  .parcelle-culture {
+    font-size: 0.75rem;
+    color: #2a5298;
+  }
+
+  .btn-delete {
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .parcelle-item:hover .btn-delete {
+    opacity: 1;
+  }
+
+  .badge.bg-warning {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .meteo-side-panel {
+      width: 300px;
     }
-    .color-option {
-      width: 30px;
-      height: 30px;
-      border-radius: 4px;
-      cursor: pointer;
-      border: 2px solid transparent;
+
+    .meteo-side-panel.open {
+      left: 10px;
     }
-    .color-option.selected {
-      border-color: #000;
-      transform: scale(1.1);
-    }
-    .color-option:hover {
-      transform: scale(1.05);
-    }
-    .list-group-item:hover {
-      background-color: #f8f9fa;
-    }
-    .modal {
-      background-color: rgba(0, 0, 0, 0.5);
-    }
-    .modal.show {
-      display: block;
-    }
-  `]
+  }
+`]
 })
 export class CarteParcelleComponent implements OnInit, OnDestroy {
   @ViewChild('parcelleForm') parcelleForm!: NgForm;
@@ -300,12 +669,21 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
   parcelleSelectionnee: Parcelle | null = null;
   parcelleEnEdition: DessinParcelleDto & { id?: number } | null = null;
   estModification = false;
-
+   showMeteoPanel = false;
   // Carte Leaflet
   map!: L.Map;
   drawnItems: L.FeatureGroup = new L.FeatureGroup();
   drawControl: any = null; // Utiliser any pour éviter les problèmes de typage avec leaflet-draw
   modeDessin = false;
+
+  // Nouvelles propriétés pour la météo
+  showMeteoPopup = false;
+  popupX = 0;
+  popupY = 0;
+  meteoData: MeteoPoint | null = null;
+  meteoLoading = false;
+  popupTimeout: any;
+
 
   // États
   modalVisible = false;
@@ -322,7 +700,8 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private parcelleService: ParcelleService
+    private parcelleService: ParcelleService,
+    private meteoService: MeteoService
   ) {}
 
   ngOnInit(): void {
@@ -375,6 +754,119 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
 
     // Initialiser les contrôles de dessin
     this.initControlesDessin();
+
+     // Ajouter le gestionnaire de clic pour la météo
+    this.map.on('click', (e: L.LeafletMouseEvent) => {
+      this.afficherMeteoPourPoint(e);
+    });
+  }
+   // Nouvelle méthode pour afficher la météo
+  // Modifier afficherMeteoPourPoint pour mettre à jour le panneau
+  private afficherMeteoPourPoint(event: L.LeafletMouseEvent): void {
+    const { lat, lng } = event.latlng;
+
+    if (this.popupTimeout) {
+      clearTimeout(this.popupTimeout);
+    }
+
+    // Mettre à jour les coordonnées pour le panneau
+    this.popupX = event.originalEvent.clientX;
+    this.popupY = event.originalEvent.clientY;
+
+    // Ouvrir le panneau et charger la météo
+    this.showMeteoPanel = true;
+    this.meteoLoading = true;
+
+    let nomPoint = `Point (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    const parcelleProche = this.trouverParcelleProche(lat, lng);
+
+    if (parcelleProche) {
+      nomPoint = parcelleProche.nom;
+      this.parcelleSelectionnee = parcelleProche;
+    }
+
+    this.meteoService.getMeteoForPoint(nomPoint, lat, lng).subscribe({
+      next: (data) => {
+        this.meteoData = data;
+        this.meteoLoading = false;
+      },
+      error: (error) => {
+        console.error('Erreur météo:', error);
+        this.meteoLoading = false;
+      }
+    });
+  }
+  // Nouvelle méthode pour toggler le panneau météo
+  toggleMeteoPanel(): void {
+    this.showMeteoPanel = !this.showMeteoPanel;
+
+    // Si on ouvre le panneau et qu'on a une parcelle sélectionnée, charger sa météo
+    if (this.showMeteoPanel && this.parcelleSelectionnee) {
+      this.chargerMeteoPourParcelle(this.parcelleSelectionnee);
+    }
+  }
+  // Méthode pour charger la météo
+  chargerMeteoPourParcelle(parcelle: Parcelle): void {
+    if (!parcelle.latitude || !parcelle.longitude) return;
+
+    this.meteoLoading = true;
+    this.meteoService.getMeteoForPoint(parcelle.nom, parcelle.latitude, parcelle.longitude)
+      .subscribe({
+        next: (data) => {
+          this.meteoData = data;
+          this.meteoLoading = false;
+        },
+        error: (error) => {
+          console.error('Erreur météo:', error);
+          this.meteoLoading = false;
+        }
+      });
+  }
+  // Méthode pour trouver une parcelle proche du point cliqué
+  private trouverParcelleProche(lat: number, lng: number): Parcelle | null {
+    let parcelleProche: Parcelle | null = null;
+    let distanceMin = Infinity;
+
+    this.parcelles.forEach(parcelle => {
+      if (parcelle.latitude && parcelle.longitude) {
+        const distance = this.calculerDistance(
+          lat, lng,
+          parcelle.latitude, parcelle.longitude
+        );
+
+        // Si la distance est inférieure à 1km et plus proche que la précédente
+        if (distance < 1 && distance < distanceMin) {
+          distanceMin = distance;
+          parcelleProche = parcelle;
+        }
+      }
+    });
+
+    return parcelleProche;
+  }
+
+  // Calculer la distance en km entre deux points
+  private calculerDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Rayon de la terre en km
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    return distance;
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI/180);
+  }
+
+   // Fermer la popup météo
+  fermerPopupMeteo(): void {
+    // Ne rien faire ou fermer le panneau si besoin
+    this.showMeteoPanel = false;
   }
 
   private initControlesDessin(): void {
@@ -548,30 +1040,18 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
     this.modeDessin = false;
   }
 
+    // Modifier selectionnerParcelle pour charger la météo si le panneau est ouvert
   selectionnerParcelle(parcelle: Parcelle): void {
     this.parcelleSelectionnee = parcelle;
 
-    // Centrer la carte sur la parcelle
     if (parcelle.latitude && parcelle.longitude) {
-      this.map.setView([parcelle.latitude, parcelle.longitude], 14);
-    }
+      this.map.setView([parcelle.latitude, parcelle.longitude], 15);
 
-    // Pour édition : charger les données dans le modal
-    this.parcelleEnEdition = {
-      nom: parcelle.nom,
-      description: parcelle.description,
-      surface: parcelle.surface,
-      couleur: parcelle.couleur,
-      latitude: parcelle.latitude,
-      longitude: parcelle.longitude,
-      gouvernorat: parcelle.gouvernorat,
-      delegation: parcelle.delegation,
-      secteur: parcelle.secteur,
-      culture: parcelle.culture,
-      geometrie: parcelle.geometrie
-    };
-    (this.parcelleEnEdition as any).id = parcelle.id;
-    this.estModification = true;
+      // Si le panneau météo est ouvert, charger la météo
+      if (this.showMeteoPanel) {
+        this.chargerMeteoPourParcelle(parcelle);
+      }
+    }
   }
 
   async sauvegarderParcelle(): Promise<void> {

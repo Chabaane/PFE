@@ -73,8 +73,8 @@ export const routes: Routes = [
       },
       {
         path: 'meteo',
-        loadComponent: () => import('./components/donnees-meteo/donnees-meteo')
-          .then(m => m.DonneesMeteoComponent)
+        loadComponent: () => import('./components/donnees-meteo/meteo-popup.component')
+          .then(m => m.MeteoPopupComponent)
       },
       {
         path: 'diagnostic',

@@ -23,6 +23,18 @@ builder.Services.AddControllers()
         options.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ss";
     });
 
+
+/// <summary>
+/// metéo ///
+/// </summary>
+/// 
+
+builder.Services.AddHttpClient<IMeteoService, MeteoService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.open-meteo.com/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

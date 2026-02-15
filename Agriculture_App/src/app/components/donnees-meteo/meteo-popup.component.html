@@ -1,0 +1,40 @@
+<!-- meteo-popup.component.html -->
+<div class="meteo-container" *ngIf="meteoData">
+  <!-- Météo actuelle -->
+  <div class="meteo-actuelle">
+    <h2>Météo</h2>
+    <div class="temperature">
+      {{ meteoData.actuelle.temperature | number:'1.2-2' }} °C
+    </div>
+
+    <div class="details">
+      <div><strong>Nuages:</strong> {{ meteoData.actuelle.nuages }} %</div>
+      <div>Humidité: {{ meteoData.actuelle.humidite }} %</div>
+      <div>Vent: {{ meteoData.actuelle.vent | number:'1.2-2' }} m/s</div>
+      <div>Pression: {{ meteoData.actuelle.pression }} hpa</div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- Prévisions par jour -->
+  <div class="previsions">
+    <div *ngFor="let prev of meteoData.previsions" class="prevision-jour">
+      <h3>{{ prev.jour }}</h3>
+      <div class="temp">{{ prev.temperature | number:'1.2-2' }} °C</div>
+
+      <div class="details">
+        <div><strong>Nuages:</strong> {{ prev.nuages }} %</div>
+        <div>Humidité: {{ prev.humidite }} %</div>
+        <div>Vent: {{ prev.vent | number:'1.2-2' }} m/s</div>
+        <div>Pression: {{ prev.pression }} hpa</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Message de chargement -->
+<div class="loading" *ngIf="loading">Chargement météo...</div>
+
+<!-- Message d'erreur -->
+<div class="error" *ngIf="error">{{ error }}</div>

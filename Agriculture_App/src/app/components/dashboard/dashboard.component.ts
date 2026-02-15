@@ -66,7 +66,7 @@ import { AuthService } from '../../services/api/auth.service';
 
             {{ getUserName() }}
 
-            <span *ngIf="isAdmin()" class="badge bg-success ms-2">Admin</span>
+            <span *ngIf="isAdmin()" ></span>
           </a>
 
           <ul class="dropdown-menu dropdown-menu-end premium-dropdown">
