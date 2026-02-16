@@ -62,7 +62,7 @@ export const routes: Routes = [
           .then(m => m.AgriculteurFormComponent)
       },
       {
-        path: 'parcelles/:agriculteurId',
+        path: 'carte-parcelle/:agriculteurId',
         loadComponent: () => import('./components/carte-parcelle/carte-parcelle.component')
           .then(m => m.CarteParcelleComponent)
       },
@@ -89,15 +89,18 @@ export const routes: Routes = [
       // Routes avec alias (pour garder la compatibilité)
       {
         path: 'fermes',
-        redirectTo: 'meteo'
+        loadComponent: () => import('./components/fermes/fermes.component')
+          .then(m => m.FermesComponent)
       },
       {
         path: 'vue-satellite',
-        redirectTo: 'diagnostic'
+        loadComponent: () => import('./components/vue-satellite/vue-satellite.component')
+          .then(m => m.VueSatelliteComponent)
       },
       {
-        path: 'parcelles',
-        redirectTo: 'synchronisation'
+        path: 'parcelles/:agriculteurId',
+        loadComponent: () => import('./components/parcelles/parcelles.component')
+          .then(m => m.ParcellesComponent)
       }
     ]
   },

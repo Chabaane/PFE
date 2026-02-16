@@ -42,13 +42,13 @@ import { AuthService } from '../../services/api/auth.service';
         </li>
 
         <li class="nav-item">
-          <a class="nav-link" routerLink="/parcelles" routerLinkActive="active">
+          <a class="nav-link" routerLink="/parcelles/:agriculteurId" routerLinkActive="active">
             <i class="bi bi-geo-alt-fill me-1"></i> Parcelles
           </a>
         </li>
 
         <li class="nav-item">
-          <a class="nav-link" routerLink="/diagnostic" routerLinkActive="active">
+          <a class="nav-link" routerLink="/vue-satellite" routerLinkActive="active">
             <i class="bi bi-globe me-1"></i> Vue Satellite
           </a>
         </li>

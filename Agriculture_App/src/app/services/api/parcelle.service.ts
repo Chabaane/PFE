@@ -140,4 +140,22 @@ export class ParcelleService {
       throw error;
     }
   }
+
+  deleteParcelle(parcelleId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${parcelleId}`).pipe(
+      catchError(error => {
+        console.error('Erreur API lors de la suppression', error);
+        return of({ success: false, message: 'Échec de la suppression' });
+      })
+    );
+  }
+  // services/api/parcelle.service.ts
+  getAllParcelles(): Observable<Parcelle[]> {
+    // Si vous avez une API qui retourne toutes les parcelles
+    //return this.http.get<Parcelle[]>(`${this.apiUrl}/parcelles`);
+    
+    // Ou si vous devez les récupérer depuis le stockage local/IndexedDB
+     return from(this.indexedDb.getParcelles());
+  }
+
 }

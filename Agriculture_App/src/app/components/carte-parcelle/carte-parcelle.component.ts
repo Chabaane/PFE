@@ -9,6 +9,7 @@ import { ParcelleService, Parcelle, DessinParcelleDto } from '../../services/api
 import area from '@turf/area';
 import { polygon } from '@turf/helpers';
 import { MeteoPoint, MeteoService } from '@app/services/api/meteo.service';
+import { MeteoPopupComponent } from 'src/app/components/donnees-meteo/meteo-popup.component'
 
 
 
@@ -27,7 +28,7 @@ L.Icon.Default.mergeOptions({
 @Component({
   selector: 'app-carte-parcelle',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, MeteoPopupComponent],
   template: `
     <div class="container-fluid mt-4">
        <!-- En-tête -->
@@ -93,114 +94,53 @@ L.Icon.Default.mergeOptions({
     <!-- Carte et liste -->
     <div class="row">
       <!-- Carte Leaflet - 8 colonnes -->
-      <div class="col-md-8">
-        <div class="card shadow-sm position-relative">
-          <div class="card-header bg-dark text-white">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>
-                <i class="fas fa-map me-2"></i>
-                Carte Interactive
-              </span>
-              <div>
-                <button class="btn btn-sm btn-light me-2" (click)="centrerCarte()">
-                  <i class="fas fa-crosshairs"></i>
-                </button>
-                <button class="btn btn-sm btn-light" (click)="changerMode()">
-                  {{modeDessin ? 'Annuler le dessin' : 'Mode dessin'}}
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="card-body p-0 position-relative">
-            <div id="map" style="height: 600px;"></div>
-
-            <!-- Bouton pour ouvrir/fermer la météo -->
-            <button class="meteo-toggle-btn"
-                    [class.active]="showMeteoPanel"
-                    (click)="toggleMeteoPanel()">
-              <i class="fas" [class.fa-cloud-sun]="!showMeteoPanel" [class.fa-times]="showMeteoPanel"></i>
-              <span *ngIf="!showMeteoPanel">Météo</span>
-            </button>
-
-            <!-- Fenêtre météo latérale -->
-            <div class="meteo-side-panel" [class.open]="showMeteoPanel">
-              <div class="meteo-panel-header">
-                <h4>
-                  <i class="fas fa-cloud-sun me-2"></i>
-                  Météo
-                </h4>
-                <button class="btn-close" (click)="showMeteoPanel = false"></button>
-              </div>
-
-              <div class="meteo-panel-content" *ngIf="meteoData; else loadingMeteo">
-                <!-- Maintenant -->
-                <div class="meteo-section">
-                  <h5>Maintenant</h5>
-                  <div class="current-weather">
-                    <div class="current-temp">{{ meteoData.actuelle.temperature | number:'1.1-1' }}°C</div>
-                    <div class="current-details">
-                      <div><i class="fas fa-cloud"></i> Nuages: {{ meteoData.actuelle.nuages }}%</div>
-                      <div><i class="fas fa-tint"></i> Humidité: {{ meteoData.actuelle.humidite }}%</div>
-                      <div><i class="fas fa-wind"></i> Vent: {{ meteoData.actuelle.vent | number:'1.1-1' }} m/s</div>
-                      <div><i class="fas fa-compress-alt"></i> Pression: {{ meteoData.actuelle.pression }} hPa</div>
-                    </div>
-                  </div>
-                </div>
-
-                <hr>
-
-                <!-- Prévisions -->
-                <div class="meteo-section">
-                  <h5>Prévisions</h5>
-                  <div class="forecast-list">
-                    <div *ngFor="let prev of meteoData.previsions" class="forecast-item">
-                      <div class="forecast-day">{{ prev.jour }}.</div>
-                      <div class="forecast-temp">{{ prev.temperature | number:'1.1-1' }}°C</div>
-                      <div class="forecast-details">
-                        <div><i class="fas fa-cloud"></i> {{ prev.nuages }}%</div>
-                        <div><i class="fas fa-tint"></i> {{ prev.humidite }}%</div>
-                        <div><i class="fas fa-wind"></i> {{ prev.vent | number:'1.1-1' }}</div>
-                        <div><i class="fas fa-compress-alt"></i> {{ prev.pression }}</div>
+              <div class="col-md-8">
+                <div class="card shadow-sm position-relative">
+                  <div class="card-header bg-dark text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span>
+                        <i class="fas fa-map me-2"></i>
+                        Carte Interactive
+                      </span>
+                      <div>
+                        <button class="btn btn-sm btn-light me-2" (click)="centrerCarte()">
+                          <i class="fas fa-crosshairs"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light" (click)="changerMode()">
+                          {{modeDessin ? 'Annuler le dessin' : 'Mode dessin'}}
+                        </button>
                       </div>
                     </div>
                   </div>
-                </div>
+                  <div class="card-body p-0 position-relative">
+                    <div id="map" style="height: 600px;"></div>
+                    <button class="meteo-toggle-btn"
+                            [class.active]="showMeteoPanel"
+                            (click)="toggleMeteoPanel()">
+                      <i class="fas"
+                        [class.fa-cloud-sun]="!showMeteoPanel"
+                        [class.fa-times]="showMeteoPanel"></i>
+                      <span *ngIf="!showMeteoPanel">Météo</span>
+                    </button>
 
-                <!-- Info parcelle si sélectionnée -->
-                <div class="parcelle-info-panel" *ngIf="parcelleSelectionnee">
-                  <h5>
-                    <i class="fas fa-tractor me-2"></i>
-                    {{ parcelleSelectionnee.nom }}
-                  </h5>
-                  <div class="parcelle-details">
-                    <div><strong>Agriculteur:</strong> Ben Fadhel Mohamed</div>
-                    <div><strong>Surface:</strong> {{ parcelleSelectionnee.surface }} ha</div>
-                    <div *ngIf="parcelleSelectionnee.culture"><strong>Culture:</strong> {{ parcelleSelectionnee.culture }}</div>
-                    <div><strong>Propriété:</strong> Propriété</div>
-                    <div><strong>Pépinière:</strong> Baddar_Agricole</div>
+                    <app-meteo-popup
+                      *ngIf="showMeteoPanel && selectedLat && selectedLng"
+                      [pointNom]="selectedPointName"
+                      [latitude]="selectedLat"
+                      [longitude]="selectedLng"
+                      class="meteo-floating-panel">
+                    </app-meteo-popup>
+
+                    <!-- Bouton pour ouvrir/fermer la météo -->
+                    <button class="meteo-toggle-btn"
+                            [class.active]="showMeteoPanel"
+                            (click)="toggleMeteoPanel()">
+                      <i class="fas" [class.fa-cloud-sun]="!showMeteoPanel" [class.fa-times]="showMeteoPanel"></i>
+                      <span *ngIf="!showMeteoPanel">Météo</span>
+                    </button>
                   </div>
-                </div>
-
-                <!-- Localisation -->
-                <div class="location-info">
-                  <i class="fas fa-map-marker-alt me-1"></i>
-                  Golfe de Tunis • طريق دويس
-                </div>
               </div>
-
-              <ng-template #loadingMeteo>
-                <div class="meteo-loading-panel">
-                  <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Chargement...</span>
-                  </div>
-                  <p>Chargement des données météo...</p>
-                </div>
-              </ng-template>
-            </div>
-          </div>
-        </div>
-      </div>
-
+              </div>
           <!-- Liste des parcelles - 4 colonnes -->
           <div class="col-md-4">
             <div class="card shadow-sm h-100">
@@ -246,7 +186,7 @@ L.Icon.Default.mergeOptions({
               </div>
             </div>
           </div>
-        </div>
+      </div>
 
 
       <!-- Modal d'édition de parcelle -->
@@ -659,10 +599,52 @@ L.Icon.Default.mergeOptions({
       left: 10px;
     }
   }
+  .meteo-floating-panel {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  width: 380px;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+/* Version plus compacte - carrés au lieu de cercles */
+.color-option {
+  width: 40px;
+  height: 30px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.color-option:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.color-option.selected {
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px #007bff;
+}
+
 `]
 })
 export class CarteParcelleComponent implements OnInit, OnDestroy {
   @ViewChild('parcelleForm') parcelleForm!: NgForm;
+  selectedLat?: number;
+  selectedLng?: number;
+  selectedPointName: string = '';
 
   agriculteurId!: number;
   parcelles: Parcelle[] = [];
@@ -763,39 +745,22 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
    // Nouvelle méthode pour afficher la météo
   // Modifier afficherMeteoPourPoint pour mettre à jour le panneau
   private afficherMeteoPourPoint(event: L.LeafletMouseEvent): void {
-    const { lat, lng } = event.latlng;
+  const { lat, lng } = event.latlng;
 
-    if (this.popupTimeout) {
-      clearTimeout(this.popupTimeout);
-    }
+  this.selectedLat = lat;
+  this.selectedLng = lng;
+  this.selectedPointName = `Point (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
-    // Mettre à jour les coordonnées pour le panneau
-    this.popupX = event.originalEvent.clientX;
-    this.popupY = event.originalEvent.clientY;
+  const parcelleProche = this.trouverParcelleProche(lat, lng);
 
-    // Ouvrir le panneau et charger la météo
-    this.showMeteoPanel = true;
-    this.meteoLoading = true;
-
-    let nomPoint = `Point (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-    const parcelleProche = this.trouverParcelleProche(lat, lng);
-
-    if (parcelleProche) {
-      nomPoint = parcelleProche.nom;
-      this.parcelleSelectionnee = parcelleProche;
-    }
-
-    this.meteoService.getMeteoForPoint(nomPoint, lat, lng).subscribe({
-      next: (data) => {
-        this.meteoData = data;
-        this.meteoLoading = false;
-      },
-      error: (error) => {
-        console.error('Erreur météo:', error);
-        this.meteoLoading = false;
-      }
-    });
+  if (parcelleProche) {
+    this.selectedPointName = parcelleProche.nom;
+    this.parcelleSelectionnee = parcelleProche;
   }
+
+  this.showMeteoPanel = true;
+}
+
   // Nouvelle méthode pour toggler le panneau météo
   toggleMeteoPanel(): void {
     this.showMeteoPanel = !this.showMeteoPanel;
