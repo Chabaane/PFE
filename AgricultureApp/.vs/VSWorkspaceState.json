@@ -8,6 +8,6 @@
     "\\Models\\Entities",
     "\\Services"
   ],
-  "SelectedNode": "\\Controllers\\MeteoController.cs",
+  "SelectedNode": "\\Models\\DTOs\\FermeDto.cs",
   "PreviewInSolutionExplorer": false
 }

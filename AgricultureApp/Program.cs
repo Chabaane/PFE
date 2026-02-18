@@ -10,9 +10,13 @@ using AgricultureApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Configuration du logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+
+builder.Services.AddScoped<IFermeService, FermeService>();
+
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -159,7 +163,7 @@ try
         var admin = new Utilisateur
         {
             Nom = "Admin",
-            Prenom = "System",
+            Prenom = "Admin",
             Email = "admin@agriculture.tn",
             MotDePasseHash = authService.HashPassword("Admin123!"),
             Role = UserRoles.Admin,

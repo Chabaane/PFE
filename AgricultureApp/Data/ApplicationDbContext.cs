@@ -19,10 +19,26 @@ namespace AgricultureApp.Data
         public DbSet<DiagnosticAcrique> DiagnosticsAcriques { get; set; }
         public DbSet<DonneeLocale> DonneesLocales { get; set; }
         public DbSet<Synchronisation> Synchronisations { get; set; }
+        public DbSet<Ferme> Fermes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Relation Ferme -> Agriculteur
+            modelBuilder.Entity<Ferme>()
+                .HasOne(f => f.Agriculteur)
+                .WithMany(a => a.Fermes)  // Vous devrez ajouter cette propriété à Agriculteur
+                .HasForeignKey(f => f.AgriculteurId)
+                .HasPrincipalKey(a => a.idAgriculteur)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Relation Parcelle -> Ferme
+            modelBuilder.Entity<Parcelle>()
+                .HasOne(p => p.Ferme)
+                .WithMany(f => f.Parcelles)
+                .HasForeignKey(p => p.FermeId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Configuration des relations
             modelBuilder.Entity<Agriculteur>()

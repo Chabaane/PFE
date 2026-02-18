@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using AgricultureApp.Models.Entities;
 
+
 namespace AgricultureApp.Models.Entities
 {
     public class Parcelle
@@ -19,9 +20,15 @@ namespace AgricultureApp.Models.Entities
         [Required]
         public int AgriculteurId { get; set; }
 
+        // Ajouter cette propriété (nullable car une parcelle peut ne pas être dans une ferme)
+        public int? FermeId { get; set; }
+
         [ForeignKey("AgriculteurId")]
         [JsonIgnore]
         public virtual Agriculteur? Agriculteur { get; set; }
+
+        [ForeignKey("FermeId")]
+        public virtual Ferme Ferme { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(10, 6)")]

@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+
 namespace AgricultureApp.Models.DTOs
 {
     public class AgriculteurUpdateDto

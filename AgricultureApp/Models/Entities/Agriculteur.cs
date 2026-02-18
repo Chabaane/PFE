@@ -24,6 +24,8 @@ namespace AgricultureApp.Models.Entities
         [StringLength(200)]
         public string Localisation { get; set; }
 
+        public virtual ICollection<Ferme> Fermes { get; set; } = new List<Ferme>();
+
         // Navigation properties
         public virtual ICollection<Parcelle> Parcelles { get; set; }
 

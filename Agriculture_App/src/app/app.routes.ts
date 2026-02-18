@@ -89,9 +89,20 @@ export const routes: Routes = [
       // Routes avec alias (pour garder la compatibilité)
       {
         path: 'fermes',
-        loadComponent: () => import('./components/fermes/fermes.component')
-          .then(m => m.FermesComponent)
+        loadComponent: () => import('./components/fermes-list/fermes-list.component')
+          .then(m => m.FermesListComponent)
       },
+      {
+        path: 'fermes/:id/details',
+        loadComponent: () => import('./components/ferme-details/ferme-details.component')
+          .then(m => m.FermeDetailsComponent)
+      },
+      {
+        path: 'fermes/creer-carte',
+        loadComponent: () => import('./components/fermes/fermes.component')
+          .then(m => m.CreerFermeCarteComponent)
+      },
+
       {
         path: 'vue-satellite',
         loadComponent: () => import('./components/vue-satellite/vue-satellite.component')

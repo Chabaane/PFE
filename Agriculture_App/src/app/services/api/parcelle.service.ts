@@ -52,7 +52,7 @@ export interface Coordonnee {
   providedIn: 'root'
 })
 export class ParcelleService {
-  private apiUrl = 'http://localhost:5000/api/parcelles';
+  private apiUrl = 'http://localhost:5160/api/parcelles';
 
   constructor(
     private http: HttpClient,
@@ -153,7 +153,7 @@ export class ParcelleService {
   getAllParcelles(): Observable<Parcelle[]> {
     // Si vous avez une API qui retourne toutes les parcelles
     //return this.http.get<Parcelle[]>(`${this.apiUrl}/parcelles`);
-    
+
     // Ou si vous devez les récupérer depuis le stockage local/IndexedDB
      return from(this.indexedDb.getParcelles());
   }
