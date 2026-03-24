@@ -152,34 +152,47 @@ import { ParcelleService, Parcelle } from 'src/app/services/api/parcelle.service
             </h5>
             <button type="button" class="btn-close btn-close-white" (click)="assignationModalVisible = false"></button>
           </div>
+          <!-- Dans le template de ferme-details.component.ts -->
           <div class="modal-body">
-            <div class="mb-3">
-              <input type="text" class="form-control"
-                     placeholder="Rechercher une parcelle..."
-                     [(ngModel)]="searchParcelle"
-                     (ngModelChange)="filtrerParcellesDisponibles()">
-            </div>
-
-            <div class="list-group" *ngIf="parcellesDisponibles.length">
-              <div *ngFor="let parcelle of parcellesDisponibles"
-                   class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>{{parcelle.nom}}</strong>
-                  <div class="small text-muted">
-                    {{parcelle.surface}} ha | {{parcelle.culture || 'Sans culture'}}
-                  </div>
-                </div>
-                <button class="btn btn-sm btn-success"
-                        (click)="assignerParcelle(parcelle.id)"
-                        [disabled]="parcellesEnAssignation.includes(parcelle.id)">
-                  <i class="fas fa-plus"></i>
-                  {{parcellesEnAssignation.includes(parcelle.id) ? 'Assignation...' : 'Assigner'}}
-                </button>
+            <div *ngIf="parcellesEnCoursChargement" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
               </div>
             </div>
 
-            <div *ngIf="!parcellesDisponibles.length" class="text-center py-4">
-              <p class="text-muted mb-0">Aucune parcelle disponible à assigner</p>
+            <div *ngIf="!parcellesEnCoursChargement">
+              <div class="mb-3">
+                <input type="text" class="form-control"
+                      placeholder="Rechercher une parcelle..."
+                      [(ngModel)]="searchParcelle"
+                      (ngModelChange)="filtrerParcellesDisponibles()">
+              </div>
+
+              <div class="list-group" *ngIf="parcellesDisponibles.length">
+                <div *ngFor="let parcelle of parcellesDisponibles"
+                    class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{parcelle.nom}}</strong>
+                    <div class="small text-muted">
+                      {{parcelle.surface}} ha | {{parcelle.culture || 'Sans culture'}}
+                      <span *ngIf="parcelle.fermeId" class="text-danger ms-2">
+                        (Déjà dans une ferme)
+                      </span>
+                    </div>
+                  </div>
+                  <button class="btn btn-sm btn-success"
+                          (click)="assignerParcelle(parcelle.id)"
+                          [disabled]="parcellesEnAssignation.includes(parcelle.id) || parcelle.fermeId">
+                    <i class="fas fa-plus"></i>
+                    {{parcellesEnAssignation.includes(parcelle.id) ? 'Assignation...' : 'Assigner'}}
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="!parcellesDisponibles.length" class="text-center py-4">
+                <p class="text-muted mb-0">Aucune parcelle disponible à assigner</p>
+                <small class="text-muted">Toutes les parcelles sont déjà assignées à une ferme</small>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -214,12 +227,15 @@ import { ParcelleService, Parcelle } from 'src/app/services/api/parcelle.service
 export class FermeDetailsComponent implements OnInit {
   ferme: FermeDetail | null = null;
   fermeId!: number;
+  parcellesEnCoursChargement = false;
 
   assignationModalVisible = false;
   searchParcelle = '';
   parcellesDisponibles: Parcelle[] = [];
   toutesParcelles: Parcelle[] = [];
   parcellesEnAssignation: number[] = [];
+
+
 
   constructor(
     private route: ActivatedRoute,
@@ -248,10 +264,19 @@ export class FermeDetailsComponent implements OnInit {
   }
 
   chargerToutesParcelles(): void {
+    // Récupérer toutes les parcelles ou filtrer par agriculteur
     this.parcelleService.getAllParcelles().subscribe({
       next: (parcelles) => {
-        this.toutesParcelles = parcelles;
+        // Filtrer pour ne montrer que les parcelles du même agriculteur
+        if (this.ferme) {
+          this.toutesParcelles = parcelles.filter(p => p.agriculteurId === this.ferme?.agriculteurId);
+        } else {
+          this.toutesParcelles = parcelles;
+        }
         this.filtrerParcellesDisponibles();
+      },
+      error: (error) => {
+        console.error('Erreur chargement parcelles:', error);
       }
     });
   }
@@ -268,20 +293,46 @@ export class FermeDetailsComponent implements OnInit {
   gererAssignation(): void {
     this.assignationModalVisible = true;
     this.searchParcelle = '';
-    this.filtrerParcellesDisponibles();
+    this.parcellesEnCoursChargement = true;
+
+    // Recharger les parcelles avant d'ouvrir le modal
+    this.chargerToutesParcelles();
+
+    setTimeout(() => {
+      this.parcellesEnCoursChargement = false;
+    }, 500);
   }
 
+  // components/fermes/ferme-details.component.ts
   assignerParcelle(parcelleId: number): void {
+    console.log('Assignation parcelle:', parcelleId, 'à ferme:', this.fermeId);
+
     this.parcellesEnAssignation.push(parcelleId);
 
     this.fermeService.assignerParcelles(this.fermeId, [parcelleId]).subscribe({
       next: () => {
-        this.chargerDetails();
+        console.log('Parcelle assignée avec succès');
+        this.chargerDetails(); // Recharger les détails
         this.parcellesEnAssignation = this.parcellesEnAssignation.filter(id => id !== parcelleId);
-        this.assignationModalVisible = false;
+        // Ne pas fermer le modal immédiatement pour permettre d'assigner plusieurs parcelles
+        // this.assignationModalVisible = false;
+
+        // Afficher un message de succès
+        alert('Parcelle assignée avec succès !');
       },
       error: (error) => {
         console.error('Erreur assignation parcelle:', error);
+        console.error('Détails:', error.error);
+
+        // Afficher l'erreur spécifique
+        if (error.error && error.error.error) {
+          alert(`Erreur: ${error.error.error}`);
+        } else if (error.error && typeof error.error === 'string') {
+          alert(`Erreur: ${error.error}`);
+        } else {
+          alert('Erreur lors de l\'assignation de la parcelle');
+        }
+
         this.parcellesEnAssignation = this.parcellesEnAssignation.filter(id => id !== parcelleId);
       }
     });

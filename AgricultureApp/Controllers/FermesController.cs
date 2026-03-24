@@ -85,11 +85,23 @@ namespace AgricultureApp.Controllers
         [HttpPost("{id}/parcelles/assigner")]
         public async Task<IActionResult> AssignerParcelles(int id, [FromBody] AssignerParcellesDto dto)
         {
-            var result = await _fermeService.AssignerParcelles(id, dto.ParcelleIds);
-            if (!result)
-                return BadRequest("Impossible d'assigner les parcelles");
+            if (dto == null || dto.ParcelleIds == null || !dto.ParcelleIds.Any())
+            {
+                return BadRequest(new { error = "Aucune parcelle à assigner" });
+            }
 
-            return Ok();
+            try
+            {
+                var result = await _fermeService.AssignerParcelles(id, dto.ParcelleIds);
+                if (!result)
+                    return BadRequest(new { error = "Impossible d'assigner les parcelles. Vérifiez que la ferme existe et que les parcelles appartiennent au même agriculteur." });
+
+                return Ok(new { message = "Parcelles assignées avec succès" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [HttpDelete("{id}/parcelles/{parcelleId}")]

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using AgricultureApp.Data; 
 using AgricultureApp.Models.Entities;
 using System.Text.Json;
+using AgricultureApp.Models.DTOs;
 
 namespace AgricultureApp.Controllers
 {
@@ -21,7 +22,25 @@ namespace AgricultureApp.Controllers
             _context = context;
             _logger = logger;
         }
+        // Dans ParcellesController.cs
+        [HttpGet("all")]
+        public async Task<ActionResult<List<ParcelleDto>>> GetAllParcelles()
+        {
+            var parcelles = await _context.Parcelles
+                .Select(p => new ParcelleDto
+                {
+                    Id = p.Id,
+                    Nom = p.Nom,
+                    Surface = p.Surface,
+                    Culture = p.Culture,
+                    Couleur = p.Couleur,
+                    AgriculteurId = p.AgriculteurId,
+                    FermeId = p.FermeId
+                })
+                .ToListAsync();
 
+            return Ok(parcelles);
+        }
         // GET: api/parcelles/agriculteur/{agriculteurId}
         [HttpGet("agriculteur/{agriculteurId}")]
         public async Task<ActionResult<IEnumerable<Parcelle>>> GetParcellesByAgriculteur(int agriculteurId)

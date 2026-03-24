@@ -9,6 +9,7 @@ import 'leaflet-draw';
 import { FermeService, Ferme } from '../../services/api/ferme.service';
 import { ParcelleService, Parcelle } from '../../services/api/parcelle.service';
 import { AgriculteurService } from '../../services/api/agriculteur';
+import {TerrainAnalysisService } from '../../services/terrain-analysis.service';
 
 // Correction pour les icônes Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -320,7 +321,8 @@ export class CreerFermeCarteComponent implements OnInit, OnDestroy {
     private fermeService: FermeService,
     private parcelleService: ParcelleService,
     private router: Router,
-    private AgriculteurService: AgriculteurService
+    private AgriculteurService: AgriculteurService,
+    private terrainAnalysis: TerrainAnalysisService
 
   ) {}
 

@@ -20,6 +20,13 @@ namespace AgricultureApp.Models.Entities
         [Required]
         public int AgriculteurId { get; set; }
 
+        public decimal? AltitudeMin { get; set; }    // Altitude minimale (m)
+        public decimal? AltitudeMax { get; set; }    // Altitude maximale (m)
+        public decimal? AltitudeMoyenne { get; set; } // Altitude moyenne (m)
+        public decimal? PenteMoyenne { get; set; }    // Pente moyenne (%)
+        public string? ClassePente { get; set; }      // Classe de pente (plat, doux, modéré, fort)
+        public string? Exposition { get; set; }       // Exposition (Nord, Sud, Est, Ouest)
+
         // Ajouter cette propriété (nullable car une parcelle peut ne pas être dans une ferme)
         public int? FermeId { get; set; }
 

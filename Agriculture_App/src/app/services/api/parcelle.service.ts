@@ -7,6 +7,7 @@ import { catchError, tap } from 'rxjs/operators';
 import { IndexedDbService } from './indexed-db.service';
 
 export interface Parcelle {
+  fermeId: any;
   id: number;
   nom: string;
   description?: string;
@@ -103,7 +104,8 @@ export class ParcelleService {
       dateRecolte: dto.dateRecolte,
       geometrie: dto.geometrie,
       dateCreation: new Date(),
-      estSynchronise: false
+      estSynchronise: false,
+      fermeId: undefined
     };
 
     await this.indexedDb.ajouterParcelle(parcelle);
@@ -149,13 +151,15 @@ export class ParcelleService {
       })
     );
   }
-  // services/api/parcelle.service.ts
-  getAllParcelles(): Observable<Parcelle[]> {
-    // Si vous avez une API qui retourne toutes les parcelles
-    //return this.http.get<Parcelle[]>(`${this.apiUrl}/parcelles`);
 
-    // Ou si vous devez les récupérer depuis le stockage local/IndexedDB
-     return from(this.indexedDb.getParcelles());
+  getAllParcelles(): Observable<Parcelle[]> {
+    // Utilisez l'endpoint correct
+    return this.http.get<Parcelle[]>(`${this.apiUrl}/all`).pipe(
+      catchError(error => {
+        console.error('Erreur récupération parcelles:', error);
+        return from(this.indexedDb.getParcelles());
+      })
+    );
   }
 
 }
