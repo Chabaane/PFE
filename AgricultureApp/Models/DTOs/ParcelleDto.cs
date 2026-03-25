@@ -10,8 +10,8 @@ namespace AgricultureApp.Models.DTOs
         public int AgriculteurId { get; set; }
         public decimal Surface { get; set; }
         public string Couleur { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
+        public decimal Latitude { get; set; }
+        public decimal Longitude { get; set; }
         public string Gouvernorat { get; set; }
         public string Delegation { get; set; }
         public string Secteur { get; set; }

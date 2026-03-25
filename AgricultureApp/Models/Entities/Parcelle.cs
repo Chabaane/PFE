@@ -76,6 +76,7 @@ namespace AgricultureApp.Models.Entities
     }
 
     // DTO pour le dessin de parcelles
+    // Models/Parcelle.cs - Modifiez le DTO DessinParcelleDto
     public class DessinParcelleDto
     {
         public string? Nom { get; set; }
@@ -90,7 +91,16 @@ namespace AgricultureApp.Models.Entities
         public string? Culture { get; set; }
         public DateTime? DatePlantation { get; set; }
         public DateTime? DateRecolte { get; set; }
-        public string? Geometrie { get; set; } // GeoJSON
+        public string? Geometrie { get; set; }
+        public int? FermeId { get; set; }
+
+        
+        public decimal? AltitudeMin { get; set; }
+        public decimal? AltitudeMax { get; set; }
+        public decimal? AltitudeMoyenne { get; set; }
+        public decimal? PenteMoyenne { get; set; }
+        public string? ClassePente { get; set; }
+        public string? Exposition { get; set; }
     }
 
     // DTO pour les coordonnées

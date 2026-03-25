@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FermeService, FermeDetail } from 'src/app/services/api/ferme.service';
+import { FermeService, FermeDetail, ParcelleSimplifiee } from 'src/app/services/api/ferme.service';
 import { ParcelleService, Parcelle } from 'src/app/services/api/parcelle.service';
 
 @Component({
@@ -66,7 +66,46 @@ import { ParcelleService, Parcelle } from 'src/app/services/api/parcelle.service
           </div>
         </div>
       </div>
-
+      <!-- Dans ferme-details.component.ts, ajoutez après les statistiques -->
+      <div class="row mb-4" *ngIf="parcelleSelectionnee">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header bg-info text-white">
+              <i class="fas fa-mountain me-2"></i>
+              Analyse du terrain
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="text-center">
+                    <h6>Altitude min</h6>
+                    <h4 class="text-success">{{parcelleSelectionnee.altitudeMin}} m</h4>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="text-center">
+                    <h6>Altitude max</h6>
+                    <h4 class="text-danger">{{parcelleSelectionnee.altitudeMax}} m</h4>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="text-center">
+                    <h6>Pente moyenne</h6>
+                    <h4 class="text-primary">{{parcelleSelectionnee.penteMoyenne}}%</h4>
+                    <small class="text-muted">{{parcelleSelectionnee.classePente}}</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="text-center">
+                    <h6>Exposition</h6>
+                    <h4 class="text-warning">{{parcelleSelectionnee.exposition}}</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- Description -->
       <div class="row mb-4" *ngIf="ferme?.description">
         <div class="col-12">
@@ -80,64 +119,72 @@ import { ParcelleService, Parcelle } from 'src/app/services/api/parcelle.service
       </div>
 
       <!-- Liste des parcelles de la ferme -->
-      <div class="row">
-        <div class="col-12">
-          <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-              <i class="fas fa-list me-2"></i>
-              Parcelles de la ferme ({{ferme?.parcelles?.length || 0}})
-            </div>
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <i class="fas fa-list me-2"></i>
+        Parcelles de la ferme ({{ferme?.parcelles?.length || 0}})
+      </div>
 
-            <div class="card-body p-0">
-              <div class="list-group list-group-flush" *ngIf="ferme?.parcelles?.length">
-                <div *ngFor="let parcelle of ferme?.parcelles"
-                     class="list-group-item d-flex justify-content-between align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="parcelle-color me-3"
-                         [style.background-color]="parcelle.couleur"
-                         [style.width.px]="8"
-                         [style.height.px]="40">
-                    </div>
-                    <div>
-                      <h6 class="mb-1">{{parcelle.nom}}</h6>
-                      <div class="d-flex gap-3">
-                        <small class="text-muted">
-                          <i class="fas fa-ruler-combined me-1"></i>
-                          {{parcelle.surface}} ha
-                        </small>
-                        <small class="text-muted" *ngIf="parcelle.culture">
-                          <i class="fas fa-seedling me-1"></i>
-                          {{parcelle.culture}}
-                        </small>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <span *ngIf="!parcelle.estSynchronise"
-                          class="badge bg-warning me-2">Hors ligne</span>
-                    <button class="btn btn-sm btn-outline-danger"
-                            (click)="retirerParcelle(parcelle.id)"
-                            title="Retirer de la ferme">
-                      <i class="fas fa-unlink"></i>
-                    </button>
-                  </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush" *ngIf="ferme?.parcelles?.length">
+          <div *ngFor="let parcelle of ferme?.parcelles"
+               class="list-group-item d-flex justify-content-between align-items-center"
+               [class.active]="parcelleSelectionnee?.id === parcelle.id"
+               (click)="selectionnerParcelle(parcelle)"
+               style="cursor: pointer;">
+            <div class="d-flex align-items-center">
+              <div class="parcelle-color me-3"
+                   [style.background-color]="parcelle.couleur"
+                   [style.width.px]="8"
+                   [style.height.px]="40">
+              </div>
+              <div>
+                <h6 class="mb-1">{{parcelle.nom}}</h6>
+                <div class="d-flex gap-3">
+                  <small class="text-muted">
+                    <i class="fas fa-ruler-combined me-1"></i>
+                    {{parcelle.surface}} ha
+                  </small>
+                  <small class="text-muted" *ngIf="parcelle.culture">
+                    <i class="fas fa-seedling me-1"></i>
+                    {{parcelle.culture}}
+                  </small>
+                  <!-- Vérifiez l'existence de penteMoyenne avant de l'afficher -->
+                  <small class="text-muted" *ngIf="parcelle.penteMoyenne !== undefined && parcelle.penteMoyenne !== null">
+                    <i class="fas fa-mountain me-1"></i>
+                    Pente: {{parcelle.penteMoyenne}}%
+                  </small>
                 </div>
               </div>
-
-              <div *ngIf="!ferme?.parcelles?.length" class="text-center py-5">
-                <i class="fas fa-map-marked-alt fa-4x text-muted mb-3"></i>
-                <h5 class="text-muted">Aucune parcelle dans cette ferme</h5>
-                <p class="text-muted mb-3">
-                  Commencez par assigner des parcelles à cette ferme
-                </p>
-                <button class="btn btn-primary" (click)="gererAssignation()">
-                  <i class="fas fa-link me-2"></i> Assigner des parcelles
-                </button>
-              </div>
+            </div>
+            <div>
+              <span *ngIf="!parcelle.estSynchronise"
+                    class="badge bg-warning me-2">Hors ligne</span>
+              <button class="btn btn-sm btn-outline-danger"
+                      (click)="retirerParcelle(parcelle.id); $event.stopPropagation()"
+                      title="Retirer de la ferme">
+                <i class="fas fa-unlink"></i>
+              </button>
             </div>
           </div>
         </div>
+
+        <div *ngIf="!ferme?.parcelles?.length" class="text-center py-5">
+          <i class="fas fa-map-marked-alt fa-4x text-muted mb-3"></i>
+          <h5 class="text-muted">Aucune parcelle dans cette ferme</h5>
+          <p class="text-muted mb-3">
+            Commencez par assigner des parcelles à cette ferme
+          </p>
+          <button class="btn btn-primary" (click)="gererAssignation()">
+            <i class="fas fa-link me-2"></i> Assigner des parcelles
+          </button>
+        </div>
       </div>
+    </div>
+  </div>
+</div>
     </div>
 
     <!-- Modal d'assignation des parcelles -->
@@ -235,7 +282,7 @@ export class FermeDetailsComponent implements OnInit {
   toutesParcelles: Parcelle[] = [];
   parcellesEnAssignation: number[] = [];
 
-
+  parcelleSelectionnee: ParcelleSimplifiee | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -251,17 +298,29 @@ export class FermeDetailsComponent implements OnInit {
     });
   }
 
-  chargerDetails(): void {
-    this.fermeService.getFermeWithParcelles(this.fermeId).subscribe({
-      next: (ferme) => {
-        this.ferme = ferme;
-        this.chargerToutesParcelles();
-      },
-      error: (error) => {
-        console.error('Erreur chargement ferme:', error);
-      }
-    });
+  selectionnerParcelle(parcelle: ParcelleSimplifiee): void {
+    if (this.parcelleSelectionnee?.id === parcelle.id) {
+      this.parcelleSelectionnee = null;
+    } else {
+      this.parcelleSelectionnee = parcelle;
+    }
   }
+
+
+
+ // Dans ferme-details.component.ts
+chargerDetails(): void {
+  this.fermeService.getFermeWithParcelles(this.fermeId).subscribe({
+    next: (ferme) => {
+      // Supprimez le bloc de données de test
+      this.ferme = ferme;
+      this.chargerToutesParcelles();
+    },
+    error: (error) => {
+      console.error('Erreur chargement ferme:', error);
+    }
+  });
+}
 
   chargerToutesParcelles(): void {
     // Récupérer toutes les parcelles ou filtrer par agriculteur

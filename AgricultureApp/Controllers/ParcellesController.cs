@@ -31,24 +31,53 @@ namespace AgricultureApp.Controllers
                 {
                     Id = p.Id,
                     Nom = p.Nom,
+                    Description = p.Description,
                     Surface = p.Surface,
                     Culture = p.Culture,
                     Couleur = p.Couleur,
                     AgriculteurId = p.AgriculteurId,
-                    FermeId = p.FermeId
+                    FermeId = p.FermeId,
+                    Latitude = p.Latitude,      
+                    Longitude = p.Longitude,    
+                    Gouvernorat = p.Gouvernorat,
+                    Delegation = p.Delegation,
+                    Secteur = p.Secteur,
+                    Geometrie = p.Geometrie,  
+                    DateCreation = p.DateCreation,
+                    EstSynchronise = p.EstSynchronise
                 })
                 .ToListAsync();
 
             return Ok(parcelles);
         }
         // GET: api/parcelles/agriculteur/{agriculteurId}
+        // GET: api/parcelles/agriculteur/{agriculteurId}
         [HttpGet("agriculteur/{agriculteurId}")]
-        public async Task<ActionResult<IEnumerable<Parcelle>>> GetParcellesByAgriculteur(int agriculteurId)
+        public async Task<ActionResult<IEnumerable<ParcelleDto>>> GetParcellesByAgriculteur(int agriculteurId)
         {
             try
             {
                 var parcelles = await _context.Parcelles
                     .Where(p => p.AgriculteurId == agriculteurId)
+                    .Select(p => new ParcelleDto
+                    {
+                        Id = p.Id,
+                        Nom = p.Nom,
+                        Description = p.Description,
+                        Surface = p.Surface,
+                        Culture = p.Culture,
+                        Couleur = p.Couleur,
+                        AgriculteurId = p.AgriculteurId,
+                        FermeId = p.FermeId,
+                        Latitude = (decimal)p.Latitude,
+                        Longitude = (decimal)p.Longitude,
+                        Gouvernorat = p.Gouvernorat,
+                        Delegation = p.Delegation,
+                        Secteur = p.Secteur,
+                        Geometrie = p.Geometrie,
+                        DateCreation = p.DateCreation,
+                        EstSynchronise = p.EstSynchronise
+                    })
                     .OrderByDescending(p => p.DateCreation)
                     .ToListAsync();
 
@@ -113,7 +142,14 @@ namespace AgricultureApp.Controllers
                     Geometrie = dto.Geometrie,
                     DateCreation = DateTime.UtcNow,
                     EstSynchronise = true,
-                    DerniereSynchronisation = DateTime.UtcNow
+                    DerniereSynchronisation = DateTime.UtcNow,
+                    AltitudeMin = dto.AltitudeMin,
+                    AltitudeMax = dto.AltitudeMax,
+                    AltitudeMoyenne = dto.AltitudeMoyenne,
+                    PenteMoyenne = dto.PenteMoyenne,
+                    ClassePente = dto.ClassePente,
+                    Exposition = dto.Exposition,
+                    FermeId = dto.FermeId
                 };
 
                 _context.Parcelles.Add(parcelle);

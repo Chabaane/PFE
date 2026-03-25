@@ -33,6 +33,12 @@ namespace AgricultureApp.Models.DTOs
         public string Culture { get; set; }
         public string Couleur { get; set; }
         public bool EstSynchronise { get; set; }
+        public decimal? AltitudeMin { get; set; }
+        public decimal? AltitudeMax { get; set; }
+        public decimal? AltitudeMoyenne { get; set; }
+        public decimal? PenteMoyenne { get; set; }
+        public string ClassePente { get; set; }
+        public string Exposition { get; set; }
     }
 
     public class CreateFermeDto

@@ -542,8 +542,20 @@ export class CreerFermeCarteComponent implements OnInit, OnDestroy {
     this.modalAjoutVisible = true;
   }
 
-  ajouterParcelle(): void {
+  async ajouterParcelle(): Promise<void> {
     if (!this.fermeCreee) return;
+
+    // Analyser le terrain du polygone
+    const coordinates = this.nouveauPolygone.layer.getLatLngs()[0];
+    const analyse = await this.terrainAnalysis.analyserTerrain(coordinates);
+
+      console.log('=== DONNÉES D\'ANALYSE À ENVOYER ===');
+      console.log('analyse complet:', analyse);
+      console.log('altitudeMin:', analyse.altitudeMin);
+      console.log('altitudeMax:', analyse.altitudeMax);
+      console.log('penteMoyenne:', analyse.penteMoyenne);
+      console.log('classePente:', analyse.classePente);
+      console.log('exposition:', analyse.exposition);
 
     const parcelleData = {
       nom: this.nouvelleParcelle.nom,
@@ -556,13 +568,18 @@ export class CreerFermeCarteComponent implements OnInit, OnDestroy {
       longitude: this.nouveauPolygone.center.lng,
       geometrie: this.nouveauPolygone.geometrie,
       gouvernorat: this.fermeEnCreation?.gouvernorat,
-      delegation: this.fermeEnCreation?.delegation
+      delegation: this.fermeEnCreation?.delegation,
+
     };
 
     this.parcelleService.createParcelle(this.fermeCreee.agriculteurId, parcelleData).subscribe({
       next: (parcelle) => {
         this.parcellesFerme.push(parcelle);
         this.modalAjoutVisible = false;
+
+        // Afficher les informations de terrain
+        this.afficherInfoTerrain(analyse);
+
 
         // Colorer le polygone avec la couleur de la parcelle
         this.nouveauPolygone.layer.setStyle({ color: parcelle.couleur });
@@ -573,7 +590,32 @@ export class CreerFermeCarteComponent implements OnInit, OnDestroy {
       }
     });
   }
+    private afficherInfoTerrain(analyse: any): void {
+    console.log('=== Analyse du terrain ===');
+    console.log(`Altitude min: ${analyse.altitudeMin.toFixed(1)} m`);
+    console.log(`Altitude max: ${analyse.altitudeMax.toFixed(1)} m`);
+    console.log(`Altitude moyenne: ${analyse.altitudeMoyenne.toFixed(1)} m`);
+    console.log(`Pente moyenne: ${analyse.penteMoyenne.toFixed(1)}%`);
+    console.log(`Classe de pente: ${analyse.classePente}`);
+    console.log(`Exposition: ${analyse.exposition}`);
+  }
 
+  private colorerParAltitude(parcelle: any, analyse: any): void {
+    // Colorer en fonction de l'altitude (vert = bas, rouge = haut)
+    const altitudeRatio = (analyse.altitudeMoyenne - analyse.altitudeMin) /
+                          (analyse.altitudeMax - analyse.altitudeMin);
+
+    // Dégradé de vert (bas) à rouge (haut)
+    const red = Math.floor(altitudeRatio * 255);
+    const green = Math.floor((1 - altitudeRatio) * 255);
+    const color = `rgb(${red}, ${green}, 0)`;
+
+    this.nouveauPolygone.layer.setStyle({
+      color: color,
+      fillColor: color,
+      fillOpacity: 0.5
+    });
+  }
   private rechercherParcelleProche(latlng: L.LatLng): void {
     // Rechercher si une parcelle existe déjà à cet emplacement
     // À implémenter selon votre logique métier

@@ -26,6 +26,12 @@ export interface Parcelle {
   dateCreation: Date;
   dateModification?: Date;
   estSynchronise: boolean;
+  altitudeMin?: number;
+  altitudeMax?: number;
+  altitudeMoyenne?: number;
+  penteMoyenne?: number;
+  classePente?: string;
+  exposition?: string;
 }
 
 export interface DessinParcelleDto {

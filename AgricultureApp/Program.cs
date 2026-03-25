@@ -69,6 +69,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Services d'authentification
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+
+// Program.cs - Ajoutez ces lignes
+builder.Services.AddHttpClient<IElevationService, ElevationService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // Configuration JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "VotreCleSecreteSuperLonguePourLaSecurite123456789";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AgricultureApp";

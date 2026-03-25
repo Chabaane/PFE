@@ -24,12 +24,19 @@ export interface FermeDetail extends Ferme {
 }
 
 export interface ParcelleSimplifiee {
+  geometrie: any;
   id: number;
   nom: string;
   surface: number;
   culture?: string;
   couleur: string;
   estSynchronise: boolean;
+  altitudeMin?: number;
+  altitudeMax?: number;
+  altitudeMoyenne?: number;
+  penteMoyenne?: number;
+  classePente?: string;
+  exposition?: string;
 }
 
 @Injectable({

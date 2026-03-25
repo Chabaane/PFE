@@ -101,7 +101,13 @@ namespace AgricultureApp.Services
                     Surface = p.Surface,
                     Culture = p.Culture,
                     Couleur = p.Couleur,
-                    EstSynchronise = p.EstSynchronise
+                    EstSynchronise = p.EstSynchronise,
+                    AltitudeMin = p.AltitudeMin,
+                    AltitudeMax = p.AltitudeMax,
+                    AltitudeMoyenne = p.AltitudeMoyenne,
+                    PenteMoyenne = p.PenteMoyenne,
+                    ClassePente = p.ClassePente,
+                    Exposition = p.Exposition
                 }).ToList()
             };
         }
