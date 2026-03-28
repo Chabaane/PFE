@@ -9,6 +9,8 @@ import { FermeService, FermeDetail } from '../../services/api/ferme.service';
 import { ParcelleService, Parcelle } from '../../services/api/parcelle.service';
 import { firstValueFrom } from 'rxjs';
 
+
+
 @Component({
   selector: 'app-vue-satellite',
   standalone: true,

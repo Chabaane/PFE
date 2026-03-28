@@ -1,1 +1,17 @@
-<p>dessin-parcelle works!</p>
+<div class="map-container">
+  <div id="map"></div>
+
+  <div class="layer-control">
+    <h6>Cartes</h6>
+
+    <label>
+      <input type="radio" name="layer" checked (change)="setLayer('default')">
+      Parcelles
+    </label>
+
+    <label>
+      <input type="radio" name="layer" (change)="setLayer('altitude')">
+      Carte d'altitude
+    </label>
+  </div>
+</div>

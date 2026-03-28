@@ -36,6 +36,11 @@
                 "glob": "**/*",
                 "input": "node_modules/leaflet/dist/images",
                 "output": "/assets/leaflet/images"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/three/examples/jsm",
+                "output": "/assets/three"
               }
             ],
             "styles": [

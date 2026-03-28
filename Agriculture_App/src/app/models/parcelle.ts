@@ -3,8 +3,8 @@ import { Point } from './point';
 export interface Parcelle {
   idParcelle: number;
   nom: string;
-  contourJson: string;
-  contour?: Point[];
+  geometrie: string;  // ← Changement clé : 'geometrie' au lieu de 'contourJson'
+  surface: number;    // ← Note: c'est 'Surface' dans le backend
   superficie?: number;
   altitudeMoyenne?: number;
   penteMoyenne?: number;

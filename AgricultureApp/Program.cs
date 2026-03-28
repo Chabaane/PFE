@@ -7,9 +7,14 @@ using System.Text;
 using AgricultureApp.Data;
 using AgricultureApp.Models.Entities;
 using AgricultureApp.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Program.cs
+builder.Services.AddSingleton<ElevationCacheService>();
 
 // Configuration du logging
 builder.Logging.ClearProviders();
