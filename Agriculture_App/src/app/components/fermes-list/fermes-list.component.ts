@@ -344,15 +344,41 @@ import { FermeService, Ferme } from 'src/app/services/api/ferme.service';
     }
 
     .ferme-body {
-      padding: 1rem;
-    }
+  position: relative;
+  padding: 1rem;
+  color: white;
+  background-image: url('/assets/images/I2.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Overlay sombre */
+.ferme-body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* ajuste 0.3 → 0.7 selon lisibilité */
+  z-index: 0;
+}
+
+/* Mettre le contenu au-dessus de l’overlay */
+.ferme-body > * {
+  position: relative;
+  z-index: 1;
+}
+
+
 
     .ferme-info {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       margin-bottom: 0.5rem;
-      color: #495057;
+      color: #f1f1f1;
     }
 
     .ferme-info i {
@@ -382,16 +408,15 @@ import { FermeService, Ferme } from 'src/app/services/api/ferme.service';
 
     .stat-label {
       font-size: 0.75rem;
-      color: #6c757d;
+      color: #f1f1f1;
       text-transform: uppercase;
     }
 
     .ferme-description {
       font-size: 0.9rem;
-      color: #6c757d;
+      color: #f1f1f1;
       margin: 0.5rem 0;
       padding: 0.5rem;
-      background: #f8f9fa;
       border-radius: 4px;
       font-style: italic;
     }
