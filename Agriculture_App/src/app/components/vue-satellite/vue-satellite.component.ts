@@ -4,12 +4,26 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import * as L from 'leaflet';
-import { TerrainAnalysisService } from '../../services/terrain-analysis.service';
 import { FermeService, FermeDetail } from '../../services/api/ferme.service';
 import { ParcelleService, Parcelle } from '../../services/api/parcelle.service';
 import { firstValueFrom } from 'rxjs';
 
+// ─── Interfaces ────────────────────────────────────────────────────────────────
 
+interface AltitudePoint {
+  lat: number;
+  lng: number;
+  altitude: number;
+}
+
+interface AltitudeStats {
+  min: number;
+  max: number;
+  mean: number;
+  denivele: number;
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-vue-satellite',
@@ -19,6 +33,7 @@ import { firstValueFrom } from 'rxjs';
     <div class="container-fluid mt-4">
       <div class="row">
         <div class="col-12">
+
           <!-- Barre d'outils -->
           <div class="card shadow-sm mb-3">
             <div class="card-body">
@@ -58,8 +73,26 @@ import { firstValueFrom } from 'rxjs';
             </div>
           </div>
 
-          <!-- Légende -->
-          <div class="legend-card" *ngIf="altitudeMin !== undefined && altitudeMax !== undefined">
+          <!-- Barre de progression -->
+          <div class="card shadow-sm mb-3" *ngIf="altitudeLoading">
+            <div class="card-body py-2">
+              <div class="d-flex align-items-center gap-3">
+                <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+                <div class="flex-grow-1">
+                  <div class="progress" style="height: 6px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning"
+                         [style.width]="progressPct + '%'"></div>
+                  </div>
+                </div>
+                <small class="text-muted text-nowrap">
+                  {{progressLabel}}
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Légende altitude globale -->
+          <div class="legend-card" *ngIf="altitudeMin !== undefined && altitudeMax !== undefined && !altitudeLoading">
             <div class="card shadow-sm">
               <div class="card-body p-2">
                 <div class="d-flex align-items-center justify-content-between flex-wrap">
@@ -68,19 +101,19 @@ import { firstValueFrom } from 'rxjs';
                     <small class="text-muted me-2">Altitude:</small>
                     <div class="gradient-bar me-2"></div>
                     <small class="text-muted">
-                      {{altitudeMin.toFixed(0)}}m
+                      {{altitudeMin | number:'1.0-0'}}m
                       <i class="fas fa-arrow-right mx-1"></i>
-                      {{altitudeMax.toFixed(0)}}m
+                      {{altitudeMax | number:'1.0-0'}}m
                     </small>
                   </div>
-                  <div class="mt-2 mt-md-0">
-                    <small class="text-muted me-3">
-                      <i class="fas fa-chart-line text-warning"></i>
-                      Moy: {{altitudeMoyenne?.toFixed(0)}}m
+                  <div class="mt-2 mt-md-0 d-flex gap-3">
+                    <small class="text-muted">
+                      <i class="fas fa-chart-line text-warning me-1"></i>
+                      Moy: {{altitudeMoyenne | number:'1.0-0'}}m
                     </small>
                     <small class="text-muted">
-                      <i class="fas fa-mountain-sun text-info"></i>
-                      Pente: {{penteMoyenne?.toFixed(1)}}%
+                      <i class="fas fa-ruler-vertical text-info me-1"></i>
+                      Dénivelé: {{(altitudeMax - altitudeMin) | number:'1.0-0'}}m
                     </small>
                   </div>
                 </div>
@@ -90,8 +123,34 @@ import { firstValueFrom } from 'rxjs';
 
           <!-- Carte -->
           <div class="card shadow-sm">
-            <div class="card-body p-0">
+            <div class="card-body p-0 position-relative">
               <div id="satellite-map" style="height: 600px; width: 100%;"></div>
+
+              <!-- Légende flottante (détail parcelle cliquée) -->
+              <div class="altitude-legend" *ngIf="legendeParcelle">
+                <div class="legend-title">
+                  <i class="fas fa-mountain me-1"></i>
+                  {{legendeParcelle.nom}}
+                </div>
+                <div class="legend-body">
+                  <div class="legend-gradient"></div>
+                  <div class="legend-labels">
+                    <span class="legend-max">{{legendeParcelle.stats.max}} m</span>
+                    <span class="legend-mid">{{((legendeParcelle.stats.max + legendeParcelle.stats.min) / 2) | number:'1.0-0'}} m</span>
+                    <span class="legend-min">{{legendeParcelle.stats.min}} m</span>
+                  </div>
+                </div>
+                <div class="legend-stats">
+                  <div><i class="fas fa-arrow-up text-danger me-1"></i>Max: <strong>{{legendeParcelle.stats.max}} m</strong></div>
+                  <div><i class="fas fa-arrow-down text-success me-1"></i>Min: <strong>{{legendeParcelle.stats.min}} m</strong></div>
+                  <div><i class="fas fa-ruler-vertical text-warning me-1"></i>Dénivelé: <strong>{{legendeParcelle.stats.denivele}} m</strong></div>
+                  <div><i class="fas fa-chart-line text-info me-1"></i>Moy: <strong>{{legendeParcelle.stats.mean | number:'1.0-0'}} m</strong></div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary mt-2 w-100"
+                        (click)="legendeParcelle = null">
+                  <i class="fas fa-times me-1"></i>Fermer
+                </button>
+              </div>
             </div>
           </div>
 
@@ -102,12 +161,12 @@ import { firstValueFrom } from 'rxjs';
                 <div class="col-md-6">
                   <h6><i class="fas fa-info-circle me-2 text-info"></i>Information du point</h6>
                   <p class="mb-1">
-                    <strong>Coordonnées:</strong> {{infoPoint.lat.toFixed(6)}}, {{infoPoint.lng.toFixed(6)}}
+                    <strong>Coordonnées:</strong> {{infoPoint.lat | number:'1.6-6'}}, {{infoPoint.lng | number:'1.6-6'}}
                   </p>
                   <p class="mb-0">
                     <strong>Altitude:</strong>
                     <span [style.color]="getColorByAltitude(infoPoint.altitude)">
-                      {{infoPoint.altitude.toFixed(1)}} m
+                      {{infoPoint.altitude | number:'1.1-1'}} m
                     </span>
                   </p>
                 </div>
@@ -126,6 +185,7 @@ import { firstValueFrom } from 'rxjs';
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
@@ -136,61 +196,131 @@ import { firstValueFrom } from 'rxjs';
       background-color: #f0f0f0;
     }
 
+    /* ── Légende compacte en haut ── */
     .legend-card {
       position: relative;
       margin-bottom: 1rem;
       z-index: 1000;
     }
-
     .gradient-bar {
       width: 150px;
       height: 20px;
       background: linear-gradient(to right,
-        #4CAF50, #FFC107, #FF5722, #F44336);
+        #1a7a1a, #4CAF50, #a8d95a, #ffe066, #ff9800, #e53935, #821408);
       border-radius: 10px;
       margin: 0 10px;
     }
 
+    /* ── Légende flottante sur la carte ── */
+    .altitude-legend {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.97);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      min-width: 175px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    .legend-title {
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: #333;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 155px;
+    }
+    .legend-body {
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .legend-gradient {
+      width: 22px;
+      min-height: 120px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      background: linear-gradient(
+        to top,
+        #1a7a1a,
+        #4CAF50,
+        #a8d95a,
+        #ffe066,
+        #ff9800,
+        #e53935,
+        #821408
+      );
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+    .legend-labels {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #444;
+    }
+    .legend-max { color: #c62828; }
+    .legend-mid { color: #e65100; }
+    .legend-min { color: #1b5e20; }
+    .legend-stats {
+      padding-top: 8px;
+      border-top: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.78rem;
+      color: #555;
+    }
+
+    /* ── Boutons ── */
     .btn-group .btn.active {
       background-color: #007bff;
       color: white;
     }
 
+    /* ── Popup info ── */
     .info-popup {
       padding: 8px;
       min-width: 220px;
     }
-
     .info-popup h6 {
       margin-bottom: 8px;
       color: #2c3e50;
       font-weight: bold;
     }
+    .info-popup hr { margin: 8px 0; }
 
-    .info-popup hr {
-      margin: 8px 0;
-    }
-
+    /* ── Responsive ── */
     @media (max-width: 768px) {
-      .btn-group {
-        margin-top: 10px;
-        width: 100%;
-      }
-
-      .gradient-bar {
-        width: 100px;
-      }
+      .btn-group { margin-top: 10px; width: 100%; }
+      .gradient-bar { width: 100px; }
+      .altitude-legend { right: 5px; bottom: 10px; }
     }
   `]
 })
 export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
-  private map!: L.Map;
-  private currentOverlay: L.GeoJSON | null = null;
-  private altitudeMarkers: L.CircleMarker[] = [];
-  private isMapReady: boolean = false;
 
+  // ── Carte ──────────────────────────────────────────────────────────────────
+  private map!: L.Map;
+  private isMapReady = false;
+
+  /** Couches contours GeoJSON des parcelles/fermes */
+  private contoursLayer: L.LayerGroup = L.layerGroup();
+
+  /** Couches heatmap IDW, indexées par id de parcelle */
+  private heatmapLayers: Map<string, L.Layer> = new Map();
+
+  // ── État ───────────────────────────────────────────────────────────────────
   mode: 'fermes' | 'parcelles' = 'parcelles';
-  typeVue: string = 'satellite';
+  typeVue = 'satellite';
 
   fermes: FermeDetail[] = [];
   parcelles: Parcelle[] = [];
@@ -198,18 +328,27 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
   altitudeMin: number | undefined;
   altitudeMax: number | undefined;
   altitudeMoyenne: number | undefined;
-  penteMoyenne: number | undefined;
 
-  infoPoint: { lat: number, lng: number, altitude: number, type?: string, entite?: any } | null = null;
+  infoPoint: { lat: number; lng: number; altitude: number; type?: string; entite?: any } | null = null;
 
+  /** Légende flottante pour la parcelle survolée/cliquée */
+  legendeParcelle: { nom: string; stats: AltitudeStats } | null = null;
+
+  // ── Progression ────────────────────────────────────────────────────────────
+  altitudeLoading = false;
+  progressPct = 0;
+  progressLabel = '';
+
+  // ── Cache altitude ─────────────────────────────────────────────────────────
   private altitudeCache: Map<string, number> = new Map();
 
   constructor(
     private route: ActivatedRoute,
-    private terrainAnalysis: TerrainAnalysisService,
     private fermeService: FermeService,
     private parcelleService: ParcelleService
   ) {}
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     this.chargerDonnees();
@@ -223,16 +362,17 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.nettoyerMarqueurs();
-    if (this.map) {
-      this.map.remove();
-    }
+    if (this.map) this.map.remove();
   }
+
+  // ── Init carte ─────────────────────────────────────────────────────────────
 
   private initMap(): void {
     this.map = L.map('satellite-map').setView([34.0, 9.0], 7);
     this.changerVue();
     L.control.scale({ metric: true, imperial: false }).addTo(this.map);
+
+    this.contoursLayer.addTo(this.map);
 
     this.map.on('click', async (e: L.LeafletMouseEvent) => {
       await this.getPointInfo(e.latlng.lat, e.latlng.lng);
@@ -242,41 +382,34 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
   changerVue(): void {
     if (!this.map) return;
 
-    this.map.eachLayer((layer) => {
-      if (layer instanceof L.TileLayer) {
-        this.map.removeLayer(layer);
-      }
+    this.map.eachLayer(layer => {
+      if (layer instanceof L.TileLayer) this.map.removeLayer(layer);
     });
 
     let tileLayer: L.TileLayer;
-
     switch (this.typeVue) {
       case 'satellite':
-        tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          attribution: 'Esri',
-          maxZoom: 19
-        });
+        tileLayer = L.tileLayer(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          { attribution: 'Esri', maxZoom: 19 }
+        );
         break;
       case 'terrain':
-        tileLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-          attribution: 'OpenTopoMap',
-          maxZoom: 17
-        });
+        tileLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+          { attribution: 'OpenTopoMap', maxZoom: 17 });
         break;
       case 'relief':
-        tileLayer = L.tileLayer('https://{s}.tile.opentopomap.org/relief/{z}/{x}/{y}.png', {
-          attribution: 'OpenTopoMap Relief',
-          maxZoom: 17
-        });
+        tileLayer = L.tileLayer('https://{s}.tile.opentopomap.org/relief/{z}/{x}/{y}.png',
+          { attribution: 'OpenTopoMap Relief', maxZoom: 17 });
         break;
       default:
-        tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: 'OpenStreetMap'
-        });
+        tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          { attribution: 'OpenStreetMap' });
     }
-
     tileLayer.addTo(this.map);
   }
+
+  // ── Chargement données ─────────────────────────────────────────────────────
 
   async chargerDonnees(): Promise<void> {
     if (!this.isMapReady) {
@@ -292,373 +425,452 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
             for (const ferme of fermes) {
               try {
                 const details = await firstValueFrom(this.fermeService.getFermeWithParcelles(ferme.id));
-                if (details && details.parcelles && details.parcelles.length > 0) {
-                  this.fermes.push(details);
-                }
-              } catch (error) {
-                console.error(`Erreur chargement ferme ${ferme.id}:`, error);
+                if (details?.parcelles?.length) this.fermes.push(details);
+              } catch (e) {
+                console.error(`Erreur ferme ${ferme.id}:`, e);
               }
             }
             await this.afficherFermes();
           },
-          error: (error) => {
-            console.error('Erreur chargement fermes:', error);
-          }
+          error: err => console.error('Erreur fermes:', err)
         });
       } else {
         this.parcelleService.getAllParcelles().subscribe({
           next: async (parcelles) => {
-            console.log('📦 Parcelles reçues:', parcelles.length);
-            this.parcelles = parcelles.filter(p => p.geometrie && p.geometrie.length > 0);
-            console.log(`📦 Parcelles avec géométrie: ${this.parcelles.length}`);
-            await this.afficherParcellesAvecTest();
+            this.parcelles = parcelles.filter(p => p.geometrie?.length);
+            await this.afficherParcelles();
           },
-          error: async (error) => {
-            console.error('Erreur chargement parcelles:', error);
-            await this.afficherParcellesAvecTest();
+          error: async err => {
+            console.error('Erreur parcelles:', err);
+            await this.afficherParcelles();
           }
         });
       }
-    } catch (error) {
-      console.error('Erreur chargement données:', error);
+    } catch (e) {
+      console.error('Erreur chargement:', e);
     }
   }
+
+  // ── Affichage Fermes ───────────────────────────────────────────────────────
 
   private async afficherFermes(): Promise<void> {
     this.nettoyerAffichage();
 
-    const geojsonFeatures: any[] = [];
-    let allAltitudes: number[] = [];
+    const items: Array<{ nom: string; geometrie: string; label: string }> = [];
 
     for (const ferme of this.fermes) {
-      if (ferme.parcelles && ferme.parcelles.length > 0) {
-        for (const parcelle of ferme.parcelles) {
-          if (parcelle.geometrie) {
-            try {
-              const geojson = JSON.parse(parcelle.geometrie);
-              if (geojson.geometry && geojson.geometry.coordinates) {
-                const points = this.extrairePointsPolygone(geojson.geometry.coordinates);
-                if (points.length >= 3) {
-                  const analyse = await this.terrainAnalysis.analyserTerrain(points);
-                  allAltitudes.push(analyse.altitudeMin, analyse.altitudeMax);
-
-                  geojsonFeatures.push({
-                    type: 'Feature',
-                    properties: {
-                      id: ferme.id,
-                      nom: ferme.nom,
-                      parcelleNom: parcelle.nom,
-                      type: 'ferme',
-                      couleur: ferme.couleur,
-                      altitudeMin: analyse.altitudeMin,
-                      altitudeMax: analyse.altitudeMax,
-                      altitudeMoyenne: analyse.altitudeMoyenne,
-                      penteMoyenne: analyse.penteMoyenne,
-                      classePente: analyse.classePente,
-                      points: points,
-                      altitudes: analyse.altitudes
-                    },
-                    geometry: geojson.geometry
-                  });
-                }
-              }
-            } catch (e) {
-              console.error('Erreur parsing GeoJSON:', e);
-            }
-          }
+      for (const parcelle of (ferme.parcelles || [])) {
+        if (parcelle.geometrie) {
+          items.push({
+            nom: `${ferme.nom} – ${parcelle.nom}`,
+            geometrie: parcelle.geometrie,
+            label: ferme.nom
+          });
         }
       }
     }
 
-    this.afficherGeoJSON(geojsonFeatures, allAltitudes);
+    await this.traiterEtAfficher(items);
   }
+
+  // ── Affichage Parcelles ────────────────────────────────────────────────────
 
   private async afficherParcelles(): Promise<void> {
     this.nettoyerAffichage();
 
-    const geojsonFeatures: any[] = [];
-    let allAltitudes: number[] = [];
+    const items = this.parcelles.map(p => ({
+      nom: p.nom,
+      geometrie: p.geometrie!,
+      label: p.nom
+    }));
 
-    for (const parcelle of this.parcelles) {
-      if (parcelle.geometrie) {
-        try {
-          const geojson = JSON.parse(parcelle.geometrie);
-          if (geojson.geometry && geojson.geometry.coordinates) {
-            const points = this.extrairePointsPolygone(geojson.geometry.coordinates);
-            if (points.length >= 3) {
-              const analyse = await this.terrainAnalysis.analyserTerrain(points);
-              allAltitudes.push(analyse.altitudeMin, analyse.altitudeMax);
-
-              geojsonFeatures.push({
-                type: 'Feature',
-                properties: {
-                  id: parcelle.id,
-                  nom: parcelle.nom,
-                  type: 'parcelle',
-                  culture: parcelle.culture,
-                  surface: parcelle.surface,
-                  couleur: parcelle.couleur,
-                  altitudeMin: analyse.altitudeMin,
-                  altitudeMax: analyse.altitudeMax,
-                  altitudeMoyenne: analyse.altitudeMoyenne,
-                  penteMoyenne: analyse.penteMoyenne,
-                  classePente: analyse.classePente,
-                  points: points,
-                  altitudes: analyse.altitudes
-                },
-                geometry: geojson.geometry
-              });
-            }
-          }
-        } catch (e) {
-          console.error('Erreur parsing GeoJSON:', e);
-        }
-      }
-    }
-
-    console.log(`📊 Features créées: ${geojsonFeatures.length}`);
-    this.afficherGeoJSON(geojsonFeatures, allAltitudes);
+    await this.traiterEtAfficher(items);
   }
 
-  private async afficherParcellesAvecTest(): Promise<void> {
-    await this.afficherParcelles();
+  // ── Pipeline principal : grille → altitudes API → heatmap ─────────────────
 
-    // Parcelle de test (Tunis)
-    const pointsTest = [
-      { lat: 36.8065, lng: 10.1715 },
-      { lat: 36.8165, lng: 10.1715 },
-      { lat: 36.8165, lng: 10.1915 },
-      { lat: 36.8065, lng: 10.1915 },
-      { lat: 36.8065, lng: 10.1715 }
-    ];
+  private async traiterEtAfficher(
+    items: Array<{ nom: string; geometrie: string; label: string }>
+  ): Promise<void> {
+    if (!items.length) return;
 
-    const analyse = await this.terrainAnalysis.analyserTerrain(pointsTest);
+    this.altitudeLoading = true;
+    this.progressPct = 0;
+    this.progressLabel = 'Initialisation…';
 
-    if (analyse.altitudeMin !== undefined && analyse.altitudeMax !== undefined) {
-      if (this.altitudeMin === undefined || analyse.altitudeMin < this.altitudeMin) {
-        this.altitudeMin = analyse.altitudeMin;
-      }
-      if (this.altitudeMax === undefined || analyse.altitudeMax > this.altitudeMax) {
-        this.altitudeMax = analyse.altitudeMax;
-      }
-    }
+    const allAltMin: number[] = [];
+    const allAltMax: number[] = [];
+    const allAltMoy: number[] = [];
 
-    const testLayer = L.polygon(pointsTest.map(p => [p.lat, p.lng]), {
-      color: '#FF9800',
-      weight: 3,
-      fillColor: '#FF9800',
-      fillOpacity: 0.5
-    }).bindPopup(`
-      <div class="info-popup">
-        <h6>🧪 Parcelle Test - Tunis</h6>
-        <p><i class="fas fa-flask"></i> Parcelle de test<br>
-        <i class="fas fa-ruler"></i> 5 ha</p>
-        <hr>
-        <p><strong>Altitude:</strong><br>
-        Min: ${analyse.altitudeMin?.toFixed(1)}m<br>
-        Max: ${analyse.altitudeMax?.toFixed(1)}m<br>
-        Moy: ${analyse.altitudeMoyenne?.toFixed(1)}m</p>
-        <p><strong>Pente:</strong> ${analyse.penteMoyenne?.toFixed(1)}%<br>
-        <strong>Classe:</strong> ${analyse.classePente}</p>
-      </div>
-    `);
+    const bounds: L.LatLngBounds[] = [];
 
-    testLayer.addTo(this.map);
-    console.log('✅ Parcelle de test ajoutée');
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      this.progressPct = Math.round(((i + 1) / items.length) * 100);
+      this.progressLabel = `${item.nom} (${i + 1}/${items.length})`;
 
-    pointsTest.forEach((point, idx) => {
-      const altitude = analyse.altitudes[idx];
-      const marker = L.circleMarker([point.lat, point.lng], {
-        radius: 5,
-        color: '#FF9800',
-        fillColor: '#FF9800',
-        fillOpacity: 0.8,
-        weight: 2
-      }).bindTooltip(`${altitude?.toFixed(1)}m`);
-      marker.addTo(this.map);
-      this.altitudeMarkers.push(marker);
-    });
-  }
+      try {
+        const geoJson = JSON.parse(item.geometrie);
+        const polyCoords = this.extraireCoordonnees(geoJson);   // [lng, lat][]
+        if (polyCoords.length < 3) continue;
 
-  private afficherGeoJSON(features: any[], allAltitudes: number[]): void {
-    if (features.length === 0) {
-      console.warn('⚠️ Aucune feature à afficher');
-      return;
-    }
+        // 1. Grille de points intérieurs
+        const grille = this.genererGrille(polyCoords, 8);
 
-    if (allAltitudes.length > 0) {
-      this.altitudeMin = Math.min(...allAltitudes);
-      this.altitudeMax = Math.max(...allAltitudes);
-      this.altitudeMoyenne = allAltitudes.reduce((a, b) => a + b, 0) / allAltitudes.length;
-      console.log(`📈 Altitudes: min=${this.altitudeMin}, max=${this.altitudeMax}`);
-    }
+        // 2. Appel API altitude (batch)
+        const pointsAvecAlt = await this.recupererAltitudes(grille);
 
-    const geojsonCollection = {
-      type: 'FeatureCollection',
-      features: features
-    };
+        // 3. Stats
+        const altitudes = pointsAvecAlt.map(p => p.altitude);
+        const min  = Math.round(Math.min(...altitudes));
+        const max  = Math.round(Math.max(...altitudes));
+        const mean = altitudes.reduce((s, a) => s + a, 0) / altitudes.length;
+        const stats: AltitudeStats = { min, max, mean, denivele: max - min };
 
-    this.currentOverlay = L.geoJSON(geojsonCollection as any, {
-      style: (feature: any) => {
-        const props = feature.properties;
-        const altitudeMoyenne = props.altitudeMoyenne || 0;
-        const couleur = this.terrainAnalysis.getColorByAltitude(
-          altitudeMoyenne,
-          this.altitudeMin || 0,
-          this.altitudeMax || 100
+        allAltMin.push(min);
+        allAltMax.push(max);
+        allAltMoy.push(mean);
+
+        // 4. Heatmap canvas IDW
+        const heatLayer = this.creerCoucheHeatmap(pointsAvecAlt, min, max, polyCoords);
+        heatLayer.addTo(this.map);
+        this.heatmapLayers.set(`${i}`, heatLayer);
+
+        // 5. Contour blanc + popup
+        const contour = L.polygon(
+          polyCoords.map(([lng, lat]) => [lat, lng] as [number, number]),
+          { color: '#ffffff', weight: 2, fillOpacity: 0, dashArray: '6,3' }
         );
-        return {
-          color: couleur,
-          weight: 2,
-          fillColor: couleur,
-          fillOpacity: 0.6
-        };
-      },
-      onEachFeature: (feature: any, layer: L.Layer) => {
-        const props = feature.properties;
-        const isFerme = props.type === 'ferme';
 
-        const popupContent = isFerme ? `
+        const popupHtml = `
           <div class="info-popup">
-            <h6>🏡 ${props.nom}</h6>
-            <p><strong>Parcelle:</strong> ${props.parcelleNom}</p>
+            <h6>🌾 ${item.nom}</h6>
             <hr>
-            <p><strong>Altitude:</strong><br>
-            Min: ${props.altitudeMin?.toFixed(1)}m<br>
-            Max: ${props.altitudeMax?.toFixed(1)}m<br>
-            Moy: ${props.altitudeMoyenne?.toFixed(1)}m</p>
-            <p><strong>Pente:</strong> ${props.penteMoyenne?.toFixed(1)}%<br>
-            <strong>Classe:</strong> ${props.classePente}</p>
-          </div>
-        ` : `
-          <div class="info-popup">
-            <h6>🌾 ${props.nom}</h6>
-            <p><i class="fas fa-seedling"></i> ${props.culture || 'Sans culture'}<br>
-            <i class="fas fa-ruler"></i> ${props.surface} ha</p>
-            <hr>
-            <p><strong>Altitude:</strong><br>
-            Min: ${props.altitudeMin?.toFixed(1)}m<br>
-            Max: ${props.altitudeMax?.toFixed(1)}m<br>
-            Moy: ${props.altitudeMoyenne?.toFixed(1)}m</p>
-            <p><strong>Pente:</strong> ${props.penteMoyenne?.toFixed(1)}%<br>
-            <strong>Classe:</strong> ${props.classePente}</p>
+            <p>
+              <i class="fas fa-arrow-up text-danger"></i> Max: <strong>${max} m</strong><br>
+              <i class="fas fa-arrow-down text-success"></i> Min: <strong>${min} m</strong><br>
+              <i class="fas fa-chart-line text-warning"></i> Moy: <strong>${Math.round(mean)} m</strong><br>
+              <i class="fas fa-ruler-vertical text-info"></i> Dénivelé: <strong>${stats.denivele} m</strong>
+            </p>
           </div>
         `;
 
-        layer.bindPopup(popupContent);
+        contour.bindPopup(popupHtml);
+        contour.on('click', () => {
+          this.legendeParcelle = { nom: item.nom, stats };
+        });
+        this.contoursLayer.addLayer(contour);
 
-        if (props.points && props.altitudes && this.map) {
-          props.points.forEach((point: any, idx: number) => {
-            const altitude = props.altitudes[idx];
-            const couleurPoint = this.terrainAnalysis.getColorByAltitude(
-              altitude,
-              this.altitudeMin || 0,
-              this.altitudeMax || 100
-            );
-            const marker = L.circleMarker([point.lat, point.lng], {
-              radius: 4,
-              color: couleurPoint,
-              fillColor: couleurPoint,
-              fillOpacity: 0.9,
-              weight: 2
-            });
-            marker.bindTooltip(`${altitude.toFixed(1)}m`);
-            marker.addTo(this.map);
-            this.altitudeMarkers.push(marker);
-          });
-        }
+        // Recalcul bounds
+        bounds.push(contour.getBounds());
+
+      } catch (e) {
+        console.error(`Erreur parcelle ${item.nom}:`, e);
       }
-    });
-
-    this.currentOverlay.addTo(this.map);
-    console.log('✅ Features ajoutées à la carte');
-
-    const bounds = this.currentOverlay.getBounds();
-    if (bounds.isValid()) {
-      this.map.fitBounds(bounds, { padding: [50, 50] });
     }
+
+    // Stats globales
+    if (allAltMin.length) {
+      this.altitudeMin = Math.min(...allAltMin);
+      this.altitudeMax = Math.max(...allAltMax);
+      this.altitudeMoyenne = allAltMoy.reduce((a, b) => a + b, 0) / allAltMoy.length;
+    }
+
+    // Centrer la carte
+    if (bounds.length) {
+      const totalBounds = bounds.reduce((acc, b) => acc.extend(b));
+      this.map.fitBounds(totalBounds, { padding: [40, 40] });
+    }
+
+    this.altitudeLoading = false;
+    this.progressLabel = '';
   }
 
-  private extrairePointsPolygone(coordinates: any): Array<{lat: number, lng: number}> {
-    const points: Array<{lat: number, lng: number}> = [];
+  // ── Heatmap IDW canvas ─────────────────────────────────────────────────────
 
-    try {
-      let coords = coordinates;
-      if (coords && coords.length > 0) {
-        if (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
-          coords = coords[0];
+  /**
+   * Crée une couche Leaflet ImageOverlay basée sur un canvas avec interpolation
+   * IDW (Inverse Distance Weighting) pixel par pixel + clipping dans le polygone.
+   * Résultat : gradient fluide et continu identique à la capture de référence.
+   */
+  private creerCoucheHeatmap(
+    points: AltitudePoint[],
+    minAlt: number,
+    maxAlt: number,
+    polyCoords: [number, number][]   // [lng, lat]
+  ): L.Layer {
+    // ── 1. Bounding box géographique ──────────────────────────────────────────
+    const lngs = polyCoords.map(c => c[0]);
+    const lats = polyCoords.map(c => c[1]);
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+
+    // ── 2. Paramètres canvas ──────────────────────────────────────────────────
+    const W = 400, H = 400;
+    const POWER = 2;
+    const range = maxAlt - minAlt || 1;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d')!;
+
+    // ── 3. IDW pixel par pixel ────────────────────────────────────────────────
+    const imgData = ctx.createImageData(W, H);
+    const data = imgData.data;
+
+    // Pré-normaliser les points en coordonnées canvas [0..1]
+    const pts = points.map(p => ({
+      nx:  (p.lng - minLng) / (maxLng - minLng),
+      ny:  1 - (p.lat - minLat) / (maxLat - minLat),
+      alt: p.altitude
+    }));
+
+    for (let py = 0; py < H; py++) {
+      for (let px = 0; px < W; px++) {
+        const nx = px / (W - 1);
+        const ny = py / (H - 1);
+
+        // Reconstruire coord géo et tester si dans le polygone
+        const lng = minLng + nx * (maxLng - minLng);
+        const lat = maxLat - ny * (maxLat - minLat);
+        if (!this.pointDansPolygone(lng, lat, polyCoords)) continue;
+
+        // Interpolation IDW
+        let weightSum = 0, valueSum = 0;
+        for (const pt of pts) {
+          const dx = nx - pt.nx, dy = ny - pt.ny;
+          const dist2 = dx * dx + dy * dy;
+          if (dist2 < 1e-10) { valueSum = pt.alt; weightSum = 1; break; }
+          const w = 1 / Math.pow(dist2, POWER / 2);
+          weightSum += w;
+          valueSum  += w * pt.alt;
         }
-        if (Array.isArray(coords) && coords.length > 0 && Array.isArray(coords[0])) {
-          coords.forEach((coord: any) => {
-            if (coord && coord.length >= 2) {
-              points.push({ lng: coord[0], lat: coord[1] });
-            }
-          });
+
+        const altitude = valueSum / weightSum;
+        const ratio    = Math.max(0, Math.min(1, (altitude - minAlt) / range));
+        const [r, g, b] = this.altitudeVerseRGB(ratio);
+
+        const idx = (py * W + px) * 4;
+        data[idx]     = r;
+        data[idx + 1] = g;
+        data[idx + 2] = b;
+        data[idx + 3] = 180;   // opacité ~70%
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+
+    // ── 4. Flou gaussien pour adoucir les transitions ─────────────────────────
+    const blurred = document.createElement('canvas');
+    blurred.width = W; blurred.height = H;
+    const bCtx = blurred.getContext('2d')!;
+    bCtx.filter = 'blur(10px)';
+    bCtx.drawImage(canvas, 0, 0);
+
+    // ── 5. ImageOverlay géo-référencé ─────────────────────────────────────────
+    const dataUrl = blurred.toDataURL('image/png');
+    const bounds: L.LatLngBoundsExpression = [[minLat, minLng], [maxLat, maxLng]];
+
+    return L.imageOverlay(dataUrl, bounds, {
+      opacity: 1,
+      interactive: false,
+      className: 'altitude-overlay'
+    });
+  }
+
+  // ── Grille & point-dans-polygone ───────────────────────────────────────────
+
+  /**
+   * Génère une grille régulière de points à l'intérieur du polygone.
+   * @param polyCoords  [lng, lat][]
+   * @param steps       divisions par axe
+   */
+  private genererGrille(polyCoords: [number, number][], steps = 8): { lat: number; lng: number }[] {
+    const lngs = polyCoords.map(c => c[0]);
+    const lats = polyCoords.map(c => c[1]);
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+
+    const stepLng = (maxLng - minLng) / (steps + 1);
+    const stepLat = (maxLat - minLat) / (steps + 1);
+
+    const points: { lat: number; lng: number }[] = [];
+
+    for (let i = 1; i <= steps; i++) {
+      for (let j = 1; j <= steps; j++) {
+        const lng = minLng + i * stepLng;
+        const lat = minLat + j * stepLat;
+        if (this.pointDansPolygone(lng, lat, polyCoords)) {
+          points.push({ lat, lng });
         }
       }
-    } catch (e) {
-      console.error('Erreur extraction points:', e);
     }
+
+    // Ajouter les sommets du polygone
+    polyCoords.forEach(([lng, lat]) => points.push({ lat, lng }));
 
     return points;
   }
 
-  private async getPointInfo(lat: number, lng: number): Promise<void> {
-    const cacheKey = `${lat},${lng}`;
-    let altitude = this.altitudeCache.get(cacheKey);
+  /** Test point-dans-polygone par ray casting. */
+  private pointDansPolygone(px: number, py: number, poly: [number, number][]): boolean {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i][0], yi = poly[i][1];
+      const xj = poly[j][0], yj = poly[j][1];
+      const intersect = ((yi > py) !== (yj > py)) &&
+                        (px < ((xj - xi) * (py - yi)) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
 
-    if (!altitude) {
+  // ── API Open-Elevation ─────────────────────────────────────────────────────
+
+  /**
+   * Appelle Open-Elevation pour récupérer les altitudes de la liste de points.
+   * Splits en batches de 100 pour respecter les limites de l'API.
+   */
+  /**
+   * Récupère les altitudes via l'API Open-Meteo Elevation.
+   * URL : https://api.open-meteo.com/v1/elevation
+   * Avantages : GET uniquement, CORS autorisé depuis le navigateur, gratuit sans clé.
+   * Limite : 100 points max par requête → on split en batches.
+   */
+  private async recupererAltitudes(points: { lat: number; lng: number }[]): Promise<AltitudePoint[]> {
+    const BATCH = 100;
+    const results: AltitudePoint[] = [];
+
+    for (let i = 0; i < points.length; i += BATCH) {
+      const batch = points.slice(i, i + BATCH);
+
+      const lats  = batch.map(p => p.lat).join(',');
+      const lngs  = batch.map(p => p.lng).join(',');
+      const url   = `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`;
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`API altitude Open-Meteo: ${response.status}`);
+
+      const data: { elevation: number[] } = await response.json();
+
+      data.elevation.forEach((elevation: number, idx: number) => {
+        results.push({
+          lat:      batch[idx].lat,
+          lng:      batch[idx].lng,
+          altitude: elevation
+        });
+      });
+    }
+
+    return results;
+  }
+
+  // ── Palette de couleurs ────────────────────────────────────────────────────
+
+  /**
+   * Mappe un ratio [0,1] → triplet RGB.
+   * 0 = vert foncé (altitude basse) → 1 = rouge foncé (altitude haute)
+   */
+  private altitudeVerseRGB(ratio: number): [number, number, number] {
+    const stops: [number, [number, number, number]][] = [
+      [0.00, [ 26, 122,  26]],
+      [0.20, [ 76, 175,  80]],
+      [0.40, [168, 217,  90]],
+      [0.55, [255, 224, 102]],
+      [0.70, [255, 152,   0]],
+      [0.85, [229,  57,  53]],
+      [1.00, [130,  20,  10]]
+    ];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const [r1, c1] = stops[i];
+      const [r2, c2] = stops[i + 1];
+      if (ratio >= r1 && ratio <= r2) {
+        const t = (ratio - r1) / (r2 - r1);
+        return [
+          Math.round(c1[0] + t * (c2[0] - c1[0])),
+          Math.round(c1[1] + t * (c2[1] - c1[1])),
+          Math.round(c1[2] + t * (c2[2] - c1[2]))
+        ];
+      }
+    }
+    return [130, 20, 10];
+  }
+
+  /** Retourne une couleur CSS pour l'affichage dans le panneau infoPoint. */
+  getColorByAltitude(altitude: number): string {
+    if (this.altitudeMin === undefined || this.altitudeMax === undefined) return '#333';
+    const ratio = (altitude - this.altitudeMin) / ((this.altitudeMax - this.altitudeMin) || 1);
+    const [r, g, b] = this.altitudeVerseRGB(Math.max(0, Math.min(1, ratio)));
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // ── Extraction GeoJSON ─────────────────────────────────────────────────────
+
+  private extraireCoordonnees(geoJson: any): [number, number][] {
+    let coords: any = [];
+    if (geoJson.type === 'Feature')            coords = geoJson.geometry?.coordinates ?? [];
+    else if (geoJson.type === 'Polygon')       coords = geoJson.coordinates ?? [];
+    else if (geoJson.type === 'FeatureCollection' && geoJson.features?.length)
+      coords = geoJson.features[0].geometry?.coordinates ?? [];
+
+    // Gérer Polygon [[[lng,lat],...]] ou [[[lng,lat],...],...]
+    if (coords.length && Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
+      coords = coords[0];
+    }
+    return (coords as any[][]).filter(c => c?.length >= 2).map(c => [c[0], c[1]] as [number, number]);
+  }
+
+  // ── Clic / info point ──────────────────────────────────────────────────────
+
+  private async getPointInfo(lat: number, lng: number): Promise<void> {
+    const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+    let altitude = this.altitudeCache.get(key);
+
+    if (altitude === undefined) {
       try {
-        altitude = await this.terrainAnalysis.getAltitude(lat, lng).toPromise() || 0;
-        this.altitudeCache.set(cacheKey, altitude);
-      } catch (error) {
-        console.error('Erreur récupération altitude:', error);
+        const result = await this.recupererAltitudes([{ lat, lng }]);
+        altitude = result[0]?.altitude ?? 0;
+        this.altitudeCache.set(key, altitude);
+      } catch {
         altitude = 0;
       }
     }
 
-    let entite = null;
-    let type = null;
+    // Chercher si le point est dans une parcelle affichée
+    let entite: any = null;
+    let type: string | null = null;
 
-    if (this.currentOverlay) {
-      this.currentOverlay.eachLayer((layer: any) => {
-        if (layer instanceof L.Polygon && layer.getBounds().contains([lat, lng])) {
-          if (layer.feature?.properties) {
-            entite = layer.feature.properties;
-            type = entite.type === 'ferme' ? 'Ferme' : 'Parcelle';
-          }
+    this.contoursLayer.eachLayer((layer: any) => {
+      if (layer instanceof L.Polygon && layer.getBounds().contains([lat, lng])) {
+        if (layer.feature?.properties) {
+          entite = layer.feature.properties;
+          type = entite?.type === 'ferme' ? 'Ferme' : 'Parcelle';
         }
-      });
-    }
+      }
+    });
 
     this.infoPoint = { lat, lng, altitude, type: type || 'Point', entite };
   }
 
-  getColorByAltitude(altitude: number): string {
-    return this.terrainAnalysis.getColorByAltitude(altitude, this.altitudeMin || 0, this.altitudeMax || 100);
-  }
+  // ── Nettoyage ──────────────────────────────────────────────────────────────
 
   private nettoyerAffichage(): void {
-    if (this.currentOverlay) {
-      this.map.removeLayer(this.currentOverlay);
-      this.currentOverlay = null;
-    }
-    this.nettoyerMarqueurs();
-  }
+    this.contoursLayer.clearLayers();
 
-  private nettoyerMarqueurs(): void {
-    this.altitudeMarkers.forEach(marker => {
-      if (this.map && marker) {
-        this.map.removeLayer(marker);
-      }
+    this.heatmapLayers.forEach(layer => {
+      if (this.map) this.map.removeLayer(layer);
     });
-    this.altitudeMarkers = [];
+    this.heatmapLayers.clear();
+
+    this.altitudeMin = undefined;
+    this.altitudeMax = undefined;
+    this.altitudeMoyenne = undefined;
+    this.legendeParcelle = null;
+    this.infoPoint = null;
   }
 
   reinitialiserCarte(): void {
-    if (this.map) {
-      this.map.setView([34.0, 9.0], 7);
-      this.infoPoint = null;
-    }
+    this.nettoyerAffichage();
+    if (this.map) this.map.setView([34.0, 9.0], 7);
   }
 }
