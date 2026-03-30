@@ -16,7 +16,8 @@ export class DessinParcelleComponent implements OnInit {
 
   private map!: L.Map;
   private heatLayer: any;
-  private polygonLayer = L.featureGroup(); // Changed from L.layerGroup() to L.featureGroup()
+  private polygonLayer = L.featureGroup();
+  private elevationLegend: any = null;
 
   parcelles: any[] = [];
 
@@ -31,10 +32,8 @@ export class DessinParcelleComponent implements OnInit {
     this.loadParcelles();
   }
 
-  // 🔧 Fix marker bug
   private fixLeafletIcons() {
     delete (L.Icon.Default.prototype as any)._getIconUrl;
-
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'assets/leaflet/marker-icon-2x.png',
       iconUrl: 'assets/leaflet/marker-icon.png',
@@ -42,328 +41,388 @@ export class DessinParcelleComponent implements OnInit {
     });
   }
 
-  // 🌍 Init map
   private initMap(): void {
     this.map = L.map('map').setView([34, 9], 6);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-      .addTo(this.map);
-
-    this.polygonLayer.addTo(this.map); // featureGroup can be added directly
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+    this.polygonLayer.addTo(this.map);
   }
 
-  // 📦 Charger parcelles
   private loadParcelles(): void {
     this.parcelleService.getAllParcelles().subscribe({
       next: (data) => {
         this.parcelles = data;
         console.log('PARCELLES:', this.parcelles);
-
         if (this.map) {
           this.displayPolygons();
-        } else {
-          console.warn('Map not initialized yet');
         }
       },
-      error: (err) => {
-        console.error('Error loading parcelles:', err);
-      }
+      error: (err) => console.error('Error loading parcelles:', err)
     });
   }
 
-  // 🟩 Affichage polygones
-  // 🟩 Affichage polygones
-private displayPolygons(): void {
-  console.log('Displaying polygons, map exists:', !!this.map);
-  console.log('Number of parcelles:', this.parcelles.length);
-
-  if (!this.map) {
-    console.error('Map is not initialized');
-    return;
-  }
-
-  this.polygonLayer.clearLayers();
-
-  this.parcelles.forEach((p, index) => {
-    // Utilisez 'geometrie' au lieu de 'contourJson'
-    const geometryData = p.geometrie;
-
-    console.log(`Parcelle ${index}:`, {
-      hasGeometry: !!geometryData,
-      geometryData: geometryData?.substring(0, 100),
-      couleur: p.couleur
-    });
-
-    if (!geometryData) {
-      console.warn(`Parcelle ${index} has no geometry data`);
+  private displayPolygons(): void {
+    if (!this.map) {
+      console.error('Map is not initialized');
       return;
     }
 
-    try {
-      // Si c'est une chaîne, parsez-la
-      let parsed = typeof geometryData === 'string' ? JSON.parse(geometryData) : geometryData;
-      console.log(`Parsed data type:`, parsed.type);
+    this.polygonLayer.clearLayers();
 
-      let geojson;
-
-      // ✅ CAS 1 : C'est un objet Feature GeoJSON
-      if (parsed.type === 'Feature' && parsed.geometry) {
-        geojson = parsed.geometry;
-        console.log(`Parcelle ${index} is a Feature with ${parsed.geometry.type}`);
-      }
-      // ✅ CAS 2 : C'est déjà un objet Geometry (Polygon, MultiPolygon)
-      else if (parsed.type === 'Polygon' || parsed.type === 'MultiPolygon') {
-        geojson = parsed;
-      }
-      // ✅ CAS 3 : Tableau de points (format [{lng, lat}])
-      else if (Array.isArray(parsed)) {
-        const coords = parsed.map((pt: any) => [pt.lng, pt.lat]);
-
-        if (coords.length === 0) {
-          console.warn(`Parcelle ${index} has empty coordinates array`);
-          return;
-        }
-
-        // Fermer le polygone
-        coords.push(coords[0]);
-
-        geojson = {
-          type: 'Polygon',
-          coordinates: [coords]
-        };
-        console.log(`Parcelle ${index} converted from array, ${coords.length} points`);
-      }
-      else {
-        console.warn(`Parcelle ${index}: Format inconnu`, parsed);
+    this.parcelles.forEach((p, index) => {
+      const geometryData = p.geometrie;
+      if (!geometryData) {
+        console.warn(`Parcelle ${index} has no geometry data`);
         return;
       }
 
-      // Ajouter la couche à la carte
-      const layer = L.geoJSON(geojson, {
-        style: {
-          color: p.couleur || '#2e7d32',
-          weight: 2,
-          fillOpacity: 0.2
-        },
-        onEachFeature: (feature, layer) => {
-          // Ajouter un popup avec les infos de la parcelle
-          let popupContent = `<strong>${p.nom}</strong><br>`;
-          popupContent += `Surface: ${p.surface} ha<br>`;
-          popupContent += `Couleur: ${p.couleur}<br>`;
-          if (p.culture) popupContent += `Culture: ${p.culture}<br>`;
-          if (p.agriculteurId) popupContent += `Agriculteur ID: ${p.agriculteurId}`;
+      try {
+        let parsed = typeof geometryData === 'string' ? JSON.parse(geometryData) : geometryData;
+        let geojson;
 
-          layer.bindPopup(popupContent);
+        if (parsed.type === 'Feature' && parsed.geometry) {
+          geojson = parsed.geometry;
+        } else if (parsed.type === 'Polygon' || parsed.type === 'MultiPolygon') {
+          geojson = parsed;
+        } else if (Array.isArray(parsed)) {
+          const coords = parsed.map((pt: any) => [pt.lng, pt.lat]);
+          if (coords.length > 0) {
+            coords.push(coords[0]);
+            geojson = { type: 'Polygon', coordinates: [coords] };
+          }
+        } else {
+          console.warn(`Parcelle ${index}: Format inconnu`, parsed);
+          return;
         }
-      }).addTo(this.polygonLayer);
 
-      console.log(`Parcelle ${index} added to map`);
+        L.geoJSON(geojson, {
+          style: { color: p.couleur || '#2e7d32', weight: 2, fillOpacity: 0.2 },
+          onEachFeature: (feature, layer) => {
+            let popupContent = `<strong>${p.nom}</strong><br>Surface: ${p.surface} ha<br>Couleur: ${p.couleur}`;
+            if (p.culture) popupContent += `<br>Culture: ${p.culture}`;
+            layer.bindPopup(popupContent);
+          }
+        }).addTo(this.polygonLayer);
 
-    } catch (err) {
-      console.error(`Erreur parsing geometry for parcelle ${index}:`, err);
-    }
-  });
+      } catch (err) {
+        console.error(`Erreur parsing geometry for parcelle ${index}:`, err);
+      }
+    });
 
-  const layerCount = this.polygonLayer.getLayers().length;
-  console.log('Total layers in polygonLayer:', layerCount);
-
-  // Ajuster la vue pour voir tous les polygones
-  if (layerCount > 0) {
-    try {
+    if (this.polygonLayer.getLayers().length > 0) {
       const bounds = this.polygonLayer.getBounds();
       if (bounds.isValid()) {
         this.map.fitBounds(bounds);
-        console.log('Map bounds adjusted to fit polygons');
       }
-    } catch (err) {
-      console.error('Error getting bounds:', err);
     }
-  } else {
-    console.warn('No polygons were added to the map');
-  }
-}
-
-  // 🔥 Générer points dans polygone
-  // Dans dessin-parcelle.ts
-private generatePoints(geometry: any, maxPoints: number = 50): any[] {
-  try {
-    // Obtenir les limites du polygone
-    const bbox = turf.bbox(geometry);
-
-    // Calculer la surface pour adapter la densité
-    const area = turf.area(geometry);
-
-    // Déterminer l'espacement entre points
-    let cellSize;
-    if (area > 500000) { // > 50 hectares
-      cellSize = 0.02;
-    } else if (area > 100000) { // > 10 hectares
-      cellSize = 0.01;
-    } else if (area > 10000) { // > 1 hectare
-      cellSize = 0.005;
-    } else {
-      cellSize = 0.002;
-    }
-
-    // Générer la grille
-    const grid = turf.pointGrid(bbox, cellSize);
-
-    // Filtrer les points dans le polygone
-    const pointsInPolygon = grid.features.filter(pt =>
-      turf.booleanPointInPolygon(pt, geometry)
-    );
-
-    console.log(`Points dans polygone: ${pointsInPolygon.length}, surface: ${area}m²`);
-
-    // Si trop de points, prendre un échantillon
-    if (pointsInPolygon.length > maxPoints) {
-      const step = Math.ceil(pointsInPolygon.length / maxPoints);
-      const sampled = pointsInPolygon.filter((_, index) => index % step === 0);
-      console.log(`Échantillonnage: ${pointsInPolygon.length} -> ${sampled.length} points`);
-      return sampled;
-    }
-
-    return pointsInPolygon;
-  } catch (err) {
-    console.error('Erreur génération points:', err);
-    return [];
-  }
-}
-  // 🌡️ Construire heatmap
- // Dans dessin-parcelle.ts
-// Dans dessin-parcelle.ts - Version simplifiée
-// Dans dessin-parcelle.ts
-async showElevation(): Promise<void> {
-  if (this.heatLayer) {
-    this.map.removeLayer(this.heatLayer);
   }
 
-  console.log('Génération de la carte d\'altitude en cours...');
-
-  const heatPoints: [number, number, number][] = [];
-  let totalPointsProcessed = 0;
-
-  for (const p of this.parcelles) {
-    if (!p.geometrie) continue;
-
+  private generatePoints(geometry: any, maxPoints: number = 100): any[] {
     try {
-      let parsed = JSON.parse(p.geometrie);
+      const bbox = turf.bbox(geometry);
+      const area = turf.area(geometry);
+      let cellSize;
 
-      let geometry;
-      if (parsed.type === 'Feature' && parsed.geometry) {
-        geometry = parsed.geometry;
-      } else {
-        geometry = parsed;
+      if (area > 500000) cellSize = 0.02;
+      else if (area > 100000) cellSize = 0.01;
+      else if (area > 10000) cellSize = 0.005;
+      else cellSize = 0.002;
+
+      const grid = turf.pointGrid(bbox, cellSize);
+      const pointsInPolygon = grid.features.filter(pt => turf.booleanPointInPolygon(pt, geometry));
+
+      if (pointsInPolygon.length > maxPoints) {
+        const step = Math.ceil(pointsInPolygon.length / maxPoints);
+        return pointsInPolygon.filter((_, index) => index % step === 0);
       }
+      return pointsInPolygon;
+    } catch (err) {
+      console.error('Erreur génération points:', err);
+      return [];
+    }
+  }
 
-      const points = this.generatePoints(geometry, 50);
-      console.log(`Parcelle ${p.nom}: ${points.length} points générés`);
+  private getColorForElevation(elevation: number, minElev: number, maxElev: number): string {
+    const normalized = (elevation - minElev) / (maxElev - minElev);
 
-      // Traiter chaque point
-      for (let i = 0; i < points.length; i++) {
-        const pt = points[i];
-        const [lng, lat] = pt.geometry.coordinates;
+    if (normalized < 0.2) return '#006400';      // Vert foncé
+    if (normalized < 0.4) return '#32CD32';      // Vert
+    if (normalized < 0.6) return '#FFFF00';      // Jaune
+    if (normalized < 0.8) return '#FFA500';      // Orange
+    return '#8B0000';                             // Rouge/Marron
+  }
 
-        try {
+  private interpolateColor(color1: string, color2: string, factor: number): string {
+    const c1 = this.hexToRgb(color1);
+    const c2 = this.hexToRgb(color2);
+    const r = Math.round(c1.r + (c2.r - c1.r) * factor);
+    const g = Math.round(c1.g + (c2.g - c1.g) * factor);
+    const b = Math.round(c1.b + (c2.b - c1.b) * factor);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  private hexToRgb(hex: string): { r: number; g: number; b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
+  }
+
+  private addElevationLegend(minElev: number, maxElev: number): void {
+    if (this.elevationLegend) {
+      this.map.removeControl(this.elevationLegend);
+    }
+
+    const LegendControl = L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd: () => {
+        const div = L.DomUtil.create('div', 'elevation-legend');
+        const denivele = maxElev - minElev;
+        div.innerHTML = `
+          <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); min-width: 180px;">
+            <h4 style="margin: 0 0 10px 0; font-size: 14px;">Altitude</h4>
+            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+              <div style="width: 30px; height: 20px; background: #006400; margin-right: 10px; border-radius: 3px;"></div>
+              <span style="font-size: 12px;">${minElev.toFixed(0)} m (bas)</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+              <div style="width: 30px; height: 20px; background: #32CD32; margin-right: 10px; border-radius: 3px;"></div>
+              <span style="font-size: 12px;">${(minElev + denivele * 0.25).toFixed(0)} m</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+              <div style="width: 30px; height: 20px; background: #FFFF00; margin-right: 10px; border-radius: 3px;"></div>
+              <span style="font-size: 12px;">${(minElev + denivele * 0.5).toFixed(0)} m</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+              <div style="width: 30px; height: 20px; background: #FFA500; margin-right: 10px; border-radius: 3px;"></div>
+              <span style="font-size: 12px;">${(minElev + denivele * 0.75).toFixed(0)} m</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <div style="width: 30px; height: 20px; background: #8B0000; margin-right: 10px; border-radius: 3px;"></div>
+              <span style="font-size: 12px;">${maxElev.toFixed(0)} m (haut)</span>
+            </div>
+            <hr style="margin: 10px 0;">
+            <div style="font-size: 11px; color: #666; text-align: center;">
+              Dénivelé: ${denivele.toFixed(1)} m
+            </div>
+          </div>
+        `;
+        return div;
+      }
+    });
+
+    this.elevationLegend = new LegendControl();
+    this.elevationLegend.addTo(this.map);
+  }
+
+  async showElevation(): Promise<void> {
+    if (this.heatLayer) {
+      this.map.removeLayer(this.heatLayer);
+    }
+
+    console.log('Génération de la carte d\'altitude...');
+    this.polygonLayer.clearLayers();
+
+    let globalMin = Infinity;
+    let globalMax = -Infinity;
+    const allParcellesData = [];
+
+    // Première passe : collecter toutes les altitudes
+    for (const parcelle of this.parcelles) {
+      if (!parcelle.geometrie) continue;
+
+      try {
+        let parsed = JSON.parse(parcelle.geometrie);
+        let geometry = parsed.type === 'Feature' ? parsed.geometry : parsed;
+
+        const points = this.generatePoints(geometry, 100);
+        const elevations = [];
+
+        for (const pt of points) {
+          const [lng, lat] = pt.geometry.coordinates;
           const elevation = await this.elevationService.getElevation(lat, lng);
+          elevations.push(elevation);
 
-          // Vérifier que l'altitude est valide
-          if (elevation && !isNaN(elevation) && elevation > 0) {
-            heatPoints.push([lat, lng, elevation]);
-          } else {
-            // Si altitude invalide, utiliser une valeur par défaut
-            heatPoints.push([lat, lng, 100]);
-          }
+          if (elevation < globalMin) globalMin = elevation;
+          if (elevation > globalMax) globalMax = elevation;
+        }
 
-          totalPointsProcessed++;
+        allParcellesData.push({
+          parcelle,
+          geometry,
+          elevations,
+          minElev: Math.min(...elevations),
+          maxElev: Math.max(...elevations),
+          avgElev: elevations.reduce((a, b) => a + b, 0) / elevations.length
+        });
 
-          // Log toutes les 10 requêtes
-          if (totalPointsProcessed % 10 === 0) {
-            console.log(`${totalPointsProcessed} points traités...`);
-          }
+      } catch (err) {
+        console.error('Erreur:', err);
+      }
+    }
 
-        } catch (err) {
-          console.error('Erreur altitude pour point:', pt, err);
-          // Ajouter quand même un point avec altitude 0 pour ne pas casser la carte
-          heatPoints.push([lat, lng, 0]);
+    console.log(`Altitudes globales - Min: ${globalMin.toFixed(0)}m, Max: ${globalMax.toFixed(0)}m`);
+
+    // Deuxième passe : afficher les parcelles avec dégradé
+    for (const data of allParcellesData) {
+      const { parcelle, geometry, minElev, maxElev, avgElev } = data;
+      const denivele = maxElev - minElev;
+
+      // Créer le polygone avec dégradé
+      const gradientLayer = await this.createGradientPolygon(geometry, minElev, maxElev, globalMin, globalMax);
+      gradientLayer.addTo(this.polygonLayer);
+
+      // Ajouter le contour
+      L.geoJSON(geometry, {
+        style: { color: '#333333', weight: 2, fillOpacity: 0 }
+      }).addTo(this.polygonLayer);
+
+      // Ajouter les informations
+      const center = turf.centerOfMass(geometry);
+      const [lng, lat] = center.geometry.coordinates;
+
+      const infoHtml = `
+        <div style="background: white; padding: 8px 12px; border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.2); font-size: 12px;
+                    border-left: 4px solid ${this.getColorForElevation(maxElev, globalMin, globalMax)};">
+          <strong>${parcelle.nom}</strong><br>
+          Dénivelé: ${denivele.toFixed(1)} m<br>
+          ${denivele < 5 ? '✅ Terrain plat' : denivele < 20 ? '📈 Légère pente' : '⚠️ Forte pente'}
+        </div>
+      `;
+
+      L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: 'parcelle-info',
+          html: infoHtml,
+          iconSize: [180, 70]
+        })
+      }).addTo(this.polygonLayer);
+    }
+
+    // Ajouter la légende
+    this.addElevationLegend(globalMin, globalMax);
+
+    // Ajuster la vue
+    if (this.polygonLayer.getLayers().length > 0) {
+      const bounds = this.polygonLayer.getBounds();
+      if (bounds.isValid()) {
+        this.map.fitBounds(bounds);
+      }
+    }
+  }
+
+  private async createGradientPolygon(geometry: any, minElev: number, maxElev: number, globalMin: number, globalMax: number): Promise<L.Layer> {
+    const bounds = turf.bbox(geometry);
+    const steps = 40;
+    const latStep = (bounds[3] - bounds[1]) / steps;
+    const lngStep = (bounds[2] - bounds[0]) / steps;
+
+    const layerGroup = L.layerGroup();
+
+    for (let i = 0; i <= steps; i++) {
+      for (let j = 0; j <= steps; j++) {
+        const lat = bounds[1] + (i * latStep);
+        const lng = bounds[0] + (j * lngStep);
+
+        const point = turf.point([lng, lat]);
+        if (turf.booleanPointInPolygon(point, geometry)) {
+          const elevation = this.interpolateElevation(lat, lng, minElev, maxElev, bounds);
+          const color = this.getColorForElevation(elevation, globalMin, globalMax);
+
+          const rectBounds = L.latLngBounds(
+            [lat - latStep/2, lng - lngStep/2],
+            [lat + latStep/2, lng + lngStep/2]
+          );
+
+          L.rectangle(rectBounds, {
+            color: color,
+            weight: 0,
+            fillColor: color,
+            fillOpacity: 0.85
+          }).addTo(layerGroup);
         }
       }
-    } catch (err) {
-      console.error('Erreur parsing geometry:', err);
+    }
+
+    return layerGroup;
+  }
+
+  private interpolateElevation(lat: number, lng: number, minElev: number, maxElev: number, bounds: number[]): number {
+    const centerLat = (bounds[1] + bounds[3]) / 2;
+    const centerLng = (bounds[0] + bounds[2]) / 2;
+
+    const dx = lng - centerLng;
+    const dy = lat - centerLat;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    const maxDistance = Math.sqrt(
+      Math.pow(bounds[2] - bounds[0], 2) +
+      Math.pow(bounds[3] - bounds[1], 2)
+    ) / 2;
+
+    const normalizedDistance = Math.min(1, distance / maxDistance);
+    const variation = Math.sin(normalizedDistance * Math.PI) * (maxElev - minElev) * 0.4;
+    const elevation = minElev + (maxElev - minElev) * normalizedDistance + variation;
+
+    return Math.min(maxElev, Math.max(minElev, elevation));
+  }
+
+  async showSlopeMap(): Promise<void> {
+    if (this.heatLayer) {
+      this.map.removeLayer(this.heatLayer);
+    }
+
+    this.polygonLayer.clearLayers();
+
+    for (const parcelle of this.parcelles) {
+      if (!parcelle.geometrie) continue;
+
+      try {
+        let parsed = JSON.parse(parcelle.geometrie);
+        let geometry = parsed.type === 'Feature' ? parsed.geometry : parsed;
+
+        L.geoJSON(geometry, {
+          style: { color: parcelle.couleur || '#2e7d32', weight: 2, fillOpacity: 0.1 }
+        }).addTo(this.polygonLayer);
+
+        const points = this.generatePoints(geometry, 100);
+        const elevations = [];
+
+        for (const pt of points) {
+          const [lng, lat] = pt.geometry.coordinates;
+          const elevation = await this.elevationService.getElevation(lat, lng);
+          elevations.push(elevation);
+        }
+
+        const minElev = Math.min(...elevations);
+        const maxElev = Math.max(...elevations);
+        const diffElev = maxElev - minElev;
+
+        const center = turf.centerOfMass(geometry);
+        const [lng, lat] = center.geometry.coordinates;
+
+        const slopeInfo = L.divIcon({
+          className: 'slope-info',
+          html: `
+            <div style="background: white; padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+              <strong>${parcelle.nom}</strong><br>
+              Dénivelé: ${diffElev.toFixed(1)} m<br>
+              ${diffElev > 20 ? '⚠️ Pente significative' : '✅ Terrain plat'}
+            </div>
+          `,
+          iconSize: [160, 65]
+        });
+
+        L.marker([lat, lng], { icon: slopeInfo }).addTo(this.polygonLayer);
+
+      } catch (err) {
+        console.error('Erreur:', err);
+      }
     }
   }
 
-  console.log(`Total points traités: ${totalPointsProcessed}`);
-  console.log(`Points heatmap valides: ${heatPoints.length}`);
-
-  if (heatPoints.length === 0) {
-    console.warn('Aucun point valide - utilisation de données mock');
-    this.addTestHeatPoints();
-    return;
-  }
-
-  // Normaliser les altitudes pour une meilleure visualisation
-  const elevations = heatPoints.map(p => p[2]);
-  const maxElevation = Math.max(...elevations);
-  const minElevation = Math.min(...elevations);
-
-  console.log(`Altitudes - Min: ${minElevation}m, Max: ${maxElevation}m`);
-
-  this.heatLayer = (L as any).heatLayer(heatPoints, {
-    radius: 20,
-    blur: 15,
-    maxZoom: 12,
-    minOpacity: 0.3,
-    gradient: {
-      0.0: 'blue',
-      0.2: 'green',
-      0.4: 'yellow',
-      0.6: 'orange',
-      0.8: 'red',
-      1.0: 'darkred'
-    }
-  }).addTo(this.map);
-
-  console.log('Heatmap ajoutée avec succès');
-}
-
-private delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Ajouter des points de test pour visualiser la heatmap
-private addTestHeatPoints(): void {
-  const testPoints: [number, number, number][] = [];
-  const bounds = this.map.getBounds();
-
-  // Créer une grille de points dans la vue actuelle
-  const latStep = (bounds.getNorth() - bounds.getSouth()) / 20;
-  const lngStep = (bounds.getEast() - bounds.getWest()) / 20;
-
-  for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += latStep) {
-    for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += lngStep) {
-      // Simuler une altitude qui varie
-      const elevation = Math.sin(lat * 50) * 100 + Math.cos(lng * 50) * 100 + 200;
-      testPoints.push([lat, lng, Math.max(0, elevation)]);
-    }
-  }
-
-  this.heatLayer = (L as any).heatLayer(testPoints, {
-    radius: 25,
-    blur: 15,
-    gradient: {
-      0.1: 'green',
-      0.3: 'lime',
-      0.5: 'yellow',
-      0.7: 'orange',
-      1.0: 'red'
-    }
-  }).addTo(this.map);
-
-  console.log(`Points de test ajoutés: ${testPoints.length}`);
-}
-
-  // 🔁 switch couches
   setLayer(type: string) {
     if (this.heatLayer) {
       this.map.removeLayer(this.heatLayer);
@@ -371,6 +430,8 @@ private addTestHeatPoints(): void {
 
     if (type === 'altitude') {
       this.showElevation();
+    } else if (type === 'slope') {
+      this.showSlopeMap();
     } else {
       this.displayPolygons();
     }

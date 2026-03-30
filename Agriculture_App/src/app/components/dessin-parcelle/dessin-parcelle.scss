@@ -19,3 +19,43 @@
   border-radius: 10px;
   z-index: 1000;
 }
+// dessin-parcelle.scss
+.elevation-legend {
+  z-index: 1000;
+}
+
+.slope-info {
+  font-family: Arial, sans-serif;
+}
+
+// Animation pour les points
+.circle-marker {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.2);
+    cursor: pointer;
+  }
+}
+// dessin-parcelle.scss
+.elevation-legend {
+  user-select: none;
+
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+.parcelle-info {
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+// Animation pour les informations
+.parcelle-info div {
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
