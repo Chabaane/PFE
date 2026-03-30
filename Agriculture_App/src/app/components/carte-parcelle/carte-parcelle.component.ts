@@ -820,88 +820,134 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Crée une couche Leaflet SVG représentant la heatmap d'altitude.
-   * Chaque point est rendu comme un cercle coloré selon son altitude relative.
-   * Le rayon des cercles est assez grand pour se chevaucher et simuler un gradient continu.
+   * Crée une couche Leaflet basée sur un canvas HTML avec interpolation IDW
+   * (Inverse Distance Weighting) pixel par pixel + clipping dans le polygone.
+   * Résultat : gradient fluide et continu, identique à la capture de référence.
    */
   private creerCoucheHeatmap(
     points: AltitudePoint[],
     minAlt: number,
     maxAlt: number,
-    polyCoords: [number, number][]
+    polyCoords: [number, number][]   // [lng, lat]
   ): L.Layer {
-    const group = L.layerGroup();
-    const range = maxAlt - minAlt || 1;
-
-    points.forEach(pt => {
-      const ratio = (pt.altitude - minAlt) / range; // 0 (bas) → 1 (haut)
-      const color = this.altitudeVerseCouleur(ratio);
-      const opacity = 0.62;
-
-      // Rayon dynamique : ajuster selon zoom de la carte
-      // On utilise un cercle Leaflet (metres)
-      const circle = L.circle([pt.lat, pt.lng], {
-        radius: this.calculerRayonMetres(polyCoords),
-        color: 'transparent',
-        fillColor: color,
-        fillOpacity: opacity,
-        interactive: false
-      });
-
-      // Tooltip avec l'altitude exacte
-      circle.bindTooltip(`${Math.round(pt.altitude)} m`, {
-        permanent: false,
-        direction: 'top',
-        className: 'altitude-tooltip'
-      });
-
-      group.addLayer(circle);
-    });
-
-    return group;
-  }
-
-  /**
-   * Calcule un rayon adapté en mètres pour que les cercles se chevauchent sur la parcelle.
-   */
-  private calculerRayonMetres(polyCoords: [number, number][]): number {
+    // ── 1. Calculer la bounding box géographique ──────────────────────────────
     const lngs = polyCoords.map(c => c[0]);
     const lats = polyCoords.map(c => c[1]);
-    const largeurDeg = Math.max(...lngs) - Math.min(...lngs);
-    const hauteurDeg = Math.max(...lats) - Math.min(...lats);
-    const diagonaleDeg = Math.sqrt(largeurDeg ** 2 + hauteurDeg ** 2);
-    // 1 degré ≈ 111 km ; diviser par ~12 pour avoir ~8 pas avec chevauchement
-    return (diagonaleDeg * 111000) / 9;
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+
+    // ── 2. Paramètres du canvas ───────────────────────────────────────────────
+    const W = 400, H = 400;           // résolution interne (pixels)
+    const POWER = 2;                   // exposant IDW (2 = quadratique, doux)
+    const range = maxAlt - minAlt || 1;
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d')!;
+
+    // ── 3. Construire l'ImageData pixel par pixel via IDW ─────────────────────
+    const imgData = ctx.createImageData(W, H);
+    const data    = imgData.data;
+
+    // Pré-convertir les points en coordonnées canvas normalisées [0..1]
+    const pts = points.map(p => ({
+      nx:  (p.lng - minLng) / (maxLng - minLng),   // 0 = gauche, 1 = droite
+      ny:  1 - (p.lat - minLat) / (maxLat - minLat), // 0 = haut, 1 = bas
+      alt: p.altitude
+    }));
+
+    for (let py = 0; py < H; py++) {
+      for (let px = 0; px < W; px++) {
+        const nx = px / (W - 1);
+        const ny = py / (H - 1);
+
+        // Vérifier si le pixel est à l'intérieur du polygone
+        // (coordonnées géo reconstituées depuis pixels)
+        const lng = minLng + nx * (maxLng - minLng);
+        const lat = maxLat - ny * (maxLat - minLat);   // ny inversé
+        if (!this.pointDansPolygone(lng, lat, polyCoords)) continue;
+
+        // Interpolation IDW
+        let weightSum = 0, valueSum = 0;
+        for (const pt of pts) {
+          const dx = nx - pt.nx, dy = ny - pt.ny;
+          const dist2 = dx * dx + dy * dy;
+          if (dist2 < 1e-10) { valueSum = pt.alt; weightSum = 1; break; }
+          const w = 1 / Math.pow(dist2, POWER / 2);
+          weightSum += w;
+          valueSum  += w * pt.alt;
+        }
+
+        const altitude = valueSum / weightSum;
+        const ratio    = Math.max(0, Math.min(1, (altitude - minAlt) / range));
+        const [r, g, b] = this.altitudeVerseRGB(ratio);
+
+        const idx = (py * W + px) * 4;
+        data[idx]     = r;
+        data[idx + 1] = g;
+        data[idx + 2] = b;
+        data[idx + 3] = 180;   // opacité ~70 %
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+
+    // ── 4. Appliquer un léger flou gaussien pour adoucir les transitions ──────
+    // On redessine l'image sur elle-même avec filter blur
+    const blurred = document.createElement('canvas');
+    blurred.width  = W;
+    blurred.height = H;
+    const bCtx = blurred.getContext('2d')!;
+    bCtx.filter = 'blur(10px)';
+    bCtx.drawImage(canvas, 0, 0);
+
+    // ── 5. Créer un ImageOverlay Leaflet ──────────────────────────────────────
+    const dataUrl = blurred.toDataURL('image/png');
+    const bounds: L.LatLngBoundsExpression = [[minLat, minLng], [maxLat, maxLng]];
+
+    const overlay = L.imageOverlay(dataUrl, bounds, {
+      opacity: 1,
+      interactive: false,
+      className: 'altitude-overlay'
+    });
+
+    // ── 6. Contour blanc du polygone par-dessus ───────────────────────────────
+    const contour = L.polygon(
+      polyCoords.map(([lng, lat]) => [lat, lng] as [number, number]),
+      { color: '#ffffff', weight: 2.5, fillOpacity: 0, dashArray: '6,3', interactive: false }
+    );
+
+    return L.layerGroup([overlay, contour]);
   }
 
   /**
    * Mappe un ratio [0, 1] vers une couleur de heatmap.
    * 0 = vert foncé (bas) → 1 = rouge foncé (haut)
    */
-  private altitudeVerseCouleur(ratio: number): string {
-    // Palette : vert foncé → vert → jaune-vert → jaune → orange → rouge → rouge foncé
+  private altitudeVerseRGB(ratio: number): [number, number, number] {
     const stops: [number, [number, number, number]][] = [
-      [0.00, [26,  122,  26]],  // vert foncé
-      [0.20, [76,  175,  80]],  // vert
-      [0.40, [168, 217,  90]],  // vert clair / jaune-vert
-      [0.55, [255, 224, 102]],  // jaune
-      [0.70, [255, 152,   0]],  // orange
-      [0.85, [229,  57,  53]],  // rouge
-      [1.00, [130,  20,  10]]   // rouge foncé
+      [0.00, [ 26, 122,  26]],
+      [0.20, [ 76, 175,  80]],
+      [0.40, [168, 217,  90]],
+      [0.55, [255, 224, 102]],
+      [0.70, [255, 152,   0]],
+      [0.85, [229,  57,  53]],
+      [1.00, [130,  20,  10]]
     ];
-
     for (let i = 0; i < stops.length - 1; i++) {
       const [r1, c1] = stops[i];
       const [r2, c2] = stops[i + 1];
       if (ratio >= r1 && ratio <= r2) {
         const t = (ratio - r1) / (r2 - r1);
-        const r = Math.round(c1[0] + t * (c2[0] - c1[0]));
-        const g = Math.round(c1[1] + t * (c2[1] - c1[1]));
-        const b = Math.round(c1[2] + t * (c2[2] - c1[2]));
-        return `rgb(${r},${g},${b})`;
+        return [
+          Math.round(c1[0] + t * (c2[0] - c1[0])),
+          Math.round(c1[1] + t * (c2[1] - c1[1])),
+          Math.round(c1[2] + t * (c2[2] - c1[2]))
+        ];
       }
     }
-    return 'rgb(130,20,10)';
+    return [130, 20, 10];
   }
 
   // ── Méthodes existantes conservées ────────────────────────────────────────
