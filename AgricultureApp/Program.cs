@@ -60,6 +60,7 @@ builder.Services.AddCors(options =>
         });
 });
 
+
 // Configuration de la base de données
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 Console.WriteLine($"Connection string: {connectionString}");

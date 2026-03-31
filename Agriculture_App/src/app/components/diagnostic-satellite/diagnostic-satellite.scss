@@ -1,0 +1,47 @@
+/* diagnostic-satellite.scss — styles globaux complémentaires */
+
+/* Tous les styles principaux sont dans le component inline (encapsulés).
+   Ce fichier contient uniquement les overrides globaux nécessaires. */
+
+app-diagnostic-satellite {
+  display: block;
+
+  /* Scrollbar personnalisée */
+  ::-webkit-scrollbar         { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track   { background: #f1f5f9; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb   { background: #cbd5e1; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  /* Animation de chargement */
+  @keyframes pulse-bar {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+  }
+
+  .loading-bar {
+    animation: pulse-bar 1.5s ease-in-out infinite;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .agro-header {
+      flex-direction: column;
+      gap: 0.8rem;
+      text-align: center;
+    }
+    .header-right {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .selectors-bar {
+      flex-direction: column;
+    }
+    .selector-group {
+      min-width: unset;
+      width: 100%;
+    }
+    .btn-analyze {
+      width: 100%;
+    }
+  }
+}

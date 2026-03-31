@@ -53,6 +53,12 @@ import { AuthService } from '../../services/api/auth.service';
           </a>
         </li>
 
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/diagnostic" routerLinkActive="active">
+            <i class="bi bi-cloud-sun-fill me-1"></i> Agroclimatique
+          </a>
+        </li>
+
         <!-- Dropdown utilisateur -->
         <li class="nav-item dropdown ms-3" *ngIf="isAuthenticated">
           <a class="nav-link dropdown-toggle d-flex align-items-center"

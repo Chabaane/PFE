@@ -678,8 +678,7 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
 
   /**
    * Chargement et affichage de la heatmap altitude pour une parcelle.
-   * Appelle l'API open-elevation (https://api.open-elevation.com) pour chaque point
-   * d'une grille générée à l'intérieur du polygone de la parcelle.
+   * Appelle l'API Open-Meteo Elevation pour chaque point de la grille (CORS autorisé).
    */
   async afficherHeatmapAltitude(parcelle: Parcelle): Promise<void> {
     if (!parcelle.geometrie) return;
@@ -791,8 +790,12 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
 
   /**
    * Appelle l'API Open-Elevation pour récupérer les altitudes de la liste de points.
-   * Documenation : https://api.open-elevation.com
+   * Récupère les altitudes via Open-Meteo (GET, sans clé API, CORS OK).
    * Splits en batches de 100 pour respecter les limites de l'API.
+   */
+  /**
+   * Récupère les altitudes via Open-Meteo Elevation (GET, CORS autorisé, sans clé API).
+   * https://api.open-meteo.com/v1/elevation
    */
   private async recupererAltitudes(points: { lat: number; lng: number }[]): Promise<AltitudePoint[]> {
     const BATCH_SIZE = 100;
@@ -800,19 +803,22 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
 
     for (let i = 0; i < points.length; i += BATCH_SIZE) {
       const batch = points.slice(i, i + BATCH_SIZE);
-      const locations = batch.map(p => ({ latitude: p.lat, longitude: p.lng }));
 
-      const response = await fetch('https://api.open-elevation.com/api/v1/lookup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ locations })
-      });
+      const lats = batch.map(p => p.lat).join(',');
+      const lngs = batch.map(p => p.lng).join(',');
+      const url  = `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`;
 
-      if (!response.ok) throw new Error(`Erreur API altitude: ${response.status}`);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Erreur API altitude Open-Meteo: ${response.status}`);
 
-      const data = await response.json();
-      data.results.forEach((r: { latitude: number; longitude: number; elevation: number }) => {
-        results.push({ lat: r.latitude, lng: r.longitude, altitude: r.elevation });
+      const data: { elevation: number[] } = await response.json();
+
+      data.elevation.forEach((elevation: number, idx: number) => {
+        results.push({
+          lat:      batch[idx].lat,
+          lng:      batch[idx].lng,
+          altitude: elevation
+        });
       });
     }
 
