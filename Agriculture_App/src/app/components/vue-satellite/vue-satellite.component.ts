@@ -1311,4 +1311,5 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     this.nettoyerAffichage();
     if (this.map) this.map.setView([34.0, 9.0], 7);
   }
-}
+
+  }

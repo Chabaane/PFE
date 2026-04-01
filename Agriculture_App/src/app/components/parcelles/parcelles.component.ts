@@ -215,11 +215,11 @@ import { ParcelleService, Parcelle } from '../../services/api/parcelle.service';
                           <div class="coordinates-box">
                             <small class="text-muted d-block">
                               <i class="fas fa-globe-americas me-1"></i>
-                              Lat: {{parcelle.latitude | number:'1.4f'}}
+                              Lat: {{parcelle.latitude | number:'1.4-4'}}
                             </small>
                             <small class="text-muted d-block">
                               <i class="fas fa-globe-americas me-1"></i>
-                              Lng: {{parcelle.longitude | number:'1.4f'}}
+                              Lng: {{parcelle.longitude | number:'1.4-4'}}
                             </small>
                           </div>
                         </div>
@@ -401,13 +401,15 @@ export class ParcellesComponent implements OnInit, OnDestroy {
   private chargerToutesParcelles(): void {
     this.parcelleService.getAllParcelles().subscribe({
       next: (parcelles) => {
-        this.parcelles = parcelles;
+        this.parcelles = parcelles || [];
         this.calculerStatistiques();
         this.extraireAgriculteurs();
         this.filtrerParcelles();
       },
       error: (error) => {
         console.error('Erreur chargement parcelles:', error);
+        this.parcelles = [];
+        this.parcellesFiltrees = [];
       }
     });
   }
