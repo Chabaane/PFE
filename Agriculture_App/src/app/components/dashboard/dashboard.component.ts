@@ -82,6 +82,12 @@ import { AuthService } from '../../services/api/auth.service';
               </a>
             </li>
 
+            <li>
+              <a class="dropdown-item" routerLink="/tableau-de-bord">
+                <i class="bi bi-speedometer2 me-2 text-info"></i> Tableau de bord
+              </a>
+            </li>
+
             <li *ngIf="isAdmin()">
               <a class="dropdown-item" routerLink="/admin">
                 <i class="bi bi-shield-lock me-2"></i> Admin

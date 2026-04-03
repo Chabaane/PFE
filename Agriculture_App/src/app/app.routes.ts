@@ -47,6 +47,11 @@ export const routes: Routes = [
           .then(m => m.ProfileComponent)
       },
       {
+        path: 'tableau-de-bord',
+        loadComponent: () => import('./components/tableau-de-bord/tableau-de-bord.component')
+          .then(m => m.TableauDeBordComponent)
+      },
+      {
         path: 'agriculteurs',
         loadComponent: () => import('./components/agriculteur-list/agriculteur-list')
           .then(m => m.AgriculteurListComponent)

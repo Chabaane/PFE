@@ -1,87 +1,78 @@
-<div class="container mt-4">
-  <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-      <div class="card shadow">
-        <div class="card-header bg-success text-white">
-          <h2 class="mb-0">
-            {{ isEditMode ? '✏️ Modifier' : '👨‍🌾 Ajouter' }} un Agriculteur
-          </h2>
-        </div>
+<div class="form-wrapper">
+  <div class="card premium-card">
 
-        <div class="card-body">
-          <!-- Loading -->
-          <div *ngIf="loading" class="text-center py-5">
-            <div class="spinner-border text-success" role="status">
-              <span class="visually-hidden">Chargement...</span>
-            </div>
-          </div>
-
-          <!-- Error -->
-          <div *ngIf="error && !loading" class="alert alert-danger">
-            {{ error }}
-          </div>
-
-          <!-- Form -->
-          <form *ngIf="!loading" (ngSubmit)="onSubmit()" #form="ngForm">
-            <div class="mb-3">
-              <label for="nom" class="form-label">Nom *</label>
-              <input type="text"
-                     class="form-control"
-                     id="nom"
-                     name="nom"
-                     [(ngModel)]="formData.nom"
-                     required
-                     #nom="ngModel">
-              <div *ngIf="nom.invalid && (nom.dirty || nom.touched)" class="text-danger">
-                Le nom est requis
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="prenom" class="form-label">Prénom *</label>
-              <input type="text"
-                     class="form-control"
-                     id="prenom"
-                     name="prenom"
-                     [(ngModel)]="formData.prenom"
-                     required
-                     #prenom="ngModel">
-              <div *ngIf="prenom.invalid && (prenom.dirty || prenom.touched)" class="text-danger">
-                Le prénom est requis
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="telephone" class="form-label">Téléphone</label>
-              <input type="tel"
-                     class="form-control"
-                     id="telephone"
-                     name="telephone"
-                     [(ngModel)]="formData.telephone">
-            </div>
-
-            <div class="mb-4">
-              <label for="localisation" class="form-label">Localisation</label>
-              <input type="text"
-                     class="form-control"
-                     id="localisation"
-                     name="localisation"
-                     [(ngModel)]="formData.localisation">
-            </div>
-
-            <div class="d-flex justify-content-between">
-              <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
-                Annuler
-              </button>
-              <button type="submit"
-                      class="btn btn-success"
-                      [disabled]="!form.form.valid || loading">
-                {{ isEditMode ? 'Modifier' : 'Ajouter' }}
-              </button>
-            </div>
-          </form>
-        </div>
+    <!-- HEADER -->
+    <div class="card-header d-flex align-items-center gap-3">
+      <div class="icon-box">
+        <i class="bi" [ngClass]="isEditMode ? 'bi-pencil-square' : 'bi-person-plus-fill'"></i>
       </div>
+      <h2 class="mb-0">{{ isEditMode ? 'Modifier' : 'Ajouter' }} un Agriculteur</h2>
+    </div>
+
+    <!-- BODY -->
+    <div class="card-body">
+
+      <!-- FORM -->
+      <form (ngSubmit)="onSubmit()" #form="ngForm">
+
+        <!-- Nom -->
+        <div class="floating-group">
+          <input type="text" name="nom" [(ngModel)]="formData.nom" required>
+          <label>Nom</label>
+        </div>
+
+        <!-- Prénom -->
+        <div class="floating-group">
+          <input type="text" name="prenom" [(ngModel)]="formData.prenom" required>
+          <label>Prénom</label>
+        </div>
+
+        <!-- Téléphone -->
+        <div class="floating-group">
+          <input type="tel"
+                 name="telephone"
+                 [(ngModel)]="formData.telephone"
+                 [pattern]="phonePattern"
+                 (input)="autoSuggest()">
+          <label>Téléphone</label>
+        </div>
+
+        <!-- IA opérateur -->
+        <small *ngIf="formData.operateur">Opérateur: {{ formData.operateur }}</small>
+
+        <!-- Localisation -->
+        <div class="floating-group">
+          <input type="text"
+                 name="localisation"
+                 [(ngModel)]="formData.localisation"
+                 (input)="onSearchLocation()">
+          <label>Localisation</label>
+        </div>
+
+        <!-- Suggestions -->
+        <ul class="suggestions" *ngIf="suggestions.length">
+          <li *ngFor="let s of suggestions" (click)="selectLocation(s)">
+            {{ s.display_name }}
+          </li>
+        </ul>
+
+        <!-- ACTIONS -->
+        <div class="actions d-flex justify-content-between mt-3">
+
+          <!-- Annuler -->
+          <button type="button" class="btn cancel" (click)="cancel()">
+            <i class="bi bi-x-circle me-1"></i>
+            Annuler
+          </button>
+
+          <!-- Ajouter / Modifier -->
+          <button type="submit" class="btn submit" [disabled]="!form.valid">
+            <i class="bi" [ngClass]="isEditMode ? 'bi-check-circle-fill' : 'bi-plus-circle-fill'"></i>
+            {{ isEditMode ? 'Modifier' : 'Ajouter' }}
+          </button>
+        </div>
+
+      </form>
     </div>
   </div>
 </div>

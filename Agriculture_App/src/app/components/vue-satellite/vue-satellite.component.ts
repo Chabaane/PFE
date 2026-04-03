@@ -490,6 +490,21 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
   progressPct = 0;
   progressLabel = '';
 
+  // ── Icônes personnalisées Leaflet ──────────────────────────────────────────
+  private readonly farmIcon = L.icon({
+    iconUrl: 'assets/icons/farm.png',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -42]
+  });
+
+  private readonly waterIcon = L.icon({
+    iconUrl: 'assets/icons/water.png',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -42]
+  });
+
   // ── Cache altitude (clé = "lat,lng" arrondi à 4 décimales) ───────────────
   private altitudeCache: Map<string, number> = new Map();
 
@@ -701,6 +716,15 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
         this.contoursLayer.addLayer(contourLayer);
         bounds.push(contourLayer.getBounds());
 
+        // Marker personnalisé farm.png au centre de la parcelle
+        const centroidFarm = this.calculerCentroide(polyCoords);
+        const farmMarker = L.marker([centroidFarm.lat, centroidFarm.lng], { icon: this.farmIcon });
+        farmMarker.bindPopup(popupHtml);
+        farmMarker.on('click', () => {
+          this.legendeParcelle = { nom: item.nom, stats };
+        });
+        this.contoursLayer.addLayer(farmMarker);
+
       } catch (e) {
         console.error(`Erreur parcelle ${item.nom}:`, e);
       }
@@ -808,6 +832,15 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.contoursLayer.addLayer(contourLayer);
         bounds.push(contourLayer.getBounds());
+
+        // Marker personnalisé water.png au centre de la parcelle
+        const centroidEau = this.calculerCentroide(polyCoords);
+        const waterMarker = L.marker([centroidEau.lat, centroidEau.lng], { icon: this.waterIcon });
+        waterMarker.bindPopup(popupHtml);
+        waterMarker.on('click', () => {
+          this.legendeEau = { nom: item.nom, waterStats };
+        });
+        this.contoursLayer.addLayer(waterMarker);
 
       } catch (e) {
         console.error(`Erreur zone eau ${item.nom}:`, e);
@@ -1130,6 +1163,14 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
       coords = coords[0];
     }
     return (coords as any[][]).filter(c => c?.length >= 2).map(c => [c[0], c[1]] as [number, number]);
+  }
+
+  // ── Centroïde d'un polygone ────────────────────────────────────────────────
+
+  private calculerCentroide(polyCoords: [number, number][]): { lat: number; lng: number } {
+    const lng = polyCoords.reduce((sum, c) => sum + c[0], 0) / polyCoords.length;
+    const lat = polyCoords.reduce((sum, c) => sum + c[1], 0) / polyCoords.length;
+    return { lat, lng };
   }
 
   // ── Grille & point-dans-polygone ───────────────────────────────────────────

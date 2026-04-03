@@ -1,0 +1,107 @@
+.form-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.2);
+  font-size: 18px;
+}
+
+.premium-card {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 20px;
+  padding: 10px;
+  background: #fff;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border-radius: 15px;
+}
+
+.floating-group {
+  position: relative;
+  margin: 20px 0;
+}
+
+.floating-group input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-bottom: 2px solid #ccc;
+}
+
+.floating-group label {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  transition: 0.3s;
+}
+
+.floating-group input:focus + label,
+.floating-group input:not(:placeholder-shown) + label {
+  top: -10px;
+  font-size: 0.8rem;
+  color: #28a745;
+}
+
+.suggestions {
+  list-style: none;
+  padding: 0;
+  background: white;
+  border-radius: 10px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.suggestions li {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.suggestions li:hover {
+  background: #eee;
+}
+
+.map-container {
+  height: 300px;
+  margin-top: 15px;
+}
+
+#map {
+  height: 100%;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+}
+
+.submit {
+  background: #28a745;
+  color: white;
+}
+
+.cancel {
+  background: #ccc;
+}

@@ -2,11 +2,9 @@
   "ExpandedNodes": [
     "",
     "\\Controllers",
-    "\\Data",
-    "\\Models",
     "\\Models\\DTOs",
-    "\\Models\\Entities",
-    "\\Services"
+    "\\Models\\Entities"
   ],
+  "SelectedNode": "\\Controllers\\AgriculteurController.cs",
   "PreviewInSolutionExplorer": false
 }
