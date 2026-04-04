@@ -21,7 +21,8 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 builder.Services.AddScoped<IFermeService, FermeService>();
-
+builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 // Add services to the container.
 builder.Services.AddControllers()

@@ -8,6 +8,8 @@ import 'leaflet-draw';
 import { ParcelleService, Parcelle, DessinParcelleDto } from '../../services/api/parcelle.service';
 import area from '@turf/area';
 import { polygon } from '@turf/helpers';
+// Ajoutez cet import avec les autres
+import { ChatbotComponent } from '../chatbot/chatbot.component';
 
 // ─── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -146,7 +148,7 @@ function degToDir(deg: number): string {
 @Component({
   selector: 'app-carte-parcelle',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, DecimalPipe, DatePipe],
+  imports: [CommonModule, FormsModule, RouterModule, DecimalPipe, DatePipe,ChatbotComponent ],
   template: `
     <div class="container-fluid mt-4">
 
@@ -548,7 +550,11 @@ function degToDir(deg: number): string {
           </div>
         </div>
       </div>
-
+      <!-- Chatbot Assistant -->
+      <app-chatbot
+        [agriculteurId]="agriculteurId"
+        (onAction)="handleChatbotAction($event)">
+      </app-chatbot>
     </div>
   `,
   styles: [`
@@ -856,6 +862,7 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
     });
     window.addEventListener('online',  this.mettreAJourStatutConnexion.bind(this));
     window.addEventListener('offline', this.mettreAJourStatutConnexion.bind(this));
+
   }
 
   ngOnDestroy(): void {
@@ -863,7 +870,20 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
     if (this.meteoTimer) clearInterval(this.meteoTimer);
     window.removeEventListener('online',  this.mettreAJourStatutConnexion.bind(this));
     window.removeEventListener('offline', this.mettreAJourStatutConnexion.bind(this));
+
   }
+
+  handleChatbotAction(event: any): void {
+  if (event.action === 'create') {
+    this.dessinerNouvelleParcelle();
+  } else if (event.action === 'edit' && event.parcelle) {
+    this.selectionnerParcelle(event.parcelle);
+    this.parcelleEnEdition = { ...event.parcelle };
+    this.estModification = true;
+    this.modalVisible = true;
+  }
+}
+
 
   // ── Init carte ─────────────────────────────────────────────────────────────
 
