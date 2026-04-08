@@ -1,0 +1,227 @@
+ /* ─── Carte ─────────────────────────────────────────────────────────────── */
+    #map { border-radius: 0 0 0.375rem 0.375rem; height: 600px; width: 100%; }
+
+    /* ─── Bouton toggle météo ──────────────────────────────────────────────── */
+    .meteo-toggle-btn {
+      position: absolute; top: 20px; left: 20px; z-index: 1000;
+      background: white; border: none; border-radius: 40px;
+      padding: 10px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; transition: all 0.3s ease; font-weight: 500; color: #333;
+    }
+    .meteo-toggle-btn:hover { background:#f8f9fa; transform:scale(1.05); box-shadow:0 4px 15px rgba(0,0,0,0.3); }
+    .meteo-toggle-btn.active { background:#1e3c72; color:white; }
+    .meteo-toggle-btn i { font-size:1.2rem; color:#f39c12; }
+    .meteo-toggle-btn.active i { color:white; }
+
+    /* ─── Panneau Météo Principal ──────────────────────────────────────────── */
+    .meteo-panel {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 300px;
+      z-index: 1000;
+      background: linear-gradient(175deg, #0f2c54 0%, #1a4a7c 35%, #0e3d6e 100%);
+      color: white;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+    .meteo-panel::-webkit-scrollbar { width: 4px; }
+    .meteo-panel::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+    .meteo-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    /* Header */
+    .mp-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 14px 10px;
+      background: rgba(0,0,0,0.2);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+    .mp-collapse-btn {
+      background: rgba(255,255,255,0.15); border: none; color: white;
+      width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; flex-shrink: 0;
+    }
+    .mp-collapse-btn:hover { background: rgba(255,255,255,0.25); }
+    .mp-header-info { flex: 1; min-width: 0; }
+    .mp-location { font-size: 0.78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mp-refresh-info { display: flex; align-items: center; gap: 8px; font-size: 0.68rem; color: rgba(255,255,255,0.6); margin-top: 2px; }
+    .btn-refresh {
+      background: none; border: none; color: rgba(255,255,255,0.6);
+      cursor: pointer; padding: 2px 4px; font-size: 0.75rem;
+      transition: color 0.2s;
+    }
+    .btn-refresh:hover { color: white; }
+
+    /* Maintenant */
+    .mp-now {
+      padding: 18px 16px 14px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+    .mp-now-icon { font-size: 3rem; line-height: 1; margin-bottom: 4px; }
+    .mp-now-temp { font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; }
+    .mp-now-label { font-size: 0.82rem; color: rgba(255,255,255,0.7); margin-bottom: 16px; }
+    .mp-now-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px; margin-top: 4px;
+    }
+    .mp-now-item {
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 8px 6px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .mp-now-item i { font-size: 1rem; color: #7ec8e3; margin-bottom: 2px; }
+    .mp-now-item span { font-size: 0.82rem; font-weight: 700; }
+    .mp-now-item small { font-size: 0.62rem; color: rgba(255,255,255,0.55); text-align: center; }
+
+    /* Boussole vent */
+    .wind-compass {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      position: relative; margin-bottom: 2px;
+    }
+    .wind-needle {
+      position: absolute; top: 2px; left: 50%; margin-left: -1px;
+      width: 2px; height: 10px;
+      background: linear-gradient(to bottom, #ff6b6b 50%, rgba(255,255,255,0.3) 50%);
+      transform-origin: bottom center;
+      border-radius: 2px;
+    }
+
+    /* Bilan agronomique */
+    .mp-agro {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+    .mp-agro-title {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: rgba(255,255,255,0.5); margin-bottom: 10px;
+    }
+    .mp-agro-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px;
+    }
+    .mp-agro-item {
+      border-radius: 10px; padding: 9px 6px; text-align: center;
+    }
+    .mp-agro-item.hot     { background: linear-gradient(135deg, rgba(255,100,30,0.3), rgba(255,60,0,0.15)); border: 1px solid rgba(255,100,30,0.25); }
+    .mp-agro-item.cold    { background: linear-gradient(135deg, rgba(100,180,255,0.3), rgba(50,130,255,0.15)); border: 1px solid rgba(100,180,255,0.25); }
+    .mp-agro-item.rain    { background: linear-gradient(135deg, rgba(60,160,255,0.3), rgba(20,100,200,0.15)); border: 1px solid rgba(60,160,255,0.25); }
+    .mp-agro-item.solar   { background: linear-gradient(135deg, rgba(255,220,50,0.3), rgba(255,170,0,0.15)); border: 1px solid rgba(255,220,50,0.25); }
+    .mp-agro-item.temp-range { background: linear-gradient(135deg, rgba(255,120,120,0.25), rgba(100,180,255,0.2)); border: 1px solid rgba(200,200,200,0.2); }
+    .mp-agro-item.hum-avg { background: linear-gradient(135deg, rgba(100,220,180,0.25), rgba(50,170,130,0.15)); border: 1px solid rgba(100,220,180,0.2); }
+    .mp-agro-val { font-size: 0.9rem; font-weight: 800; line-height: 1.1; }
+    .mp-agro-unit { font-size: 0.6rem; color: rgba(255,255,255,0.5); margin: 1px 0; }
+    .mp-agro-label { font-size: 0.6rem; color: rgba(255,255,255,0.65); }
+
+    /* Historique */
+    .mp-history { padding: 12px 16px; flex-shrink: 0; }
+    .mp-history-title {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: rgba(255,255,255,0.5); margin-bottom: 8px;
+    }
+    .mp-history-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 8px; border-radius: 7px; font-size: 0.72rem;
+      margin-bottom: 3px; transition: background 0.15s;
+    }
+    .mp-history-row:hover { background: rgba(255,255,255,0.07); }
+    .mp-history-now { background: rgba(255,255,255,0.1); font-weight: 700; }
+    .mp-h-time { color: rgba(255,255,255,0.5); min-width: 34px; }
+    .mp-h-icon { font-size: 0.9rem; }
+    .mp-h-temp { min-width: 38px; font-weight: 600; }
+    .mp-h-hum  { color: #64b5f6; min-width: 38px; }
+    .mp-h-wind { color: #b0bec5; min-width: 44px; }
+    .mp-h-rain { color: #4fc3f7; }
+
+    /* Footer */
+    .mp-footer {
+      padding: 10px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.68rem;
+      margin-top: auto; flex-shrink: 0;
+    }
+    .mp-footer .btn-outline-secondary {
+      border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6);
+      font-size: 0.68rem; padding: 2px 8px;
+    }
+    .mp-footer .btn-outline-secondary:hover { background: rgba(255,255,255,0.1); }
+    .mp-footer .text-muted { color: rgba(255,255,255,0.35) !important; }
+
+    /* ─── Icône agriculteur dans la liste ─────────────────────────────────── */
+    .parcelle-farmer-icon {
+      width: 36px; height: 36px; flex-shrink: 0; margin-right: 10px;
+    }
+    .parcelle-farmer-icon svg { width: 100%; height: 100%; }
+
+    /* ─── Mini stats météo dans la liste ──────────────────────────────────── */
+    .meteo-mini-stats {
+      font-size: 0.72rem; color: #555; margin-top: 2px;
+      display: flex; align-items: center; gap: 2px;
+    }
+
+    /* ─── Légende Altitude ────────────────────────────────────────────────── */
+    .altitude-legend {
+      position: absolute; bottom: 30px; right: 10px; z-index: 1000;
+      background: rgba(255,255,255,0.96); border-radius: 12px; padding: 14px 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25); min-width: 170px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    .legend-title { font-weight:700; font-size:0.82rem; color:#333; margin-bottom:10px; display:flex; align-items:center; }
+    .legend-gradient {
+      height:130px; width:22px; border-radius:6px;
+      background: linear-gradient(to top, #1a7a1a, #4CAF50, #a8d95a, #ffe066, #ff9800, #e53935);
+      float:left; margin-right:8px; box-shadow:0 1px 4px rgba(0,0,0,0.15);
+    }
+    .legend-labels {
+      float:left; height:130px; display:flex; flex-direction:column;
+      justify-content:space-between; font-size:0.78rem; font-weight:600; color:#444; margin-right:4px;
+    }
+    .legend-max{color:#c62828;} .legend-mid{color:#e65100;} .legend-min{color:#1b5e20;}
+    .legend-stats {
+      clear:both; padding-top:10px; margin-top:8px; border-top:1px solid #eee;
+      display:flex; flex-direction:column; gap:4px; font-size:0.78rem; color:#555;
+    }
+    .altitude-hint {
+      position:absolute; bottom:30px; right:10px; z-index:1000;
+      background:rgba(255,193,7,0.92); color:#333; padding:10px 16px;
+      border-radius:20px; font-size:0.82rem; font-weight:600;
+      box-shadow:0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    /* ─── Liste parcelles ────────────────────────────────────────────────── */
+    .parcelle-item {
+      display:flex; align-items:center; padding:12px 15px; cursor:pointer;
+      transition:all 0.2s; border-left:3px solid transparent;
+    }
+    .parcelle-item.active { background-color:#e3f2fd; border-left-color:#2196f3; }
+    .parcelle-item.altitude-active { background-color:#fff8e1; border-left-color:#ffc107; }
+    .parcelle-info { flex:1; min-width:0; }
+    .parcelle-nom { font-weight:600; color:#333; margin-bottom:4px; display:flex; align-items:center; }
+    .parcelle-meta { font-size:0.8rem; color:#6c757d; margin-bottom:2px; }
+    .parcelle-culture { font-size:0.75rem; color:#2a5298; }
+    .altitude-mini-stats { font-size:0.72rem; margin-top:3px; color:#555; }
+    .btn-delete { opacity:0; transition:opacity 0.2s; }
+    .parcelle-item:hover .btn-delete { opacity:1; }
+
+    /* ─── Color picker ───────────────────────────────────────────────────── */
+    .color-option {
+      width:40px; height:30px; cursor:pointer; border:2px solid transparent;
+      transition:all 0.2s; border-radius:4px;
+    }
+    .color-option:hover { transform:scale(1.05); box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+    .color-option.selected { border:2px solid white; box-shadow:0 0 0 2px #007bff; }
+
+    /* ─── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .altitude-legend { right:5px; bottom:10px; }
+      .meteo-panel { width: 260px; }
+    }

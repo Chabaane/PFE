@@ -53,6 +53,7 @@ namespace AgricultureApp.Controllers
             var elevation = await _elevationService.GetElevation(lat, lng);
             return Ok(new { elevation });
         }
+
     }
 
     public class ElevationRequest

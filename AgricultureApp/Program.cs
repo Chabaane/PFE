@@ -13,18 +13,25 @@ using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Program.cs
+// ── Cache Elevation ────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<ElevationCacheService>();
 
-// Configuration du logging
+// ── Services d'élévation ───────────────────────────────────────────────────────
+builder.Services.AddHttpClient<IElevationService, ElevationService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped<IElevationService, ElevationService>();
+
+// ── Logging ───────────────────────────────────────────────────────────────────
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
+// ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IFermeService, FermeService>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 
-// Add services to the container.
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
     {
@@ -33,12 +40,7 @@ builder.Services.AddControllers()
         options.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ss";
     });
 
-
-/// <summary>
-/// metéo ///
-/// </summary>
-/// 
-
+// ── Météo ─────────────────────────────────────────────────────────────────────
 builder.Services.AddHttpClient<IMeteoService, MeteoService>(client =>
 {
     client.BaseAddress = new Uri("https://api.open-meteo.com/");
@@ -47,43 +49,32 @@ builder.Services.AddHttpClient<IMeteoService, MeteoService>(client =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<ChatMemoryService>();
 
-// Configuration CORS
+// ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngularApp",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:4200")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        });
+    options.AddPolicy("AllowAngularApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
-
-// Configuration de la base de données
+// ── Base de données ───────────────────────────────────────────────────────────
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-Console.WriteLine($"Connection string: {connectionString}");
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(connectionString);
     options.EnableSensitiveDataLogging();
-    options.LogTo(Console.WriteLine, LogLevel.Information);
 });
 
-// Services d'authentification
+// ── Auth ──────────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-
-// Program.cs - Ajoutez ces lignes
-builder.Services.AddHttpClient<IElevationService, ElevationService>(client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
-
-// Configuration JWT
+// ── JWT ───────────────────────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "VotreCleSecreteSuperLonguePourLaSecurite123456789";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AgricultureApp";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "AgricultureAppUsers";
@@ -114,7 +105,6 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -122,81 +112,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// ⚠️ IMPORTANT: UseCors AVANT l'authentification
 app.UseCors("AllowAngularApp");
-app.UseAuthentication(); // IMPORTANT: Avant UseAuthorization
+
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-// Initialisation BD
-try
-{
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-    logger.LogInformation("Création de la base de données...");
-
-    // Appliquer les migrations
-    dbContext.Database.Migrate();
-
-    // Ajout de données de test si nécessaire
-    if (!dbContext.Agriculteurs.Any())
-    {
-        dbContext.Agriculteurs.AddRange(
-            new Agriculteur
-            {
-                Nom = "Dupont",
-                Prenom = "Jean",
-                Telephone = "12345678",
-                Localisation = "Tunis"
-            },
-            new Agriculteur
-            {
-                Nom = "Martin",
-                Prenom = "Pierre",
-                Telephone = "87654321",
-                Localisation = "Sousse"
-            },
-            new Agriculteur
-            {
-                Nom = "Ben Ali",
-                Prenom = "Mohamed",
-                Telephone = "11223344",
-                Localisation = "Sfax"
-            }
-        );
-
-        dbContext.SaveChanges();
-        logger.LogInformation("Données de test ajoutées!");
-    }
-
-    // Créer un utilisateur admin par défaut
-    if (!dbContext.Utilisateurs.Any())
-    {
-        var admin = new Utilisateur
-        {
-            Nom = "Admin",
-            Prenom = "Admin",
-            Email = "admin@agriculture.tn",
-            MotDePasseHash = authService.HashPassword("Admin123!"),
-            Role = UserRoles.Admin,
-            Telephone = "00000000",
-            Localisation = "Tunis",
-            EstActif = true,
-            DateCreation = DateTime.UtcNow
-        };
-
-        dbContext.Utilisateurs.Add(admin);
-        dbContext.SaveChanges();
-
-        logger.LogInformation("Utilisateur admin créé: admin@agriculture.tn / Admin123!");
-    }
-}
-catch (Exception ex)
-{
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "Erreur d'initialisation BD");
-}
 
 app.Run();

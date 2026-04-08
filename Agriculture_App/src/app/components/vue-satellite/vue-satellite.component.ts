@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import * as L from 'leaflet';
+import { FermeService, FermeDetail } from '../../services/api/ferme.service';
 import { ParcelleService, Parcelle } from '../../services/api/parcelle.service';
 import { firstValueFrom } from 'rxjs';
 
@@ -60,6 +61,11 @@ interface WaterZoneStats {
                 </div>
                 <div class="col-md-4">
                   <div class="btn-group w-100" role="group">
+                    <button class="btn btn-outline-primary"
+                            [class.active]="mode === 'fermes'"
+                            (click)="mode = 'fermes'; chargerDonnees()">
+                      <i class="fas fa-warehouse me-1"></i> Fermes
+                    </button>
                     <button class="btn btn-outline-primary"
                             [class.active]="mode === 'parcelles'"
                             (click)="mode = 'parcelles'; chargerDonnees()">
@@ -118,7 +124,7 @@ interface WaterZoneStats {
                 <div class="flex-grow-1">
                   <div class="progress" style="height: 6px;">
                     <div class="progress-bar progress-bar-striped progress-bar-animated"
-                         [class.bg-warning]="mode === 'parcelles'"
+                         [class.bg-warning]="mode !== 'zonesEau'"
                          [class.bg-info]="mode === 'zonesEau'"
                          [style.width]="progressPct + '%'"></div>
                   </div>
@@ -130,8 +136,8 @@ interface WaterZoneStats {
             </div>
           </div>
 
-          <!-- Légende altitude globale (mode parcelles) -->
-          <div class="legend-card" *ngIf="mode === 'parcelles' && altitudeMin !== undefined && altitudeMax !== undefined && !altitudeLoading">
+          <!-- Légende altitude globale (mode fermes/parcelles) -->
+          <div class="legend-card" *ngIf="mode !== 'zonesEau' && altitudeMin !== undefined && altitudeMax !== undefined && !altitudeLoading">
             <div class="card shadow-sm">
               <div class="card-body p-2">
                 <div class="d-flex align-items-center justify-content-between flex-wrap">
@@ -165,8 +171,8 @@ interface WaterZoneStats {
             <div class="card-body p-0 position-relative">
               <div id="satellite-map" style="height: 600px; width: 100%;"></div>
 
-              <!-- Légende flottante (mode parcelles : détail parcelle cliquée) -->
-              <div class="altitude-legend" *ngIf="mode === 'parcelles' && legendeParcelle">
+              <!-- Légende flottante (mode fermes/parcelles : détail cliqué) -->
+              <div class="altitude-legend" *ngIf="mode !== 'zonesEau' && legendeParcelle">
                 <div class="legend-title">
                   <i class="fas fa-mountain me-1"></i>
                   {{legendeParcelle.nom}}
@@ -191,7 +197,7 @@ interface WaterZoneStats {
                 </button>
               </div>
 
-              <!-- Légende flottante (mode zones d'eau : détail parcelle cliquée) -->
+              <!-- Légende flottante (mode zones d'eau : détail cliqué) -->
               <div class="water-legend" *ngIf="mode === 'zonesEau' && legendeEau">
                 <div class="water-legend-title">
                   <i class="fas fa-water me-1"></i>
@@ -281,7 +287,7 @@ interface WaterZoneStats {
       background-color: #f0f0f0;
     }
 
-    /* ── Légende compacte en haut (mode parcelles) ── */
+    /* ── Légende compacte en haut (mode fermes/parcelles) ── */
     .legend-card {
       position: relative;
       margin-bottom: 1rem;
@@ -312,7 +318,7 @@ interface WaterZoneStats {
       border: 1px solid rgba(0,0,0,0.15);
     }
 
-    /* ── Légende flottante altitude (mode parcelles) ── */
+    /* ── Légende flottante altitude ── */
     .altitude-legend {
       position: absolute;
       bottom: 30px;
@@ -460,17 +466,19 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
   // ── Carte ──────────────────────────────────────────────────────────────────
   private map!: L.Map;
   private isMapReady = false;
+  private altitudeWorker!: Worker;
 
-  /** Couches contours GeoJSON des parcelles (dimensions réelles via L.geoJSON) */
+  /** Couches contours GeoJSON des parcelles/fermes */
   private contoursLayer: L.LayerGroup = L.layerGroup();
 
-  /** Couches heatmap IDW, indexées par id de parcelle */
+  /** Couches heatmap IDW, indexées par id */
   private heatmapLayers: Map<string, L.Layer> = new Map();
 
   // ── État ───────────────────────────────────────────────────────────────────
-  mode: 'parcelles' | 'zonesEau' = 'parcelles';
+  mode: 'fermes' | 'parcelles' | 'zonesEau' = 'parcelles';
   typeVue = 'satellite';
 
+  fermes: FermeDetail[] = [];
   parcelles: Parcelle[] = [];
 
   altitudeMin: number | undefined;
@@ -479,7 +487,7 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
 
   infoPoint: { lat: number; lng: number; altitude: number; type?: string; entite?: any } | null = null;
 
-  /** Légende flottante altitude (mode parcelles) */
+  /** Légende flottante altitude (mode fermes/parcelles) */
   legendeParcelle: { nom: string; stats: AltitudeStats } | null = null;
 
   /** Légende flottante zones d'eau (mode zonesEau) */
@@ -505,21 +513,48 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     popupAnchor: [0, -42]
   });
 
-  // ── Cache altitude (clé = "lat,lng" arrondi à 4 décimales) ───────────────
-  private altitudeCache: Map<string, number> = new Map();
+  // ── Cache altitude (sessionStorage avec arrondi 3 décimales) ───────────────
+  private readonly ALTITUDE_CACHE_KEY = 'altitude_cache_v1';
+  private altitudeMemCache: Map<string, number> = new Map();
 
-  /** Délai minimum entre deux appels API (ms) pour éviter le 429 */
-  private readonly API_DELAY_MS = 600;
-  private dernierAppelApi = 0;
+  private cacheKey(lat: number, lng: number): string {
+    return `${lat.toFixed(3)},${lng.toFixed(3)}`;
+  }
+
+  private chargerCacheAltitude(): void {
+    try {
+      const raw = sessionStorage.getItem(this.ALTITUDE_CACHE_KEY);
+      if (raw) {
+        const obj = JSON.parse(raw);
+        this.altitudeMemCache = new Map(Object.entries(obj));
+      }
+    } catch { /* SSR ou quota */ }
+  }
+
+  private sauvegarderCacheAltitude(): void {
+    try {
+      const obj = Object.fromEntries(this.altitudeMemCache);
+      sessionStorage.setItem(this.ALTITUDE_CACHE_KEY, JSON.stringify(obj));
+    } catch { /* quota exceeded */ }
+  }
 
   constructor(
     private route: ActivatedRoute,
+    private fermeService: FermeService,
     private parcelleService: ParcelleService
   ) {}
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
+    if (typeof Worker !== 'undefined') {
+      this.altitudeWorker = new Worker(
+        new URL('./altitude.worker', import.meta.url)
+      );
+    }
+    if (this.altitudeMemCache.size === 0) {
+      this.chargerCacheAltitude();
+    }
     this.chargerDonnees();
   }
 
@@ -532,6 +567,9 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.map) this.map.remove();
+    if (this.altitudeWorker) {
+      this.altitudeWorker.terminate();
+    }
   }
 
   // ── Init carte ─────────────────────────────────────────────────────────────
@@ -593,20 +631,70 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.parcelleService.getAllParcelles().subscribe({
-      next: async (parcelles) => {
-        this.parcelles = parcelles.filter(p => p.geometrie?.length);
-        if (this.mode === 'parcelles') {
-          await this.afficherParcelles();
-        } else {
-          await this.afficherZonesEau();
-        }
-      },
-      error: err => console.error('Erreur parcelles:', err)
-    });
+    try {
+      if (this.mode === 'fermes') {
+        this.fermeService.getAllFermes().subscribe({
+          next: async (fermes) => {
+            this.fermes = [];
+            for (const ferme of fermes) {
+              try {
+                const details = await firstValueFrom(this.fermeService.getFermeWithParcelles(ferme.id));
+                if (details?.parcelles?.length) this.fermes.push(details);
+              } catch (e) {
+                console.error(`Erreur ferme ${ferme.id}:`, e);
+              }
+            }
+            await this.afficherFermes();
+          },
+          error: err => console.error('Erreur fermes:', err)
+        });
+      } else if (this.mode === 'parcelles') {
+        this.parcelleService.getAllParcelles().subscribe({
+          next: async (parcelles) => {
+            this.parcelles = parcelles.filter(p => p.geometrie?.length);
+            await this.afficherParcelles();
+          },
+          error: err => console.error('Erreur parcelles:', err)
+        });
+      } else if (this.mode === 'zonesEau') {
+        this.parcelleService.getAllParcelles().subscribe({
+          next: async (parcelles) => {
+            this.parcelles = parcelles.filter(p => p.geometrie?.length);
+            await this.afficherZonesEau();
+          },
+          error: err => console.error('Erreur parcelles:', err)
+        });
+      }
+    } catch (e) {
+      console.error('Erreur chargement:', e);
+    }
   }
 
-  // ── Affichage Mode Parcelles (heatmap altitude) ────────────────────────────
+  // ── Affichage Fermes ───────────────────────────────────────────────────────
+
+  private async afficherFermes(): Promise<void> {
+    this.nettoyerAffichage();
+
+    const items: Array<{ id: number; nom: string; geometrie: string; surface: number; culture?: string }> = [];
+
+    for (const ferme of this.fermes) {
+      for (const parcelle of (ferme.parcelles || [])) {
+        if (parcelle.geometrie) {
+          items.push({
+            id: parcelle.id,
+            nom: `${ferme.nom} – ${parcelle.nom}`,
+            geometrie: parcelle.geometrie,
+            surface: parcelle.surface || 0,
+            culture: parcelle.culture
+          });
+        }
+      }
+    }
+
+    await this.traiterEtAfficherAltitude(items);
+  }
+
+  // ── Affichage Parcelles ────────────────────────────────────────────────────
 
   private async afficherParcelles(): Promise<void> {
     this.nettoyerAffichage();
@@ -623,7 +711,7 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     await this.traiterEtAfficherAltitude(items);
   }
 
-  // ── Affichage Mode Zones d'eau ─────────────────────────────────────────────
+  // ── Affichage Zones d'eau ─────────────────────────────────────────────────
 
   private async afficherZonesEau(): Promise<void> {
     this.nettoyerAffichage();
@@ -665,12 +753,12 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
         const polyCoords = this.extraireCoordonnees(geoJson);
         if (polyCoords.length < 3) continue;
 
-        const grille = this.genererGrille(polyCoords, 8);
+        const grille = this.genererGrille(polyCoords, 6);
         const pointsAvecAlt = await this.recupererAltitudes(grille);
 
         const altitudes = pointsAvecAlt.map(p => p.altitude);
-        const min  = Math.round(Math.min(...altitudes));
-        const max  = Math.round(Math.max(...altitudes));
+        const min = Math.round(Math.min(...altitudes));
+        const max = Math.round(Math.max(...altitudes));
         const mean = altitudes.reduce((s, a) => s + a, 0) / altitudes.length;
         const stats: AltitudeStats = { min, max, mean, denivele: max - min };
 
@@ -678,12 +766,10 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
         allAltMax.push(max);
         allAltMoy.push(mean);
 
-        // Heatmap altitude
         const heatLayer = this.creerCoucheHeatmapAltitude(pointsAvecAlt, min, max, polyCoords);
         heatLayer.addTo(this.map);
         this.heatmapLayers.set(`alt_${i}`, heatLayer);
 
-        // Contour via L.geoJSON (dimensions réelles) + blanc en mode altitude
         const contourLayer = L.geoJSON(geoJson, {
           style: {
             color: '#ffffff',
@@ -716,14 +802,17 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
         this.contoursLayer.addLayer(contourLayer);
         bounds.push(contourLayer.getBounds());
 
-        // Marker personnalisé farm.png au centre de la parcelle
-        const centroidFarm = this.calculerCentroide(polyCoords);
-        const farmMarker = L.marker([centroidFarm.lat, centroidFarm.lng], { icon: this.farmIcon });
+        const centroid = this.calculerCentroide(polyCoords);
+        const farmMarker = L.marker([centroid.lat, centroid.lng], { icon: this.farmIcon });
         farmMarker.bindPopup(popupHtml);
         farmMarker.on('click', () => {
           this.legendeParcelle = { nom: item.nom, stats };
         });
         this.contoursLayer.addLayer(farmMarker);
+
+        if (i < items.length - 1) {
+          await this.attendre(300);
+        }
 
       } catch (e) {
         console.error(`Erreur parcelle ${item.nom}:`, e);
@@ -745,7 +834,7 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     this.progressLabel = '';
   }
 
-  // ── Pipeline zones d'eau : grille → API → heatmap eau ────────────────────
+  // ── Pipeline zones d'eau ───────────────────────────────────────────────────
 
   private async traiterEtAfficherEau(
     items: Array<{ id: number; nom: string; geometrie: string; surface: number; culture?: string }>
@@ -761,33 +850,27 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       this.progressPct = Math.round(((i + 1) / items.length) * 100);
-      this.progressLabel = `Analyse ${item.nom} (${i + 1}/${items.length}) — requêtes espacées…`;
+      this.progressLabel = `Analyse ${item.nom} (${i + 1}/${items.length})`;
 
       try {
         const geoJson = JSON.parse(item.geometrie);
         const polyCoords = this.extraireCoordonnees(geoJson);
         if (polyCoords.length < 3) continue;
 
-        // Grille standard pour la détection hydrologique
-        const grille = this.genererGrille(polyCoords, 8);
+        const grille = this.genererGrille(polyCoords, 6);
         const pointsAvecAlt = await this.recupererAltitudes(grille);
 
         const altitudes = pointsAvecAlt.map(p => p.altitude);
         const altMin = Math.round(Math.min(...altitudes));
         const altMax = Math.round(Math.max(...altitudes));
 
-        // Calculer l'indice d'accumulation d'eau pour chaque point
         const pointsAvecFlux = this.calculerFluxHydrologique(pointsAvecAlt, altMin, altMax);
-
-        // Statistiques zones d'eau
         const waterStats = this.calculerStatistiquesEau(pointsAvecFlux, altMin, altMax);
 
-        // Heatmap eau (palette bleue)
         const heatLayer = this.creerCoucheHeatmapEau(pointsAvecFlux, polyCoords);
         heatLayer.addTo(this.map);
         this.heatmapLayers.set(`eau_${i}`, heatLayer);
 
-        // Contour via L.geoJSON (dimensions réelles)
         const contourLayer = L.geoJSON(geoJson, {
           style: {
             color: '#1565C0',
@@ -833,14 +916,17 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
         this.contoursLayer.addLayer(contourLayer);
         bounds.push(contourLayer.getBounds());
 
-        // Marker personnalisé water.png au centre de la parcelle
-        const centroidEau = this.calculerCentroide(polyCoords);
-        const waterMarker = L.marker([centroidEau.lat, centroidEau.lng], { icon: this.waterIcon });
+        const centroid = this.calculerCentroide(polyCoords);
+        const waterMarker = L.marker([centroid.lat, centroid.lng], { icon: this.waterIcon });
         waterMarker.bindPopup(popupHtml);
         waterMarker.on('click', () => {
           this.legendeEau = { nom: item.nom, waterStats };
         });
         this.contoursLayer.addLayer(waterMarker);
+
+        if (i < items.length - 1) {
+          await this.attendre(300);
+        }
 
       } catch (e) {
         console.error(`Erreur zone eau ${item.nom}:`, e);
@@ -858,12 +944,6 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ── Algorithme hydrologique ────────────────────────────────────────────────
 
-  /**
-   * Calcule un indice d'accumulation d'eau pour chaque point.
-   * Basé sur : altitude relative (zones basses = accumulation),
-   * pente locale estimée (points plats dans les creux = stagnation).
-   * Retourne ratio [0,1] où 1 = accumulation maximale.
-   */
   private calculerFluxHydrologique(
     points: AltitudePoint[],
     altMin: number,
@@ -872,10 +952,8 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     const range = altMax - altMin || 1;
 
     return points.map(point => {
-      // 1. Ratio d'altitude inversé : zones basses ont ratio élevé (s'accumule en bas)
       const ratioAlt = 1 - ((point.altitude - altMin) / range);
 
-      // 2. Pente locale : chercher les voisins proches et estimer la pente
       const voisins = points.filter(p => {
         const dx = Math.abs(p.lng - point.lng);
         const dy = Math.abs(p.lat - point.lat);
@@ -885,32 +963,24 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
       let penteLocale = 0;
       if (voisins.length > 0) {
         const diffAlt = voisins.map(v => v.altitude - point.altitude);
-        const diffMax = Math.max(...diffAlt);    // voisins plus hauts → l'eau afflue ici
         const diffMoy = diffAlt.reduce((s, d) => s + d, 0) / diffAlt.length;
-        // Si les voisins sont plus hauts en moyenne → ce point est un creux → accumulation
         penteLocale = Math.max(0, Math.min(1, (diffMoy / range) * 3 + 0.5));
       }
 
-      // 3. Score composite : combinaison altitude basse + position de creux
       const fluxEau = Math.max(0, Math.min(1, ratioAlt * 0.65 + penteLocale * 0.35));
-
       return { ...point, fluxEau };
     });
   }
 
-  /**
-   * Calcule les statistiques hydrologiques pour une parcelle.
-   */
   private calculerStatistiquesEau(
     points: Array<AltitudePoint & { fluxEau: number }>,
     altMin: number,
     altMax: number
   ): WaterZoneStats {
-    const seuil = 0.55;   // seuil d'accumulation significative
+    const seuil = 0.55;
     const pointsAccumulation = points.filter(p => p.fluxEau >= seuil);
     const surfaceAccumulation = (pointsAccumulation.length / points.length) * 100;
 
-    // Détecter les "zones" discrètes par clustering simplifié
     let zonesDetectees = 0;
     const visites = new Set<number>();
     pointsAccumulation.forEach((p, idx) => {
@@ -927,12 +997,11 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    // Niveau de risque basé sur le pourcentage de surface affectée
     let niveauRisque: WaterZoneStats['niveauRisque'];
-    if (surfaceAccumulation >= 35)      niveauRisque = 'Critique';
+    if (surfaceAccumulation >= 35) niveauRisque = 'Critique';
     else if (surfaceAccumulation >= 20) niveauRisque = 'Élevé';
     else if (surfaceAccumulation >= 10) niveauRisque = 'Modéré';
-    else                                niveauRisque = 'Faible';
+    else niveauRisque = 'Faible';
 
     return {
       surfaceAccumulation,
@@ -967,8 +1036,8 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     const data = imgData.data;
 
     const pts = points.map(p => ({
-      nx:  (p.lng - minLng) / (maxLng - minLng),
-      ny:  1 - (p.lat - minLat) / (maxLat - minLat),
+      nx: (p.lng - minLng) / (maxLng - minLng),
+      ny: 1 - (p.lat - minLat) / (maxLat - minLat),
       alt: p.altitude
     }));
 
@@ -987,11 +1056,11 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
           if (dist2 < 1e-10) { valueSum = pt.alt; weightSum = 1; break; }
           const w = 1 / Math.pow(dist2, POWER / 2);
           weightSum += w;
-          valueSum  += w * pt.alt;
+          valueSum += w * pt.alt;
         }
 
         const altitude = valueSum / weightSum;
-        const ratio    = Math.max(0, Math.min(1, (altitude - minAlt) / range));
+        const ratio = Math.max(0, Math.min(1, (altitude - minAlt) / range));
         const [r, g, b] = this.altitudeVerseRGB(ratio);
 
         const idx = (py * W + px) * 4;
@@ -1015,10 +1084,6 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ── Heatmap zones d'eau IDW ────────────────────────────────────────────────
 
-  /**
-   * Crée une couche heatmap bleue pour la visualisation des zones d'accumulation d'eau.
-   * Palette : blanc (sec) → bleu clair → bleu moyen → bleu foncé → bleu nuit (accumulation max).
-   */
   private creerCoucheHeatmapEau(
     points: Array<AltitudePoint & { fluxEau: number }>,
     polyCoords: [number, number][]
@@ -1038,9 +1103,9 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     const data = imgData.data;
 
     const pts = points.map(p => ({
-      nx:    (p.lng - minLng) / (maxLng - minLng),
-      ny:    1 - (p.lat - minLat) / (maxLat - minLat),
-      flux:  p.fluxEau
+      nx: (p.lng - minLng) / (maxLng - minLng),
+      ny: 1 - (p.lat - minLat) / (maxLat - minLat),
+      flux: p.fluxEau
     }));
 
     for (let py = 0; py < H; py++) {
@@ -1058,7 +1123,7 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
           if (dist2 < 1e-10) { valueSum = pt.flux; weightSum = 1; break; }
           const w = 1 / Math.pow(dist2, POWER / 2);
           weightSum += w;
-          valueSum  += w * pt.flux;
+          valueSum += w * pt.flux;
         }
 
         const fluxInterp = Math.max(0, Math.min(1, valueSum / weightSum));
@@ -1066,7 +1131,6 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
 
         const idx = (py * W + px) * 4;
         data[idx] = r; data[idx + 1] = g; data[idx + 2] = b;
-        // Opacité progressive : zones sèches plus transparentes, accumulation opaque
         data[idx + 3] = Math.round(80 + fluxInterp * 150);
       }
     }
@@ -1085,21 +1149,17 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     return L.imageOverlay(dataUrl, overlayBounds, { opacity: 1, interactive: false });
   }
 
-  // ── Palette eau ────────────────────────────────────────────────────────────
+  // ── Palettes de couleurs ───────────────────────────────────────────────────
 
-  /**
-   * Mappe un ratio de flux [0,1] → triplet RGB palette bleue eau.
-   * 0 = zone sèche (blanc/transparent) → 1 = accumulation critique (bleu nuit).
-   */
   private fluxEauVerseRGB(ratio: number): [number, number, number] {
     const stops: [number, [number, number, number]][] = [
-      [0.00, [227, 242, 253]],   // #E3F2FD : blanc-bleu (très sec)
-      [0.20, [187, 222, 251]],   // #BBDEFB : bleu très clair
-      [0.40, [100, 181, 246]],   // #64B5F6 : bleu clair
-      [0.60, [ 66, 165, 245]],   // #42A5F5 : bleu moyen
-      [0.75, [ 21, 101, 192]],   // #1565C0 : bleu foncé
-      [0.88, [ 13,  71, 161]],   // #0D47A1 : bleu très foncé
-      [1.00, [ 13,  27, 142]]    // #0d1b8e : bleu nuit (accumulation critique)
+      [0.00, [227, 242, 253]],
+      [0.20, [187, 222, 251]],
+      [0.40, [100, 181, 246]],
+      [0.60, [66, 165, 245]],
+      [0.75, [21, 101, 192]],
+      [0.88, [13, 71, 161]],
+      [1.00, [13, 27, 142]]
     ];
     for (let i = 0; i < stops.length - 1; i++) {
       const [r1, c1] = stops[i];
@@ -1116,17 +1176,15 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     return [13, 27, 142];
   }
 
-  // ── Palette altitude ───────────────────────────────────────────────────────
-
   private altitudeVerseRGB(ratio: number): [number, number, number] {
     const stops: [number, [number, number, number]][] = [
-      [0.00, [ 26, 122,  26]],
-      [0.20, [ 76, 175,  80]],
-      [0.40, [168, 217,  90]],
+      [0.00, [26, 122, 26]],
+      [0.20, [76, 175, 80]],
+      [0.40, [168, 217, 90]],
       [0.55, [255, 224, 102]],
-      [0.70, [255, 152,   0]],
-      [0.85, [229,  57,  53]],
-      [1.00, [130,  20,  10]]
+      [0.70, [255, 152, 0]],
+      [0.85, [229, 57, 53]],
+      [1.00, [130, 20, 10]]
     ];
     for (let i = 0; i < stops.length - 1; i++) {
       const [r1, c1] = stops[i];
@@ -1154,8 +1212,8 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private extraireCoordonnees(geoJson: any): [number, number][] {
     let coords: any = [];
-    if (geoJson.type === 'Feature')            coords = geoJson.geometry?.coordinates ?? [];
-    else if (geoJson.type === 'Polygon')       coords = geoJson.coordinates ?? [];
+    if (geoJson.type === 'Feature') coords = geoJson.geometry?.coordinates ?? [];
+    else if (geoJson.type === 'Polygon') coords = geoJson.coordinates ?? [];
     else if (geoJson.type === 'FeatureCollection' && geoJson.features?.length)
       coords = geoJson.features[0].geometry?.coordinates ?? [];
 
@@ -1165,7 +1223,7 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     return (coords as any[][]).filter(c => c?.length >= 2).map(c => [c[0], c[1]] as [number, number]);
   }
 
-  // ── Centroïde d'un polygone ────────────────────────────────────────────────
+  // ── Centroïde ──────────────────────────────────────────────────────────────
 
   private calculerCentroide(polyCoords: [number, number][]): { lat: number; lng: number } {
     const lng = polyCoords.reduce((sum, c) => sum + c[0], 0) / polyCoords.length;
@@ -1175,7 +1233,7 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ── Grille & point-dans-polygone ───────────────────────────────────────────
 
-  private genererGrille(polyCoords: [number, number][], steps = 8): { lat: number; lng: number }[] {
+  private genererGrille(polyCoords: [number, number][], steps = 6): { lat: number; lng: number }[] {
     const lngs = polyCoords.map(c => c[0]);
     const lats = polyCoords.map(c => c[1]);
     const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
@@ -1213,103 +1271,119 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     return inside;
   }
 
-  // ── API Open-Meteo Elevation ───────────────────────────────────────────────
+  // ── API Open-Meteo Elevation avec cache et retry ───────────────────────────
 
-  /**
-   * Récupère les altitudes via Open-Meteo avec :
-   *  - Cache local (clé arrondie à 4 décimales ≈ ~11 m de précision)
-   *  - Respect du rate-limit : délai minimum entre deux appels
-   *  - Retry automatique (x3) avec back-off exponentiel en cas de 429
-   */
   private async recupererAltitudes(points: { lat: number; lng: number }[]): Promise<AltitudePoint[]> {
-    const BATCH    = 80;   // réduit à 80 pour alléger chaque requête
     const results: AltitudePoint[] = [];
+    const toFetch: { lat: number; lng: number; key: string }[] = [];
 
-    // Séparer les points déjà en cache de ceux à charger
-    const aCharger: Array<{ lat: number; lng: number; origIdx: number }> = [];
-    const cacheKey = (p: { lat: number; lng: number }) =>
-      `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`;
+    const seen = new Set<string>();
+    for (const p of points) {
+      const key = this.cacheKey(p.lat, p.lng);
+      if (seen.has(key)) continue;
+      seen.add(key);
 
-    // Pré-remplir depuis le cache
-    const resolved = new Array<AltitudePoint | null>(points.length).fill(null);
-    points.forEach((p, idx) => {
-      const cached = this.altitudeCache.get(cacheKey(p));
+      const cached = this.altitudeMemCache.get(key);
       if (cached !== undefined) {
-        resolved[idx] = { lat: p.lat, lng: p.lng, altitude: cached };
+        results.push({ lat: p.lat, lng: p.lng, altitude: cached });
       } else {
-        aCharger.push({ ...p, origIdx: idx });
+        toFetch.push({ lat: p.lat, lng: p.lng, key });
       }
-    });
-
-    // Appels API par batch uniquement pour les points non cachés
-    for (let i = 0; i < aCharger.length; i += BATCH) {
-      const batch = aCharger.slice(i, i + BATCH);
-
-      // Respecter le délai minimum entre appels
-      const maintenant = Date.now();
-      const delai = this.API_DELAY_MS - (maintenant - this.dernierAppelApi);
-      if (delai > 0) await this.sleep(delai);
-
-      const lats = batch.map(p => p.lat).join(',');
-      const lngs = batch.map(p => p.lng).join(',');
-      const url  = `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`;
-
-      const data = await this.fetchAvecRetry(url);
-      this.dernierAppelApi = Date.now();
-
-      data.elevation.forEach((elevation: number, idx: number) => {
-        const p = batch[idx];
-        this.altitudeCache.set(cacheKey(p), elevation);
-        resolved[p.origIdx] = { lat: p.lat, lng: p.lng, altitude: elevation };
-      });
     }
 
-    // Assembler dans l'ordre original
-    resolved.forEach(r => { if (r) results.push(r); });
+    if (toFetch.length === 0) return results;
+
+    const BATCH_SIZE = 100;
+    for (let i = 0; i < toFetch.length; i += BATCH_SIZE) {
+      const batch = toFetch.slice(i, i + BATCH_SIZE);
+      const lats = batch.map(p => p.lat).join(',');
+      const lngs = batch.map(p => p.lng).join(',');
+      const url = `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`;
+
+      let lastError: Error | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) {
+          const waitMs = 1000 * Math.pow(2, attempt);
+          console.warn(`Open-Meteo 429 — attente ${waitMs}ms avant retry ${attempt}…`);
+          await this.attendre(waitMs);
+        }
+
+        try {
+          const response = await fetch(url);
+
+          if (response.status === 429) {
+            lastError = new Error('429');
+            continue;
+          }
+
+          if (!response.ok) {
+            throw new Error(`API altitude Open-Meteo: ${response.status}`);
+          }
+
+          const data: { elevation: number[] } = await response.json();
+
+          data.elevation.forEach((elevation, idx) => {
+            const point = batch[idx];
+            this.altitudeMemCache.set(point.key, elevation);
+            results.push({ lat: point.lat, lng: point.lng, altitude: elevation });
+          });
+
+          lastError = null;
+          break;
+
+        } catch (err: any) {
+          lastError = err;
+          if (err.message !== '429') break;
+        }
+      }
+
+      if (lastError) {
+        if (lastError.message === '429') {
+          console.warn('Open-Meteo toujours en 429 — utilisation interpolation locale.');
+          batch.forEach(p => {
+            const alt = this.interpolerAltitudeLocale(p.lat, p.lng);
+            results.push({ lat: p.lat, lng: p.lng, altitude: alt });
+          });
+        } else {
+          throw lastError;
+        }
+      }
+
+      if (i + BATCH_SIZE < toFetch.length) {
+        await this.attendre(500);
+      }
+    }
+
+    this.sauvegarderCacheAltitude();
     return results;
   }
 
-  /**
-   * fetch avec retry (max 3 tentatives) et back-off exponentiel.
-   * Attend 2s, 4s, 8s avant chaque nouvelle tentative.
-   */
-  private async fetchAvecRetry(url: string, tentatives = 3): Promise<{ elevation: number[] }> {
-    for (let essai = 1; essai <= tentatives; essai++) {
-      const response = await fetch(url);
+  private interpolerAltitudeLocale(lat: number, lng: number): number {
+    if (this.altitudeMemCache.size === 0) return 100;
 
-      if (response.ok) return response.json();
+    let bestDist = Infinity;
+    let bestAlt = 100;
 
-      if (response.status === 429) {
-        if (essai === tentatives) throw new Error(`API altitude Open-Meteo: 429 (trop de requêtes)`);
-        const attente = Math.pow(2, essai) * 1000;   // 2s, 4s, 8s
-        console.warn(`Rate-limit Open-Meteo (429) — nouvelle tentative dans ${attente / 1000}s…`);
-        await this.sleep(attente);
-      } else {
-        throw new Error(`API altitude Open-Meteo: ${response.status}`);
+    this.altitudeMemCache.forEach((alt, key) => {
+      const [klat, klng] = key.split(',').map(Number);
+      const dist = Math.pow(lat - klat, 2) + Math.pow(lng - klng, 2);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestAlt = alt;
       }
-    }
-    throw new Error('API altitude : échec après toutes les tentatives');
+    });
+
+    return bestAlt;
   }
 
-  private sleep(ms: number): Promise<void> {
+  private attendre(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   // ── Clic / info point ──────────────────────────────────────────────────────
 
   private async getPointInfo(lat: number, lng: number): Promise<void> {
-    const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
-    let altitude = this.altitudeCache.get(key);
-
-    if (altitude === undefined) {
-      try {
-        const result = await this.recupererAltitudes([{ lat, lng }]);
-        altitude = result[0]?.altitude ?? 0;
-        this.altitudeCache.set(key, altitude);
-      } catch {
-        altitude = 0;
-      }
-    }
+    const altitude = await this.getAltitudeForPoint(lat, lng);
 
     let entite: any = null;
     let type: string | null = null;
@@ -1324,10 +1398,26 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
             }
           }
         });
+      } else if (layer instanceof L.Polygon && layer.getBounds().contains([lat, lng])) {
+        entite = layer.feature?.properties;
+        type = 'Parcelle';
       }
     });
 
     this.infoPoint = { lat, lng, altitude, type: type || 'Point', entite };
+  }
+
+  private async getAltitudeForPoint(lat: number, lng: number): Promise<number> {
+    const key = this.cacheKey(lat, lng);
+    const cached = this.altitudeMemCache.get(key);
+    if (cached !== undefined) return cached;
+
+    try {
+      const result = await this.recupererAltitudes([{ lat, lng }]);
+      return result[0]?.altitude ?? 0;
+    } catch {
+      return 100;
+    }
   }
 
   // ── Nettoyage ──────────────────────────────────────────────────────────────
@@ -1340,17 +1430,16 @@ export class VueSatelliteComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     this.heatmapLayers.clear();
 
-    this.altitudeMin     = undefined;
-    this.altitudeMax     = undefined;
+    this.altitudeMin = undefined;
+    this.altitudeMax = undefined;
     this.altitudeMoyenne = undefined;
     this.legendeParcelle = null;
-    this.legendeEau      = null;
-    this.infoPoint       = null;
+    this.legendeEau = null;
+    this.infoPoint = null;
   }
 
   reinitialiserCarte(): void {
     this.nettoyerAffichage();
     if (this.map) this.map.setView([34.0, 9.0], 7);
   }
-
-  }
+}

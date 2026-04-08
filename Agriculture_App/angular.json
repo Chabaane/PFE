@@ -51,7 +51,8 @@
             "scripts": [
                "node_modules/leaflet/dist/leaflet.js",
                "node_modules/leaflet-draw/dist/leaflet.draw.js"
-            ]
+            ],
+            "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
             "production": {
@@ -85,7 +86,7 @@
             },
             "development": {
               "buildTarget": "Agriculture_App:build:development",
-              "proxyConfig": "src/proxy.conf.json"
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
@@ -106,7 +107,8 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "webWorkerTsConfig": "tsconfig.worker.json"
           }
         }
       }

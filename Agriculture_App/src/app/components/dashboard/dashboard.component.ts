@@ -3,11 +3,11 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/api/auth.service';
-
+import { ChatComponent } from '../chat/chat.component';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink],
+  imports: [CommonModule, RouterOutlet, RouterLink , ChatComponent],
   template: `
     <div class="app-background">
       <div class="app-container">
@@ -113,6 +113,11 @@ import { AuthService } from '../../services/api/auth.service';
         <main class="container mt-4">
           <router-outlet></router-outlet>
         </main>
+
+
+        <!-- Chat widget flottant en bas à droite -->
+        <app-chat></app-chat>
+
       </div>
 
       <!-- Footer -->

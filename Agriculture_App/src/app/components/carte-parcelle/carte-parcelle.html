@@ -1,1 +1,406 @@
-<p>carte-parcelle works!</p>
+<div class="container-fluid mt-4">
+
+      <!-- En-tête -->
+      <div class="row mb-4">
+        <div class="col-md-8">
+          <h3><i class="fas fa-map-marked-alt me-2"></i>Carte des Parcelles - Agriculteur {{agriculteurId}}</h3>
+          <p class="text-muted">Visualisez et gérez les parcelles de l'agriculteur sur la carte</p>
+        </div>
+        <div class="col-md-4 text-end">
+          <button class="btn btn-success me-2" (click)="dessinerNouvelleParcelle()">
+            <i class="fas fa-draw-polygon me-1"></i> Dessiner une parcelle
+          </button>
+          <button class="btn btn-primary" (click)="synchroniser()" [disabled]="!hasOfflineData">
+            <i class="fas fa-sync-alt me-1" [class.fa-spin]="synchronisationEnCours"></i>
+            Synchroniser ({{parcellesOfflineCount}})
+          </button>
+        </div>
+      </div>
+
+      <!-- Cartes de statistiques -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card text-center border-success">
+            <div class="card-body">
+              <h5 class="card-title text-success">{{parcelles.length}}</h5>
+              <p class="card-text">Parcelles</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-info">
+            <div class="card-body">
+              <h5 class="card-title text-info">{{surfaceTotale}} ha</h5>
+              <p class="card-text">Surface totale</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-warning">
+            <div class="card-body">
+              <h5 class="card-title text-warning">{{parcellesOfflineCount}}</h5>
+              <p class="card-text">Non synchronisées</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center border-primary">
+            <div class="card-body">
+              <h5 class="card-title text-primary">{{connectionStatus}}</h5>
+              <p class="card-text">Connexion</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carte et liste -->
+      <div class="row">
+
+        <!-- Carte Leaflet -->
+        <div class="col-md-8">
+          <div class="card shadow-sm position-relative">
+            <div class="card-header bg-dark text-white">
+              <div class="d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-map me-2"></i>Carte Interactive</span>
+                <div class="d-flex gap-2 align-items-center">
+                  <div class="map-mode-selector">
+                    <button class="btn btn-sm"
+                            [class.btn-light]="modeAffichage !== 'altitude'"
+                            [class.btn-warning]="modeAffichage === 'altitude'"
+                            (click)="basculerModeAltitude()">
+                      <i class="fas fa-mountain me-1"></i>
+                      <span *ngIf="modeAffichage !== 'altitude'">Altitude</span>
+                      <span *ngIf="modeAffichage === 'altitude'">
+                        <span *ngIf="!altitudeLoading">Altitude ✓</span>
+                        <span *ngIf="altitudeLoading"><i class="fas fa-spinner fa-spin me-1"></i>Chargement...</span>
+                      </span>
+                    </button>
+                  </div>
+                  <button class="btn btn-sm btn-light" (click)="centrerCarte()">
+                    <i class="fas fa-crosshairs"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light" (click)="changerMode()">
+                    {{modeDessin ? 'Annuler le dessin' : 'Mode dessin'}}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-body p-0 position-relative">
+              <div id="map" style="height:600px;"></div>
+
+              <!-- ── Panneau Météo principal flottant ── -->
+              <div class="meteo-panel" *ngIf="showMeteoPanel && meteoActuel" [@slideIn]>
+                <!-- Header -->
+                <div class="mp-header">
+                  <button class="mp-collapse-btn" (click)="toggleMeteoPanel()">
+                    <i class="fas fa-chevron-left"></i>
+                  </button>
+                  <div class="mp-header-info">
+                    <div class="mp-location">
+                      <i class="fas fa-map-pin me-1"></i>
+                      <span>{{selectedPointName || 'Point sélectionné'}}</span>
+                    </div>
+                    <div class="mp-refresh-info">
+                      <span *ngIf="meteoActuel">MAJ: {{meteoActuel.timestamp | date:'HH:mm'}}</span>
+                      <button class="btn-refresh" (click)="rafraichirMeteo()" [disabled]="meteoLoading">
+                        <i class="fas fa-sync-alt" [class.fa-spin]="meteoLoading"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Maintenant -->
+                <div class="mp-now">
+                  <div class="mp-now-icon">{{meteoActuel.weatherIcon}}</div>
+                  <div class="mp-now-temp">{{meteoActuel.temperature | number:'1.1-1'}}°C</div>
+                  <div class="mp-now-label">{{meteoActuel.weatherLabel}}</div>
+                  <div class="mp-now-grid">
+                    <div class="mp-now-item">
+                      <i class="fas fa-tint"></i>
+                      <span>{{meteoActuel.humidity}}%</span>
+                      <small>Humidité</small>
+                    </div>
+                    <div class="mp-now-item">
+                      <i class="fas fa-wind"></i>
+                      <span>{{meteoActuel.windSpeed | number:'1.1-1'}} m/s</span>
+                      <small>Vent {{meteoActuel.windDirectionLabel}}</small>
+                    </div>
+                    <div class="mp-now-item">
+                      <i class="fas fa-tachometer-alt"></i>
+                      <span>{{meteoActuel.pressure | number:'1.0-0'}}</span>
+                      <small>hPa</small>
+                    </div>
+                    <div class="mp-now-item">
+                      <i class="fas fa-cloud-rain"></i>
+                      <span>{{meteoActuel.precipitation | number:'1.1-1'}}</span>
+                      <small>mm pluie</small>
+                    </div>
+                    <div class="mp-now-item">
+                      <i class="fas fa-sun"></i>
+                      <span>{{meteoActuel.solarRadiation | number:'1.0-0'}}</span>
+                      <small>W/m² solaire</small>
+                    </div>
+                    <div class="mp-now-item wind-dir-item">
+                      <div class="wind-compass">
+                        <div class="wind-needle" [style.transform]="'rotate(' + meteoActuel.windDirection + 'deg)'"></div>
+                      </div>
+                      <span>{{meteoActuel.windDirection}}°</span>
+                      <small>Direction</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Données agronomiques cumulées -->
+                <div class="mp-agro" *ngIf="meteoSummary">
+                  <div class="mp-agro-title">
+                    <i class="fas fa-seedling me-1"></i> Bilan agronomique
+                    <small class="ms-2 text-muted">({{meteoSummary.nbMesures}} mesures)</small>
+                  </div>
+                  <div class="mp-agro-grid">
+                    <div class="mp-agro-item hot">
+                      <div class="mp-agro-val">{{meteoSummary.chaleurCumulee | number:'1.0-0'}}</div>
+                      <div class="mp-agro-unit">GDD</div>
+                      <div class="mp-agro-label">Chaleur cumulée</div>
+                    </div>
+                    <div class="mp-agro-item cold">
+                      <div class="mp-agro-val">{{meteoSummary.froidCumule | number:'1.0-0'}}</div>
+                      <div class="mp-agro-unit">h</div>
+                      <div class="mp-agro-label">Heures de froid</div>
+                    </div>
+                    <div class="mp-agro-item rain">
+                      <div class="mp-agro-val">{{meteoSummary.precipTotale | number:'1.1-1'}}</div>
+                      <div class="mp-agro-unit">mm</div>
+                      <div class="mp-agro-label">Précipitations</div>
+                    </div>
+                    <div class="mp-agro-item solar">
+                      <div class="mp-agro-val">{{meteoSummary.rayonnementTotal | number:'1.2-2'}}</div>
+                      <div class="mp-agro-unit">kWh/m²</div>
+                      <div class="mp-agro-label">Rayonnement</div>
+                    </div>
+                    <div class="mp-agro-item temp-range">
+                      <div class="mp-agro-val">{{meteoSummary.tempMin | number:'1.1-1'}}° / {{meteoSummary.tempMax | number:'1.1-1'}}°</div>
+                      <div class="mp-agro-unit">min/max</div>
+                      <div class="mp-agro-label">T° extrêmes</div>
+                    </div>
+                    <div class="mp-agro-item hum-avg">
+                      <div class="mp-agro-val">{{meteoSummary.humMoyenne | number:'1.0-0'}}%</div>
+                      <div class="mp-agro-unit">moy.</div>
+                      <div class="mp-agro-label">Humidité moy.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Historique (dernières 5 mesures) -->
+                <div class="mp-history" *ngIf="historique.length > 1">
+                  <div class="mp-history-title">
+                    <i class="fas fa-history me-1"></i> Historique récent
+                  </div>
+                  <div class="mp-history-list">
+                    <div *ngFor="let rec of historique.slice(-5).reverse(); let i = index"
+                         class="mp-history-row" [class.mp-history-now]="i===0">
+                      <span class="mp-h-time">{{rec.timestamp | date:'HH:mm'}}</span>
+                      <span class="mp-h-icon">{{rec.weatherIcon}}</span>
+                      <span class="mp-h-temp">{{rec.temperature | number:'1.1-1'}}°</span>
+                      <span class="mp-h-hum"><i class="fas fa-tint"></i> {{rec.humidity}}%</span>
+                      <span class="mp-h-wind"><i class="fas fa-wind"></i> {{rec.windSpeed | number:'1.0-0'}} m/s</span>
+                      <span class="mp-h-rain"><i class="fas fa-cloud-rain"></i> {{rec.precipitation | number:'1.1-1'}}mm</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bouton effacer historique -->
+                <div class="mp-footer">
+                  <button class="btn btn-sm btn-outline-secondary" (click)="effacerHistorique()">
+                    <i class="fas fa-trash me-1"></i>Effacer historique
+                  </button>
+                  <small class="text-muted">Actualisation auto: 1h</small>
+                </div>
+              </div>
+
+
+
+              <!-- Légende Altitude -->
+              <div class="altitude-legend" *ngIf="modeAffichage === 'altitude' && altitudeParcelleActive">
+                <div class="legend-title"><i class="fas fa-mountain me-1"></i>Altitude - {{altitudeParcelleActive.nom}}</div>
+                <div class="legend-gradient"></div>
+                <div class="legend-labels">
+                  <span class="legend-max">{{altitudeStats?.max}} m</span>
+                  <span class="legend-mid">{{altitudeStats ? ((altitudeStats.max + altitudeStats.min) / 2 | number:'1.0-0') : ''}} m</span>
+                  <span class="legend-min">{{altitudeStats?.min}} m</span>
+                </div>
+                <div class="legend-stats" *ngIf="altitudeStats">
+                  <div><i class="fas fa-arrow-up text-danger me-1"></i>Max: <strong>{{altitudeStats.max}} m</strong></div>
+                  <div><i class="fas fa-arrow-down text-success me-1"></i>Min: <strong>{{altitudeStats.min}} m</strong></div>
+                  <div><i class="fas fa-ruler-vertical text-warning me-1"></i>Dénivelé: <strong>{{altitudeStats.denivele}} m</strong></div>
+                  <div><i class="fas fa-chart-line text-info me-1"></i>Moy: <strong>{{altitudeStats.mean | number:'1.0-0'}} m</strong></div>
+                </div>
+              </div>
+
+              <div class="altitude-hint" *ngIf="modeAffichage === 'altitude' && !altitudeParcelleActive && !altitudeLoading">
+                <i class="fas fa-hand-pointer me-1"></i> Cliquez sur une parcelle pour afficher sa carte d'altitude
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Liste des parcelles -->
+        <div class="col-md-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+              <span><i class="fas fa-list me-2"></i>Liste des Parcelles</span>
+              <span *ngIf="modeAffichage === 'altitude'" class="badge bg-warning text-dark">
+                <i class="fas fa-mountain me-1"></i>Mode Altitude
+              </span>
+            </div>
+            <div class="card-body p-0">
+              <div class="list-group list-group-flush" *ngIf="parcelles.length > 0">
+                <div *ngFor="let parcelle of parcelles"
+                     class="list-group-item list-group-item-action parcelle-item"
+                     [class.active]="parcelle.id === parcelleSelectionnee?.id"
+                     [class.altitude-active]="modeAffichage === 'altitude' && parcelle.id === altitudeParcelleActive?.id"
+                     (click)="selectionnerParcelle(parcelle)">
+                  <!-- Icon agriculteur -->
+                  <div class="parcelle-farmer-icon" [innerHTML]="getFarmerIconSvg(parcelle.agriculteurId || agriculteurId)"></div>
+                  <div class="parcelle-info">
+                    <div class="parcelle-nom">
+                      {{parcelle.nom}}
+                      <span *ngIf="!parcelle.estSynchronise" class="badge bg-warning ms-2">Hors ligne</span>
+                    </div>
+                    <div class="parcelle-meta">
+                      <span>{{parcelle.surface}} ha</span>
+                      <span class="mx-2">•</span>
+                      <span>{{parcelle.gouvernorat || 'Localisation inconnue'}}</span>
+                    </div>
+                    <div *ngIf="parcelle.culture" class="parcelle-culture">
+                      <i class="fas fa-seedling me-1"></i>{{parcelle.culture}}
+                    </div>
+                    <!-- Mini météo si disponible pour cette parcelle -->
+                    <div *ngIf="getMeteoParcelle(parcelle.id)" class="meteo-mini-stats">
+                      <span>{{getMeteoParcelle(parcelle.id)!.weatherIcon}}</span>
+                      <span class="ms-1">{{getMeteoParcelle(parcelle.id)!.temperature | number:'1.1-1'}}°</span>
+                      <span class="ms-2"><i class="fas fa-tint" style="color:#64b5f6;font-size:0.7rem;"></i> {{getMeteoParcelle(parcelle.id)!.humidity}}%</span>
+                      <span class="ms-2"><i class="fas fa-wind" style="color:#90a4ae;font-size:0.7rem;"></i> {{getMeteoParcelle(parcelle.id)!.windSpeed | number:'1.0-0'}} m/s</span>
+                    </div>
+                    <!-- Mini stats altitude -->
+                    <div *ngIf="modeAffichage === 'altitude' && altitudeParcelleActive?.id === parcelle.id && altitudeStats"
+                         class="altitude-mini-stats">
+                      <span class="text-danger"><i class="fas fa-arrow-up"></i> {{altitudeStats.max}}m</span>
+                      <span class="mx-1 text-muted">|</span>
+                      <span class="text-success"><i class="fas fa-arrow-down"></i> {{altitudeStats.min}}m</span>
+                      <span class="mx-1 text-muted">|</span>
+                      <span class="text-warning">Δ{{altitudeStats.denivele}}m</span>
+                    </div>
+                  </div>
+                  <button class="btn btn-sm btn-outline-danger btn-delete"
+                          (click)="supprimerParcelle(parcelle.id); $event.stopPropagation()">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <div *ngIf="parcelles.length === 0" class="text-center py-5">
+                <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Aucune parcelle trouvée</p>
+                <button class="btn btn-success" (click)="dessinerNouvelleParcelle()">
+                  <i class="fas fa-plus me-1"></i> Créer la première parcelle
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal d'édition de parcelle -->
+      <div class="modal fade" [class.show]="modalVisible" [style.display]="modalVisible ? 'block' : 'none'">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+              <h5 class="modal-title">{{estModification ? 'Modifier' : 'Nouvelle'}} Parcelle</h5>
+              <button type="button" class="btn-close btn-close-white" (click)="fermerModal()"></button>
+            </div>
+            <div class="modal-body">
+              <form #parcelleForm="ngForm" *ngIf="parcelleEnEdition">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Nom *</label>
+                      <input type="text" class="form-control" [(ngModel)]="parcelleEnEdition.nom" name="nom" required>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Surface (ha) *</label>
+                      <input type="number" class="form-control" [(ngModel)]="parcelleEnEdition.surface" name="surface" step="0.01" min="0.01" required>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Couleur</label>
+                      <div class="d-flex gap-2">
+                        <div *ngFor="let couleur of couleurs" class="color-option"
+                             [style.background-color]="couleur"
+                             [class.selected]="parcelleEnEdition.couleur === couleur"
+                             (click)="parcelleEnEdition.couleur = couleur"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Culture</label>
+                      <select class="form-control" [(ngModel)]="parcelleEnEdition.culture" name="culture">
+                        <option value="">Sélectionner</option>
+                        <option value="Blé">Blé</option>
+                        <option value="Orge">Orge</option>
+                        <option value="Maïs">Maïs</option>
+                        <option value="Olives">Olives</option>
+                        <option value="Vigne">Vigne</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Gouvernorat</label>
+                      <input type="text" class="form-control" [(ngModel)]="parcelleEnEdition.gouvernorat" name="gouvernorat">
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Délégation</label>
+                      <input type="text" class="form-control" [(ngModel)]="parcelleEnEdition.delegation" name="delegation">
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Secteur</label>
+                      <input type="text" class="form-control" [(ngModel)]="parcelleEnEdition.secteur" name="secteur">
+                    </div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Description</label>
+                  <textarea class="form-control" [(ngModel)]="parcelleEnEdition.description" name="description" rows="3"></textarea>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+              <button type="button" class="btn btn-primary"
+                      (click)="sauvegarderParcelle()"
+                      [disabled]="!parcelleEnEdition || !parcelleForm || !parcelleForm.valid || sauvegardeEnCours">
+                <i class="fas fa-save me-1"></i>
+                {{sauvegardeEnCours ? 'Enregistrement...' : 'Enregistrer'}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Chatbot Assistant -->
+      <app-chatbot
+        [agriculteurId]="agriculteurId"
+        (onAction)="handleChatbotAction($event)">
+      </app-chatbot>
+    </div>
