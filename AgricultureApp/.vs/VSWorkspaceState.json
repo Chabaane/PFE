@@ -2,11 +2,12 @@
   "ExpandedNodes": [
     "",
     "\\Controllers",
+    "\\Controllers\\AI",
     "\\Models",
     "\\Models\\DTOs",
     "\\Models\\Entities",
     "\\Services"
   ],
-  "SelectedNode": "\\Controllers\\ElevationController.cs",
+  "SelectedNode": "\\Program.cs",
   "PreviewInSolutionExplorer": false
 }

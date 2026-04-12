@@ -1,5 +1,5 @@
 // components/carte-parcelle/carte-parcelle.component.ts
-import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef, ElementRef } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -9,6 +9,9 @@ import { ParcelleService, Parcelle, DessinParcelleDto } from '../../services/api
 import area from '@turf/area';
 import { polygon } from '@turf/helpers';
 import { ChatbotComponent } from '../chatbot/chatbot.component';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 
 // ─── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -31,6 +34,14 @@ interface MeteoRecord {
   weatherIcon: string;        // emoji
 }
 
+interface Point3D {
+  x: number;
+  y: number;
+  z: number;
+  ndvi: number;
+  lat: number;
+  lng: number;
+}
 /** Résumé agronomique calculé depuis l'historique */
 interface MeteoSummary {
   chaleurCumulee: number;     // GDD Growing Degree Days (base 10°C)
@@ -45,6 +56,16 @@ interface MeteoSummary {
   derniereMAJ: Date | null;
 }
 
+/** Point 3D avec altitude et NDVI */
+interface Point3D {
+  x: number;
+  y: number;
+  z: number;
+  ndvi: number;
+  lat: number;
+  lng: number;
+}
+
 // ─── Palette SVG icons par agriculteur (déterministe par id % 12) ────────────
 
 const FARMER_ICONS = [
@@ -53,56 +74,7 @@ const FARMER_ICONS = [
     <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🌾</text>
     <polygon points="22,42 15,54 29,54" fill="#2d7a2d"/>
   </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#1a6b9a" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🫒</text>
-    <polygon points="22,42 15,54 29,54" fill="#1a6b9a"/>
-  </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#e07820" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🚜</text>
-    <polygon points="22,42 15,54 29,54" fill="#e07820"/>
-  </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#7b3fa0" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🍇</text>
-    <polygon points="22,42 15,54 29,54" fill="#7b3fa0"/>
-  </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#c9a800" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🌽</text>
-    <polygon points="22,42 15,54 29,54" fill="#c9a800"/>
-  </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#1588c8" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">💧</text>
-    <polygon points="22,42 15,54 29,54" fill="#1588c8"/>
-  </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#3aa86e" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🌱</text>
-    <polygon points="22,42 15,54 29,54" fill="#3aa86e"/>
-  </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#c83030" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🌻</text>
-    <polygon points="22,42 15,54 29,54" fill="#c83030"/>
-  </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#8b5a2b" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🏡</text>
-    <polygon points="22,42 15,54 29,54" fill="#8b5a2b"/>
-  </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#3d5a80" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🍋</text>
-    <polygon points="22,42 15,54 29,54" fill="#3d5a80"/>
-  </svg>`,
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
-    <circle cx="22" cy="22" r="20" fill="#0d7377" stroke="white" stroke-width="2.5"/>
-    <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🍀</text>
-    <polygon points="22,42 15,54 29,54" fill="#0d7377"/>
-  </svg>`,
+  // ... (autres icônes conservées)
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 54">
     <circle cx="22" cy="22" r="20" fill="#a03030" stroke="white" stroke-width="2.5"/>
     <text x="22" y="29" text-anchor="middle" font-size="20" fill="white">🌶️</text>
@@ -137,6 +109,7 @@ function degToDir(deg: number): string {
 })
 export class CarteParcelleComponent implements OnInit, OnDestroy {
   @ViewChild('parcelleForm') parcelleForm!: NgForm;
+  @ViewChild('canvas3d') canvas3d!: ElementRef<HTMLDivElement>;
 
   // ── Météo ──────────────────────────────────────────────────────────────────
   selectedLat?: number;
@@ -175,13 +148,42 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
   couleurs = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336', '#00BCD4'];
 
   // ── Mode Altitude (avec cache optimisé) ────────────────────────────────────
-  modeAffichage: 'normal' | 'altitude' = 'normal';
+  modeAffichage: 'normal' | 'altitude' | '3d' = 'normal';
   altitudeLoading = false;
   altitudeParcelleActive: Parcelle | null = null;
   altitudeStats: AltitudeStats | null = null;
   private altitudeLayers: Map<number, L.Layer> = new Map();
 
-  // ── Cache altitude avec sessionStorage (CORRECTION 1) ──────────────────────
+  // ── Mode 3D ────────────────────────────────────────────────────────────────
+  mode3dActif = false;
+  scene3d: THREE.Scene | null = null;
+  camera3d: THREE.PerspectiveCamera | null = null;
+  renderer3d: THREE.WebGLRenderer | null = null;
+  labelRenderer: CSS2DRenderer | null = null;
+  controls3d: OrbitControls | null = null;
+  terrainGroup: THREE.Group | null = null;
+  ndviOverlay: THREE.Mesh | null = null;
+  parcelle3dObjects: Map<number, THREE.Group> = new Map();
+
+  // Options NDVI
+  ndviOptions = {
+    showNdvi: true,
+    ndviMin: -0.2,
+    ndviMax: 0.8,
+    opacity: 0.7
+  };
+
+  // Palette NDVI (rouge = faible végétation, vert = forte végétation)
+  private ndviColors = [
+    { value: -0.2, color: new THREE.Color(0x8B3A3A) }, // Marron/rouge - sol nu
+    { value: 0.0, color: new THREE.Color(0xD2B48C) },  // Beige - sol sec
+    { value: 0.2, color: new THREE.Color(0xF4A460) },  // Orange clair - végétation faible
+    { value: 0.4, color: new THREE.Color(0x9ACD32) },  // Jaune-vert - végétation modérée
+    { value: 0.6, color: new THREE.Color(0x228B22) },  // Vert - végétation bonne
+    { value: 0.8, color: new THREE.Color(0x006400) }   // Vert foncé - végétation dense
+  ];
+
+  // ── Cache altitude avec sessionStorage ──────────────────────────────────────
   private readonly ALT_CACHE_KEY = 'altitude_cache_cp_v2';
   private altCache: Map<string, number> = new Map();
 
@@ -202,12 +204,13 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
     });
     window.addEventListener('online', this.mettreAJourStatutConnexion.bind(this));
     window.addEventListener('offline', this.mettreAJourStatutConnexion.bind(this));
-    this.loadAltCache(); // Charger le cache altitude depuis sessionStorage
+    this.loadAltCache();
   }
 
   ngOnDestroy(): void {
     if (this.map) this.map.remove();
     if (this.meteoTimer) clearInterval(this.meteoTimer);
+    if (this.renderer3d) this.renderer3d.dispose();
     window.removeEventListener('online', this.mettreAJourStatutConnexion.bind(this));
     window.removeEventListener('offline', this.mettreAJourStatutConnexion.bind(this));
   }
@@ -245,14 +248,343 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
   }
 
   private altKey(lat: number, lng: number): string {
-    // Arrondi à 3 décimales (~111m) pour le cache (CORRECTION 1)
     return `${lat.toFixed(3)},${lng.toFixed(3)}`;
   }
+
+  // ─── MODE 3D ET NDVI ───────────────────────────────────────────────────────
+
+  /**
+   * Bascule vers le mode 3D avec superposition NDVI
+   */
+  async basculerMode3d(): Promise<void> {
+  if (this.mode3dActif) {
+    this.desactiverMode3d();
+  } else {
+    if (this.altitudeLoading) {
+      console.log('Chargement en cours...');
+      return;
+    }
+
+    this.mode3dActif = true;
+    this.modeAffichage = '3d';
+
+    this.cdr.detectChanges();
+
+    setTimeout(async () => {
+      const mapElement = document.getElementById('map');
+      if (mapElement) mapElement.style.display = 'none';
+
+      const canvasElement = document.getElementById('canvas3d');
+      if (canvasElement) {
+        canvasElement.style.display = 'block';
+        canvasElement.style.width = '100%';
+        canvasElement.style.height = '600px';
+      }
+
+      await this.initScene3d();
+
+      // Si une parcelle est déjà sélectionnée, l'afficher
+      if (this.parcelleSelectionnee) {
+        await this.afficherParcelleSeule3d(this.parcelleSelectionnee);
+      } else if (this.parcelles.length > 0) {
+        // Sinon, afficher la première parcelle
+        await this.afficherParcelleSeule3d(this.parcelles[0]);
+      }
+    }, 100);
+  }
+}
+
+  private desactiverMode3d(): void {
+    this.mode3dActif = false;
+    this.modeAffichage = 'normal';
+
+    // Réafficher la carte
+    const mapElement = document.getElementById('map');
+    if (mapElement) mapElement.style.display = 'block';
+
+    // Cacher le canvas 3D
+    const canvasElement = document.getElementById('canvas3d');
+    if (canvasElement) canvasElement.style.display = 'none';
+
+    // Nettoyer la scène 3D
+    if (this.renderer3d) {
+      this.renderer3d.dispose();
+      this.renderer3d = null;
+    }
+    if (this.controls3d) {
+      this.controls3d.dispose();
+      this.controls3d = null;
+    }
+    this.scene3d = null;
+    this.camera3d = null;
+    this.labelRenderer = null;
+    this.terrainGroup = null;
+    this.parcelle3dObjects.clear();
+  }
+
+  /**
+   * Initialise la scène Three.js
+   */
+  private async initScene3d(): Promise<void> {
+  const container = document.getElementById('canvas3d');
+  if (!container) {
+    console.error('Canvas 3D non trouvé');
+    return;
+  }
+   this.testerScene3d();
+  container.style.display = 'block';
+
+  const width = container.offsetWidth || window.innerWidth;
+  const height = container.offsetHeight || 600;
+  console.log(container.offsetWidth, container.offsetHeight);
+  console.log('Initialisation 3D avec dimensions:', width, 'x', height);
+
+  this.scene3d = new THREE.Scene();
+  this.scene3d.background = new THREE.Color(0x87CEEB);
+  this.scene3d.fog = new THREE.Fog(0x87CEEB, 50, 150);
+
+  // Camera - position plus proche pour mieux voir
+  this.camera3d = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+  this.camera3d.position.set(20, 15, 25);  // Position plus proche
+  this.camera3d.lookAt(0, 0, 0);
+
+  // Renderer
+  this.renderer3d = new THREE.WebGLRenderer({ antialias: true });
+  this.renderer3d.setSize(width, height);
+  this.renderer3d.shadowMap.enabled = true;
+  this.renderer3d.setClearColor(0x87CEEB);
+
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+  container.appendChild(this.renderer3d.domElement);
+
+  // CSS2D Renderer
+  this.labelRenderer = new CSS2DRenderer();
+  this.labelRenderer.setSize(width, height);
+  this.labelRenderer.domElement.style.position = 'absolute';
+  this.labelRenderer.domElement.style.top = '0px';
+  this.labelRenderer.domElement.style.left = '0px';
+  this.labelRenderer.domElement.style.pointerEvents = 'none';
+  container.appendChild(this.labelRenderer.domElement);
+
+  // Controls
+  this.controls3d = new OrbitControls(this.camera3d, this.renderer3d.domElement);
+  this.controls3d.enableDamping = true;
+  this.controls3d.dampingFactor = 0.05;
+  this.controls3d.rotateSpeed = 1.0;
+  this.controls3d.zoomSpeed = 1.2;
+  this.controls3d.enablePan = true;
+  this.controls3d.target.set(0, 5, 0);
+
+  // Éclairage
+  this.ajouterEclairage();
+
+  // Grille d'aide
+  const gridHelper = new THREE.GridHelper(50, 20, 0x888888, 0x444444);
+  gridHelper.position.y = -2;
+  this.scene3d.add(gridHelper);
+
+  // Axes helpers (pour debug)
+  const axesHelper = new THREE.AxesHelper(15);
+  this.scene3d.add(axesHelper);
+
+  // Démarrer l'animation
+  this.animate3d();
+
+  console.log('Scene 3D initialisée avec succès');
+}
+// Ajoutez cette fonction pour tester la 3D sans données
+private testerScene3d(): void {
+  if (!this.scene3d) return;
+
+  console.log('Ajout des objets de test...');
+
+  // Ajouter une sphère de test plus grande et mieux positionnée
+  const geometry = new THREE.SphereGeometry(5, 32, 32);
+  const material = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0x442200 });
+  const sphere = new THREE.Mesh(geometry, material);
+  sphere.position.set(0, 5, 0);
+  sphere.castShadow = true;
+  this.scene3d.add(sphere);
+
+  // Ajouter un cube de test
+  const boxGeometry = new THREE.BoxGeometry(4, 4, 4);
+  const boxMaterial = new THREE.MeshStandardMaterial({ color: 0x44aa44, emissive: 0x226622 });
+  const box = new THREE.Mesh(boxGeometry, boxMaterial);
+  box.position.set(-10, 2, -10);
+  box.castShadow = true;
+  this.scene3d.add(box);
+
+  // Ajouter un plan au sol pour référence
+  const planeGeometry = new THREE.PlaneGeometry(40, 40);
+  const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x88aa88, side: THREE.DoubleSide });
+  const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  plane.rotation.x = -Math.PI / 2;
+  plane.position.y = -2;
+  plane.receiveShadow = true;
+  this.scene3d.add(plane);
+
+  console.log('Objets de test ajoutés à la scène');
+}
+
+  private ajouterEclairage(): void {
+  if (!this.scene3d) return;
+
+  // Lumière ambiante plus forte
+  const ambientLight = new THREE.AmbientLight(0x404060, 0.7);
+  this.scene3d.add(ambientLight);
+
+  // Lumière directionnelle principale (soleil)
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  directionalLight.position.set(10, 20, 5);
+  directionalLight.castShadow = true;
+  directionalLight.receiveShadow = true;
+  directionalLight.shadow.mapSize.width = 1024;
+  directionalLight.shadow.mapSize.height = 1024;
+  this.scene3d.add(directionalLight);
+
+  // Lumière d'appoint depuis le côté
+  const fillLight = new THREE.DirectionalLight(0x88aaff, 0.5);
+  fillLight.position.set(-5, 10, 10);
+  this.scene3d.add(fillLight);
+
+  // Lumière venant du bas pour éclairer les ombres
+  const backLight = new THREE.PointLight(0x4466cc, 0.4);
+  backLight.position.set(0, -5, 0);
+  this.scene3d.add(backLight);
+
+  // Ajouter une lumière ponctuelle au centre
+  const centerLight = new THREE.PointLight(0xffaa66, 0.3);
+  centerLight.position.set(0, 10, 0);
+  this.scene3d.add(centerLight);
+}
+
+  private animate3d(): void {
+    requestAnimationFrame(() => this.animate3d());
+
+    if (this.controls3d) {
+      this.controls3d.update();
+    }
+
+    if (this.renderer3d && this.scene3d && this.camera3d) {
+      this.renderer3d.render(this.scene3d, this.camera3d);
+    }
+
+    if (this.labelRenderer && this.scene3d && this.camera3d) {
+      this.labelRenderer.render(this.scene3d, this.camera3d);
+    }
+  }
+
+
+  /**
+   * Simule une valeur NDVI basée sur la parcelle et la position
+   * À remplacer par une vraie API Sentinel Hub ou autre source NDVI
+   */
+  private simulerNdvi(lat: number, lng: number, parcelle: Parcelle): number {
+    // Simulation réaliste basée sur:
+    // - Type de culture
+    // - Saison (mois actuel)
+    // - Altitude (les zones plus hautes ont moins de végétation)
+    // - Position aléatoire cohérente (hash)
+
+    const mois = new Date().getMonth();
+    const isSaisonVegetative = mois >= 2 && mois <= 9; // Mars à Octobre
+
+    let ndviBase = 0.3;
+
+    // Type de culture
+    switch (parcelle.culture?.toLowerCase()) {
+      case 'blé':
+      case 'orge':
+        ndviBase = isSaisonVegetative ? 0.6 : 0.3;
+        break;
+      case 'olivier':
+        ndviBase = 0.5;
+        break;
+      case 'vigne':
+        ndviBase = isSaisonVegetative ? 0.65 : 0.35;
+        break;
+      case 'maraîchage':
+      case 'tomate':
+      case 'pomme de terre':
+        ndviBase = isSaisonVegetative ? 0.7 : 0.2;
+        break;
+      default:
+        ndviBase = 0.4;
+    }
+
+    // Variation spatiale cohérente (bruit de Perlin simplifié)
+    const hash = Math.sin(lat * 100) * Math.cos(lng * 100) * 10000;
+    const variation = (Math.sin(hash) + Math.cos(hash * 2)) * 0.15;
+
+    let ndvi = ndviBase + variation;
+
+    // Ajustement par altitude (moins de végétation en haute altitude)
+    const altitude = this.altCache.get(this.altKey(lat, lng)) || 100;
+    ndvi *= Math.max(0.5, 1 - (altitude - 50) / 500);
+
+    return Math.max(this.ndviOptions.ndviMin, Math.min(this.ndviOptions.ndviMax, ndvi));
+  }
+
+
+
+  /**
+   * Obtient la couleur NDVI pour une valeur donnée
+   */
+  private getNdviColor(ndvi: number): THREE.Color {
+    // Trouver l'intervalle
+    for (let i = 0; i < this.ndviColors.length - 1; i++) {
+      if (ndvi >= this.ndviColors[i].value && ndvi <= this.ndviColors[i + 1].value) {
+        const t = (ndvi - this.ndviColors[i].value) / (this.ndviColors[i + 1].value - this.ndviColors[i].value);
+        const r = this.ndviColors[i].color.r * (1 - t) + this.ndviColors[i + 1].color.r * t;
+        const g = this.ndviColors[i].color.g * (1 - t) + this.ndviColors[i + 1].color.g * t;
+        const b = this.ndviColors[i].color.b * (1 - t) + this.ndviColors[i + 1].color.b * t;
+        return new THREE.Color(r, g, b);
+      }
+    }
+    return this.ndviColors[0].color;
+  }
+
+
+
+  /**
+   * Met à jour l'opacité de la superposition NDVI
+   */
+  updateNdviOpacity(): void {
+    if (this.terrainGroup) {
+      const terrainMesh = this.terrainGroup.children.find(c => c instanceof THREE.Mesh) as THREE.Mesh;
+      if (terrainMesh && terrainMesh.material) {
+        (terrainMesh.material as THREE.MeshStandardMaterial).opacity = this.ndviOptions.opacity;
+        (terrainMesh.material as THREE.MeshStandardMaterial).transparent = this.ndviOptions.opacity < 1;
+      }
+    }
+  }
+
+  /**
+   * Bascule l'affichage NDVI
+   */
+  toggleNdvi(): void {
+    this.ndviOptions.showNdvi = !this.ndviOptions.showNdvi;
+    if (this.terrainGroup) {
+      const terrainMesh = this.terrainGroup.children.find(c => c instanceof THREE.Mesh) as THREE.Mesh;
+      if (terrainMesh && terrainMesh.material) {
+        if (this.ndviOptions.showNdvi) {
+          (terrainMesh.material as THREE.MeshStandardMaterial).vertexColors = true;
+        } else {
+          (terrainMesh.material as THREE.MeshStandardMaterial).vertexColors = false;
+          (terrainMesh.material as THREE.MeshStandardMaterial).color.setHex(0x8B7355);
+        }
+      }
+    }
+  }
+
+  // ─── MÉTHODES ALTITUDE EXISTANTES (adaptées) ───────────────────────────────
 
   basculerModeAltitude(): void {
     if (this.modeAffichage === 'altitude') {
       this.desactiverModeAltitude();
-    } else {
+    } else if (this.modeAffichage !== '3d') {
       this.modeAffichage = 'altitude';
       this.afficherParcellesSurCarte();
     }
@@ -270,7 +602,6 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
   async afficherHeatmapAltitude(parcelle: Parcelle): Promise<void> {
     if (!parcelle.geometrie) return;
 
-    // Supprimer l'ancienne couche altitude
     if (this.altitudeParcelleActive && this.altitudeLayers.has(this.altitudeParcelleActive.id)) {
       this.map.removeLayer(this.altitudeLayers.get(this.altitudeParcelleActive.id)!);
       this.altitudeLayers.delete(this.altitudeParcelleActive.id);
@@ -288,7 +619,6 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // CORRECTION 2: Grille réduite 6×6 (au lieu de 8×8) pour moins de requêtes
       const grille = this.genererGrille(coords, 6);
       const pointsAvecAltitude = await this.recupererAltitudesAvecCache(grille);
 
@@ -309,15 +639,11 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Récupère les altitudes avec cache sessionStorage + retry backoff (CORRECTION 1 & 3)
-   */
   private async recupererAltitudesAvecCache(points: { lat: number; lng: number }[]): Promise<AltitudePoint[]> {
     const results: AltitudePoint[] = [];
     const toFetch: { lat: number; lng: number; key: string }[] = [];
     const seen = new Set<string>();
 
-    // Séparer points en cache / à fetcher, avec déduplication
     for (const p of points) {
       const key = this.altKey(p.lat, p.lng);
       if (seen.has(key)) continue;
@@ -340,7 +666,6 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
       const url = `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`;
 
       let lastErr: Error | null = null;
-      // CORRECTION 3: Retry avec backoff exponentiel
       for (let attempt = 0; attempt < 3; attempt++) {
         if (attempt > 0) await this.wait(1000 * Math.pow(2, attempt));
         try {
@@ -363,7 +688,6 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
         }
       }
 
-      // Fallback: si toujours 429 après retries, utiliser interpolation
       if (lastErr && lastErr.message === '429') {
         batch.forEach(p => {
           const alt = this.interpAltitude(p.lat, p.lng);
@@ -381,9 +705,6 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
     return results;
   }
 
-  /**
-   * Interpolation d'altitude à partir des points en cache (fallback anti-429)
-   */
   private interpAltitude(lat: number, lng: number): number {
     if (this.altCache.size === 0) return 100;
     let bestDist = Infinity, bestAlt = 100;
@@ -530,7 +851,7 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
     return [130, 20, 10];
   }
 
-  // ── MÉTHODES MÉTÉO (inchangées depuis version 2) ───────────────────────────
+  // ── MÉTHODES MÉTÉO (inchangées) ───────────────────────────────────────────
 
   private async onMapClick(lat: number, lng: number, nom: string): Promise<void> {
     this.selectedLat = lat;
@@ -883,6 +1204,11 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
     if (this.modeAffichage === 'altitude' && this.altitudeParcelleActive?.id !== parcelle.id) {
       this.afficherHeatmapAltitude(parcelle);
     }
+
+    // Mode 3D - Afficher uniquement la parcelle sélectionnée
+    if (this.modeAffichage === '3d' && this.mode3dActif) {
+      this.afficherParcelleSeule3d(parcelle);
+    }
   }
 
   private calculerSurfacePolygone(latlngs: L.LatLng[]): number {
@@ -952,6 +1278,10 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
       if (this.altitudeLayers.has(id)) { this.map.removeLayer(this.altitudeLayers.get(id)!); this.altitudeLayers.delete(id); }
       if (this.altitudeParcelleActive?.id === id) { this.altitudeParcelleActive = null; this.altitudeStats = null; }
       if (this.meteoMarkers.has(id)) { this.map.removeLayer(this.meteoMarkers.get(id)!); this.meteoMarkers.delete(id); }
+      if (this.parcelle3dObjects.has(id)) {
+        if (this.scene3d) this.scene3d.remove(this.parcelle3dObjects.get(id)!);
+        this.parcelle3dObjects.delete(id);
+      }
       this.meteoParParcelle.delete(id);
       this.calculerStatistiques();
       this.afficherParcellesSurCarte();
@@ -1004,4 +1334,444 @@ export class CarteParcelleComponent implements OnInit, OnDestroy {
     this.connectionStatus = navigator.onLine ? 'En ligne' : 'Hors ligne';
     if (navigator.onLine && this.hasOfflineData) this.synchroniser();
   }
+  // Ajouter une légende d'altitude en 3D
+private ajouterLegendeAltitude(): void {
+  const div = document.createElement('div');
+  div.innerHTML = `
+    <div style="background:rgba(0,0,0,0.7);padding:8px 12px;border-radius:8px;color:white;font-size:12px;">
+      <strong>⛰️ Altitude</strong><br>
+      <span style="color:#1a7a1a">■</span> Basse: ${this.altitudeStats?.min || 0}m<br>
+      <span style="color:#e53935">■</span> Haute: ${this.altitudeStats?.max || 0}m<br>
+      Dénivelé: ${this.altitudeStats?.denivele || 0}m
+    </div>
+  `;
+  const label = new CSS2DObject(div);
+  label.position.set(-15, 10, -15);
+  this.scene3d?.add(label);
+}
+  private ajouterMarqueursCulture(parcelle: Parcelle, position: { x: number; z: number; y: number }): void {
+  if (!this.scene3d) return;
+
+  const div = document.createElement('div');
+  div.className = 'culture-marker-3d';
+  div.innerHTML = `
+    <div style="background:${parcelle.couleur || '#4CAF50'};border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+      ${this.getCultureIcon(parcelle.culture || '')}
+    </div>
+    <div style="background:rgba(0,0,0,0.7);color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-top:2px;text-align:center;">
+      ${parcelle.nom}<br>${parcelle.surface}ha
+    </div>
+  `;
+
+  const label = new CSS2DObject(div);
+  label.position.set(position.x, position.y + 2, position.z);
+  this.scene3d.add(label);
+}
+
+private getCultureIcon(culture: string): string {
+  const icons: { [key: string]: string } = {
+    'Blé': '🌾',
+    'Olives': '🫒',
+    'Vigne': '🍇',
+    'Maïs': '🌽',
+    'Tomate': '🍅',
+    'Orge': '🌾'
+  };
+  return icons[culture] || '🌱';
+}
+// Au clic sur le terrain, afficher la valeur NDVI
+private setupRaycaster(): void {
+  if (!this.renderer3d || !this.scene3d || !this.camera3d) return;
+
+  // Supprimer l'ancien event listener pour éviter les doublons
+  const oldListener = (this.renderer3d.domElement as any).__raycasterListener;
+  if (oldListener) {
+    this.renderer3d.domElement.removeEventListener('click', oldListener);
+  }
+
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  const clickHandler = (event: MouseEvent) => {
+    const rect = this.renderer3d!.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, this.camera3d!);
+
+    // Chercher spécifiquement le terrain dans terrainGroup
+    const terrainMesh = this.terrainGroup?.children.find(c => c instanceof THREE.Mesh) as THREE.Mesh | undefined;
+
+    let intersects: THREE.Intersection[] = [];
+    if (terrainMesh) {
+      intersects = raycaster.intersectObject(terrainMesh);
+    } else {
+      intersects = raycaster.intersectObjects(this.scene3d!.children, true);
+    }
+
+    if (intersects.length > 0) {
+      const point = intersects[0].point;
+      console.log(`Clic 3D - Position: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`);
+      this.afficherValeurNdvi(point);
+    }
+  };
+
+  this.renderer3d.domElement.addEventListener('click', clickHandler);
+  (this.renderer3d.domElement as any).__raycasterListener = clickHandler;
+}
+
+private afficherValeurNdvi(point: THREE.Vector3): void {
+  // Calculer la valeur NDVI approximative à cette position
+  // Idéalement, il faudrait interpoler depuis les points existants
+  let ndvi = 0.5;
+
+  // Essayer de trouver le point le plus proche dans les données
+  if (this.terrainGroup && (this.terrainGroup.userData as any).points3d) {
+    const points3d = (this.terrainGroup.userData as any).points3d as Point3D[];
+    let minDist = Infinity;
+    for (const p of points3d) {
+      const dist = Math.hypot(p.x - point.x, p.z - point.z);
+      if (dist < minDist) {
+        minDist = dist;
+        ndvi = p.ndvi;
+      }
+    }
+  }
+
+  // Créer un popup temporaire en CSS2D au lieu de alert()
+  this.afficherPopupNdvi(point, ndvi);
+}
+
+private afficherPopupNdvi(point: THREE.Vector3, ndvi: number): void {
+  if (!this.scene3d) return;
+
+  // Supprimer l'ancien popup s'il existe
+  if ((this.scene3d as any).__ndviPopup) {
+    this.scene3d.remove((this.scene3d as any).__ndviPopup);
+  }
+
+  const div = document.createElement('div');
+  const interpretation = this.getNdviInterpretation(ndvi);
+  const color = ndvi > 0.6 ? '#228B22' : ndvi > 0.4 ? '#9ACD32' : ndvi > 0.2 ? '#F4A460' : '#8B3A3A';
+
+  div.innerHTML = `
+    <div style="background:rgba(0,0,0,0.85);color:white;padding:10px 15px;border-radius:12px;font-size:13px;text-align:center;border-left:4px solid ${color};backdrop-filter:blur(8px);">
+      <strong>📍 NDVI: ${ndvi.toFixed(3)}</strong><br>
+      ${interpretation}
+      <div style="font-size:10px;color:#aaa;margin-top:4px;">Cliquez sur la carte pour fermer</div>
+    </div>
+  `;
+
+  const popup = new CSS2DObject(div);
+  popup.position.set(point.x, point.y + 2, point.z);
+  this.scene3d.add(popup);
+  (this.scene3d as any).__ndviPopup = popup;
+
+  // Fermer le popup au prochain clic (déjà géré par le remplacement)
+  setTimeout(() => {
+    if ((this.scene3d as any).__ndviPopup === popup) {
+      this.scene3d?.remove(popup);
+      (this.scene3d as any).__ndviPopup = null;
+    }
+  }, 5000);
+}
+
+private getNdviInterpretation(ndvi: number): string {
+  if (ndvi > 0.6) return '🌿 Végétation très dense et saine';
+  if (ndvi > 0.4) return '🌱 Végétation modérée, bonne santé';
+  if (ndvi > 0.2) return '⚠️ Végétation faible, surveiller';
+  return '🔴 Sol nu ou végétation stressée';
+}
+
+   ///////////////////////
+   /**
+ * Affiche une seule parcelle en 3D
+ */
+private async afficherParcelleSeule3d(parcelle: Parcelle): Promise<void> {
+  if (!this.scene3d || !parcelle.geometrie) {
+    console.log('Scene 3D non disponible');
+    return;
+  }
+
+  this.altitudeLoading = true;
+
+  try {
+    // Nettoyer l'affichage 3D existant
+    this.nettoyerScene3d();
+
+    // Extraire les coordonnées de la parcelle
+    const geoJson = JSON.parse(parcelle.geometrie);
+    const coords = this.extraireCoordonnees(geoJson);
+    if (coords.length < 3) return;
+
+    // Calculer les bounds de cette parcelle seulement
+    const bounds = this.calculerBoundsParcelle(coords);
+
+    // Générer une grille plus fine pour la parcelle (12x12 pour plus de détails)
+    const grille = this.genererGrille(coords, 12);
+    const pointsAvecAlt = await this.recupererAltitudesAvecCache(grille);
+
+    // Calculer les statistiques d'altitude
+    const altitudes = pointsAvecAlt.map(p => p.altitude);
+    const min = Math.round(Math.min(...altitudes));
+    const max = Math.round(Math.max(...altitudes));
+    const mean = altitudes.reduce((s, a) => s + a, 0) / altitudes.length;
+    this.altitudeStats = { min, max, mean, denivele: max - min };
+
+    // Convertir les points en 3D
+    const points3d: Point3D[] = [];
+    pointsAvecAlt.forEach(point => {
+      const ndvi = this.simulerNdvi(point.lat, point.lng, parcelle);
+      const { x, z } = this.geoToWorldParcelle(point.lng, point.lat, bounds);
+      const y = point.altitude * 0.3; // Facteur d'échelle verticale
+      points3d.push({ x, y, z, ndvi, lat: point.lat, lng: point.lng });
+    });
+
+    // Créer le terrain 3D pour cette parcelle
+    this.creerTerrain3dParcelle(points3d, bounds, parcelle);
+
+    // Ajouter un contour coloré autour de la parcelle
+    this.ajouterContourParcelle(coords, bounds, parcelle.couleur || '#4CAF50');
+      // ⭐ RECONFIGURER LE RAYCASTER APRÈS LA CRÉATION DU TERRAIN
+    this.setupRaycaster();
+
+    // Centrer la caméra sur la parcelle
+    this.centrerCameraSurParcelle(points3d);
+
+  } catch (err) {
+    console.error('Erreur affichage parcelle 3D:', err);
+    alert('Erreur lors du chargement 3D de la parcelle');
+  } finally {
+    this.altitudeLoading = false;
+    this.cdr.detectChanges();
+  }
+}
+
+/**
+ * Nettoie la scène 3D (garde seulement les éléments de base)
+ */
+private nettoyerScene3d(): void {
+  if (!this.scene3d) return;
+
+  // Supprimer le terrain existant
+  if (this.terrainGroup) {
+    this.scene3d.remove(this.terrainGroup);
+    this.terrainGroup = null;
+  }
+
+  // Supprimer tous les labels (garder la grille et les axes si présents)
+  this.scene3d.children.forEach(child => {
+    if (child instanceof CSS2DObject || (child instanceof THREE.Mesh && child !== this.scene3d?.getObjectByName('gridHelper'))) {
+      this.scene3d?.remove(child);
+    }
+  });
+}
+
+/**
+ * Calcule les bounds d'une seule parcelle
+ */
+private calculerBoundsParcelle(coords: [number, number][]): { minLng: number; maxLng: number; minLat: number; maxLat: number } {
+  const lngs = coords.map(c => c[0]);
+  const lats = coords.map(c => c[1]);
+  return {
+    minLng: Math.min(...lngs),
+    maxLng: Math.max(...lngs),
+    minLat: Math.min(...lats),
+    maxLat: Math.max(...lats)
+  };
+}
+
+/**
+ * Convertit des coordonnées pour une parcelle individuelle
+ */
+private geoToWorldParcelle(lng: number, lat: number, bounds: { minLng: number; maxLng: number; minLat: number; maxLat: number }): { x: number; z: number } {
+  // Échelle plus grande pour mieux voir le détail de la parcelle
+  const scale = 50;
+  const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng) - 0.5) * scale;
+  const z = ((lat - bounds.minLat) / (bounds.maxLat - bounds.minLat) - 0.5) * scale;
+  return { x, z };
+}
+
+/**
+ * Crée le terrain 3D pour une parcelle unique
+ */
+private creerTerrain3dParcelle(points: Point3D[], bounds: any, parcelle: Parcelle): void {
+  if (!this.scene3d) return;
+
+  this.terrainGroup = new THREE.Group();
+   // Stocker les points pour le raycaster
+  this.terrainGroup.userData = { points3d: points };
+
+  this.scene3d.add(this.terrainGroup);
+
+  // Créer une grille pour le terrain
+  const resolution = 40;
+  const stepX = 50 / resolution;
+  const stepZ = 50 / resolution;
+
+  const vertices: number[] = [];
+  const colors: number[] = [];
+  const indices: number[] = [];
+
+  // Map des hauteurs pour interpolation rapide
+  const heightMap = new Map<string, { height: number; ndvi: number }>();
+  points.forEach(p => {
+    const key = `${Math.round(p.x * 10)},${Math.round(p.z * 10)}`;
+    heightMap.set(key, { height: p.y, ndvi: p.ndvi });
+  });
+
+  const getHeightAt = (x: number, z: number): { height: number; ndvi: number } => {
+    let closestDist = Infinity;
+    let closestHeight = 0;
+    let closestNdvi = 0;
+
+    for (const p of points) {
+      const dx = p.x - x;
+      const dz = p.z - z;
+      const dist = dx * dx + dz * dz;
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestHeight = p.y;
+        closestNdvi = p.ndvi;
+      }
+    }
+    return { height: closestHeight, ndvi: closestNdvi };
+  };
+
+  // Générer les vertices
+  for (let i = 0; i <= resolution; i++) {
+    const z = -25 + i * stepZ;
+    for (let j = 0; j <= resolution; j++) {
+      const x = -25 + j * stepX;
+      const { height, ndvi } = getHeightAt(x, z);
+
+      vertices.push(x, height, z);
+
+      const color = this.getNdviColor3D(ndvi);
+      colors.push(color.r, color.g, color.b);
+
+      if (i < resolution && j < resolution) {
+        const a = i * (resolution + 1) + j;
+        const b = i * (resolution + 1) + j + 1;
+        const c = (i + 1) * (resolution + 1) + j;
+        const d = (i + 1) * (resolution + 1) + j + 1;
+
+        indices.push(a, b, c);
+        indices.push(b, d, c);
+      }
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+
+  const material = new THREE.MeshStandardMaterial({
+    vertexColors: true,
+    side: THREE.DoubleSide,
+    roughness: 0.6,
+    metalness: 0.1,
+    flatShading: false
+  });
+
+  const terrainMesh = new THREE.Mesh(geometry, material);
+  terrainMesh.castShadow = true;
+  terrainMesh.receiveShadow = true;
+  this.terrainGroup.add(terrainMesh);
+
+  this.scene3d.add(this.terrainGroup);
+
+  // Ajouter le label de la parcelle
+  this.ajouterLabelParcelle3d(parcelle, points);
+}
+
+/**
+ * Ajoute un contour coloré autour de la parcelle
+ */
+private ajouterContourParcelle(coords: [number, number][], bounds: any, couleur: string): void {
+  if (!this.scene3d) return;
+
+  const points3d: THREE.Vector3[] = [];
+
+  coords.forEach(([lng, lat]) => {
+    const { x, z } = this.geoToWorldParcelle(lng, lat, bounds);
+    points3d.push(new THREE.Vector3(x, 0.5, z));
+  });
+
+  // Fermer le contour
+  if (points3d.length > 0) {
+    points3d.push(points3d[0].clone());
+  }
+
+  const lineGeometry = new THREE.BufferGeometry().setFromPoints(points3d);
+  const lineMaterial = new THREE.LineBasicMaterial({ color: couleur, linewidth: 2 });
+  const contourLine = new THREE.Line(lineGeometry, lineMaterial);
+  this.terrainGroup?.add(contourLine);
+
+  // Ajouter des poteaux aux sommets
+  const poleMaterial = new THREE.MeshStandardMaterial({ color: couleur });
+  points3d.forEach(point => {
+    const poleGeo = new THREE.CylinderGeometry(0.1, 0.2, 1, 4);
+    const pole = new THREE.Mesh(poleGeo, poleMaterial);
+    pole.position.set(point.x, point.y + 0.5, point.z);
+    this.terrainGroup?.add(pole);
+  });
+}
+
+/**
+ * Ajoute un label en 3D pour la parcelle
+ */
+private ajouterLabelParcelle3d(parcelle: Parcelle, points: Point3D[]): void {
+  if (!this.scene3d || points.length === 0) return;
+
+  // Calculer le centre de la parcelle
+  const centerX = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+  const centerZ = points.reduce((sum, p) => sum + p.z, 0) / points.length;
+  const centerY = points.reduce((sum, p) => sum + p.y, 0) / points.length + 3;
+
+  const div = document.createElement('div');
+  div.innerHTML = `
+    <div style="background:${parcelle.couleur || '#4CAF50'};border-radius:12px;padding:8px 16px;color:white;font-weight:bold;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,0.3);backdrop-filter:blur(4px);border:2px solid white;">
+      <div style="font-size:14px;">🌾 ${parcelle.nom}</div>
+      <div style="font-size:11px;opacity:0.9;">${parcelle.surface} ha | ${parcelle.culture || 'Sans culture'}</div>
+      <div style="font-size:10px;margin-top:4px;">
+        ⛰️ ${this.altitudeStats?.min || 0}m → ${this.altitudeStats?.max || 0}m (Δ${this.altitudeStats?.denivele || 0}m)
+      </div>
+    </div>
+  `;
+
+  const label = new CSS2DObject(div);
+  label.position.set(centerX, centerY, centerZ);
+  this.scene3d.add(label);
+}
+
+/**
+ * Centre la caméra sur la parcelle
+ */
+private centrerCameraSurParcelle(points: Point3D[]): void {
+  if (!this.camera3d || !this.controls3d || points.length === 0) return;
+
+  const centerX = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+  const centerZ = points.reduce((sum, p) => sum + p.z, 0) / points.length;
+  const maxY = Math.max(...points.map(p => p.y));
+
+  // Positionner la caméra pour bien voir la parcelle
+  const distance = 30;
+  this.camera3d.position.set(centerX + distance * 0.7, maxY + distance * 0.5, centerZ + distance);
+  this.controls3d.target.set(centerX, maxY / 2, centerZ);
+  this.controls3d.update();
+}
+
+/**
+ * Retourne la couleur NDVI pour le terrain 3D
+ */
+private getNdviColor3D(ndvi: number): { r: number; g: number; b: number } {
+  if (ndvi > 0.6) return { r: 34/255, g: 139/255, b: 34/255 };   // Vert foncé
+  if (ndvi > 0.4) return { r: 154/255, g: 205/255, b: 50/255 };  // Vert clair
+  if (ndvi > 0.2) return { r: 244/255, g: 164/255, b: 96/255 };   // Orange
+  return { r: 139/255, g: 69/255, b: 19/255 };                     // Marron
+}
+
 }

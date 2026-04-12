@@ -821,6 +821,30 @@ export class ChatComponent implements AfterViewChecked, OnInit, OnDestroy {
   }
 
   trackByDate(_: number, msg: ChatMessage): string {
-    return msg.timestamp.getTime().toString();
+  // Vérification de sécurité pour éviter l'erreur
+  if (!msg || !msg.timestamp) {
+    return `${_}_${Date.now()}`;
   }
+
+  // Si timestamp est déjà un Date
+  if (msg.timestamp instanceof Date) {
+    return `${msg.timestamp.getTime()}`;
+  }
+
+  // Si timestamp est un nombre (timestamp Unix)
+  if (typeof msg.timestamp === 'number') {
+    return `${msg.timestamp}`;
+  }
+
+  // Si timestamp est une chaîne
+  if (typeof msg.timestamp === 'string') {
+    const parsed = new Date(msg.timestamp);
+    if (!isNaN(parsed.getTime())) {
+      return `${parsed.getTime()}`;
+    }
+  }
+
+  // Fallback
+  return `${_}_${Date.now()}`;
+}
 }
