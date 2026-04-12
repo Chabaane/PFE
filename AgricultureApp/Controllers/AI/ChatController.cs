@@ -13,7 +13,7 @@ namespace AgricultureApp.Controllers.AI
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ChatMemoryService _memory;
         private readonly ILogger<ChatController> _logger;
-        private const string HUGGINGFACE_TOKEN = "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"; // Remplacez par votre token
+        private const string HUGGINGFACE_TOKEN = ""; // Remplacez par votre token
 
         public ChatController(
             IHttpClientFactory httpClientFactory,
