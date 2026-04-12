@@ -13,9 +13,7 @@ namespace AgricultureApp.Controllers.AI
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ChatMemoryService _memory;
         private readonly ILogger<ChatController> _logger;
-        private const string HUGGINGFACE_TOKEN = "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"; // Remplacez par votre token
-
-        public static string HUGGINGFACE_TOKEN1 => HUGGINGFACE_TOKEN;
+       // Remplacez par votre token
 
         public ChatController(
             IHttpClientFactory httpClientFactory,
@@ -123,7 +121,7 @@ namespace AgricultureApp.Controllers.AI
                 client.Timeout = TimeSpan.FromSeconds(30);
 
                 // Ajouter le token d'authentification
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {HUGGINGFACE_TOKEN1}");
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {HUGGINGFACE_TOKEN}");
 
                 var prompt = BuildPrompt(request, context, knowledge);
 
