@@ -59,6 +59,12 @@ import { ChatComponent } from '../chat/chat.component';
           </a>
         </li>
 
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/leaf-scan" routerLinkActive="active">
+            <i class="fas fa-leaf"></i>🔬 Scan Feuilles
+          </a>
+        </li>
+
         <!-- Dropdown utilisateur -->
         <li class="nav-item dropdown ms-3" *ngIf="isAuthenticated">
           <a class="nav-link dropdown-toggle d-flex align-items-center"

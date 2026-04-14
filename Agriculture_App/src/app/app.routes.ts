@@ -118,6 +118,13 @@ export const routes: Routes = [
         loadComponent: () => import('./components/parcelles/parcelles.component')
           .then(m => m.ParcellesComponent)
       }
+      ,{
+        path: 'leaf-scan',
+        loadComponent: () =>
+          import('./components/leaf-scan/leaf-scan.component')
+            .then(m => m.LeafScanComponent),
+        title: 'PhytoScan — Diagnostic foliaire'
+      }
     ]
   },
 
