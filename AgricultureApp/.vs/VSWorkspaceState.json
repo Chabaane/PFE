@@ -1,12 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Controllers",
-    "\\Controllers\\AI",
-    "\\Models",
-    "\\Models\\DTOs",
-    "\\Models\\Entities",
-    "\\Services"
+    "\\Data",
+    "\\Models"
   ],
+  "SelectedNode": "\\Data\\class_indices.json",
   "PreviewInSolutionExplorer": false
 }

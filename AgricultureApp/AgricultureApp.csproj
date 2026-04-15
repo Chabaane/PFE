@@ -25,10 +25,17 @@
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		  <PrivateAssets>all</PrivateAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.ML" Version="5.0.0" />
+		<PackageReference Include="Microsoft.ML.ImageAnalytics" Version="5.0.0" />
+		<PackageReference Include="Microsoft.ML.Vision" Version="5.0.0" />
 
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 
+		<PackageReference Include="SciSharp.TensorFlow.Redist" Version="2.16.0" />
+
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+		<PackageReference Include="pythonnet" Version="3.0.3" />
+		
 	</ItemGroup>
 
 </Project>

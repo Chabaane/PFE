@@ -11,11 +11,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Cache Elevation ────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<ElevationCacheService>();
-
+builder.Services.AddSingleton<PythonModelService>();
 // ── Services d'élévation ───────────────────────────────────────────────────────
 builder.Services.AddHttpClient<IElevationService, ElevationService>(client =>
 {
@@ -40,6 +42,14 @@ builder.Services.AddControllers()
         options.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ss";
     });
 
+
+//--------TenserFlow-----------------------
+// Chemin vers le dossier contenant saved_model.pb (pas le fichier lui-même, mais le dossier)
+string modelFolder = Path.Combine(builder.Environment.ContentRootPath, "Models");
+
+builder.Services.AddSingleton<TensorFlowModelService>(provider =>
+    new TensorFlowModelService(modelFolder));
+//---------------------------------------------
 // ── Météo ─────────────────────────────────────────────────────────────────────
 builder.Services.AddHttpClient<IMeteoService, MeteoService>(client =>
 {

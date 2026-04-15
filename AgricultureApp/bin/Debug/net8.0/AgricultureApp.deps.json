@@ -14,8 +14,13 @@
           "Microsoft.AspNetCore.OpenApi": "8.0.0",
           "Microsoft.EntityFrameworkCore.Design": "8.0.0",
           "Microsoft.EntityFrameworkCore.SqlServer": "8.0.0",
+          "Microsoft.ML": "5.0.0",
+          "Microsoft.ML.ImageAnalytics": "5.0.0",
+          "Microsoft.ML.Vision": "5.0.0",
           "Newtonsoft.Json": "13.0.4",
-          "Swashbuckle.AspNetCore": "6.5.0"
+          "SciSharp.TensorFlow.Redist": "2.16.0",
+          "Swashbuckle.AspNetCore": "6.5.0",
+          "pythonnet": "3.0.3"
         },
         "runtime": {
           "AgricultureApp.dll": {}
@@ -23,7 +28,7 @@
       },
       "Azure.Core/1.25.0": {
         "dependencies": {
-          "Microsoft.Bcl.AsyncInterfaces": "6.0.0",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.4",
           "System.Memory.Data": "1.0.2"
         },
         "runtime": {
@@ -55,11 +60,27 @@
           }
         }
       },
+      "Google.Protobuf/3.30.2": {
+        "runtime": {
+          "lib/net5.0/Google.Protobuf.dll": {
+            "assemblyVersion": "3.30.2.0",
+            "fileVersion": "3.30.2.0"
+          }
+        }
+      },
       "Humanizer.Core/2.14.1": {
         "runtime": {
           "lib/net6.0/Humanizer.dll": {
             "assemblyVersion": "2.14.0.0",
             "fileVersion": "2.14.1.48190"
+          }
+        }
+      },
+      "MethodBoundaryAspect.Fody/2.0.148": {
+        "runtime": {
+          "lib/netstandard2.0/MethodBoundaryAspect.dll": {
+            "assemblyVersion": "2.0.148.0",
+            "fileVersion": "2.0.148.0"
           }
         }
       },
@@ -109,15 +130,18 @@
           }
         }
       },
-      "Microsoft.Bcl.AsyncInterfaces/6.0.0": {
+      "Microsoft.Bcl.AsyncInterfaces/9.0.4": {
         "runtime": {
           "lib/netstandard2.1/Microsoft.Bcl.AsyncInterfaces.dll": {
-            "assemblyVersion": "6.0.0.0",
-            "fileVersion": "6.0.21.52210"
+            "assemblyVersion": "9.0.0.4",
+            "fileVersion": "9.0.425.16305"
           }
         }
       },
       "Microsoft.CodeAnalysis.Common/4.5.0": {
+        "dependencies": {
+          "System.Collections.Immutable": "9.0.4"
+        },
         "runtime": {
           "lib/netcoreapp3.1/Microsoft.CodeAnalysis.dll": {
             "assemblyVersion": "4.5.0.0",
@@ -276,9 +300,10 @@
       "Microsoft.CodeAnalysis.Workspaces.Common/4.5.0": {
         "dependencies": {
           "Humanizer.Core": "2.14.1",
-          "Microsoft.Bcl.AsyncInterfaces": "6.0.0",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.4",
           "Microsoft.CodeAnalysis.Common": "4.5.0",
-          "System.Composition": "6.0.0"
+          "System.Composition": "6.0.0",
+          "System.Threading.Channels": "9.0.4"
         },
         "runtime": {
           "lib/netcoreapp3.1/Microsoft.CodeAnalysis.Workspaces.dll": {
@@ -537,6 +562,189 @@
           }
         }
       },
+      "Microsoft.ML/5.0.0": {
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.4",
+          "Microsoft.ML.CpuMath": "5.0.0",
+          "Microsoft.ML.DataView": "5.0.0",
+          "Newtonsoft.Json": "13.0.4",
+          "System.CodeDom": "9.0.4",
+          "System.Collections.Immutable": "9.0.4",
+          "System.Numerics.Tensors": "9.0.4",
+          "System.Threading.Channels": "9.0.4"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.ML.Core.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          },
+          "lib/netstandard2.0/Microsoft.ML.Data.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          },
+          "lib/netstandard2.0/Microsoft.ML.KMeansClustering.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          },
+          "lib/netstandard2.0/Microsoft.ML.PCA.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          },
+          "lib/netstandard2.0/Microsoft.ML.StandardTrainers.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          },
+          "lib/netstandard2.0/Microsoft.ML.Transforms.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/linux-arm/native/libLdaNative.so": {
+            "rid": "linux-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm/native/libLdaNative.so.dbg": {
+            "rid": "linux-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libLdaNative.so": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libLdaNative.so.dbg": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x64/native/libLdaNative.so": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x64/native/libLdaNative.so.dbg": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-arm64/native/libLdaNative.dylib": {
+            "rid": "osx-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-arm64/native/libLdaNative.dylib.dwarf": {
+            "rid": "osx-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-x64/native/libLdaNative.dylib": {
+            "rid": "osx-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-x64/native/libLdaNative.dylib.dwarf": {
+            "rid": "osx-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-arm64/native/LdaNative.dll": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "0.2300.25.55704"
+          },
+          "runtimes/win-x64/native/LdaNative.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.2300.25.55704"
+          },
+          "runtimes/win-x86/native/LdaNative.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "0.2300.25.55704"
+          }
+        }
+      },
+      "Microsoft.ML.CpuMath/5.0.0": {
+        "dependencies": {
+          "System.Numerics.Tensors": "9.0.4"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.ML.CpuMath.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          }
+        }
+      },
+      "Microsoft.ML.DataView/5.0.0": {
+        "dependencies": {
+          "System.Collections.Immutable": "9.0.4"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.ML.DataView.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          }
+        }
+      },
+      "Microsoft.ML.ImageAnalytics/5.0.0": {
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.4",
+          "Microsoft.ML": "5.0.0",
+          "Newtonsoft.Json": "13.0.4",
+          "SkiaSharp": "2.88.8",
+          "SkiaSharp.NativeAssets.Linux.NoDependencies": "2.88.8",
+          "System.CodeDom": "9.0.4",
+          "System.Collections.Immutable": "9.0.4",
+          "System.Numerics.Tensors": "9.0.4",
+          "System.Threading.Channels": "9.0.4"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.ML.ImageAnalytics.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          }
+        }
+      },
+      "Microsoft.ML.TensorFlow/5.0.0": {
+        "dependencies": {
+          "Google.Protobuf": "3.30.2",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.4",
+          "Microsoft.ML": "5.0.0",
+          "Newtonsoft.Json": "13.0.4",
+          "System.CodeDom": "9.0.4",
+          "System.Collections.Immutable": "9.0.4",
+          "System.Numerics.Tensors": "9.0.4",
+          "System.Threading.Channels": "9.0.4",
+          "TensorFlow.NET": "0.100.2"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.ML.TensorFlow.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          }
+        }
+      },
+      "Microsoft.ML.Vision/5.0.0": {
+        "dependencies": {
+          "Google.Protobuf": "3.30.2",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.4",
+          "Microsoft.ML.TensorFlow": "5.0.0",
+          "Newtonsoft.Json": "13.0.4",
+          "System.CodeDom": "9.0.4",
+          "System.Collections.Immutable": "9.0.4",
+          "System.Threading.Channels": "9.0.4",
+          "TensorFlow.NET": "0.100.2"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.ML.Vision.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "5.0.25.55704"
+          }
+        }
+      },
       "Microsoft.OpenApi/1.4.3": {
         "runtime": {
           "lib/netstandard2.0/Microsoft.OpenApi.dll": {
@@ -571,7 +779,7 @@
       },
       "Mono.TextTemplating/2.2.1": {
         "dependencies": {
-          "System.CodeDom": "4.4.0"
+          "System.CodeDom": "9.0.4"
         },
         "runtime": {
           "lib/netstandard2.0/Mono.TextTemplating.dll": {
@@ -596,6 +804,130 @@
           "lib/netstandard2.0/Newtonsoft.Json.Bson.dll": {
             "assemblyVersion": "1.0.0.0",
             "fileVersion": "1.0.2.22727"
+          }
+        }
+      },
+      "Protobuf.Text/0.6.0": {
+        "dependencies": {
+          "Google.Protobuf": "3.30.2"
+        },
+        "runtime": {
+          "lib/net6.0/Protobuf.Text.dll": {
+            "assemblyVersion": "0.6.0.0",
+            "fileVersion": "0.6.0.0"
+          }
+        }
+      },
+      "pythonnet/3.0.3": {
+        "runtime": {
+          "lib/netstandard2.0/Python.Runtime.dll": {
+            "assemblyVersion": "3.0.3.0",
+            "fileVersion": "3.0.3.0"
+          }
+        }
+      },
+      "SciSharp.TensorFlow.Redist/2.16.0": {
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/libtensorflow.so": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x64/native/libtensorflow_framework.so.2": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/tensorflow.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Serilog/2.10.0": {
+        "runtime": {
+          "lib/netstandard2.1/Serilog.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.10.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Console/4.1.0": {
+        "dependencies": {
+          "Serilog": "2.10.0"
+        },
+        "runtime": {
+          "lib/net5.0/Serilog.Sinks.Console.dll": {
+            "assemblyVersion": "4.1.0.0",
+            "fileVersion": "4.1.0.0"
+          }
+        }
+      },
+      "SkiaSharp/2.88.8": {
+        "dependencies": {
+          "SkiaSharp.NativeAssets.Win32": "2.88.8",
+          "SkiaSharp.NativeAssets.macOS": "2.88.8"
+        },
+        "runtime": {
+          "lib/net6.0/SkiaSharp.dll": {
+            "assemblyVersion": "2.88.0.0",
+            "fileVersion": "2.88.8.0"
+          }
+        }
+      },
+      "SkiaSharp.NativeAssets.Linux.NoDependencies/2.88.8": {
+        "dependencies": {
+          "SkiaSharp": "2.88.8"
+        },
+        "runtimeTargets": {
+          "runtimes/linux-arm/native/libSkiaSharp.so": {
+            "rid": "linux-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libSkiaSharp.so": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-x64/native/libSkiaSharp.so": {
+            "rid": "linux-musl-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x64/native/libSkiaSharp.so": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "SkiaSharp.NativeAssets.macOS/2.88.8": {
+        "runtimeTargets": {
+          "runtimes/osx/native/libSkiaSharp.dylib": {
+            "rid": "osx",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "SkiaSharp.NativeAssets.Win32/2.88.8": {
+        "runtimeTargets": {
+          "runtimes/win-arm64/native/libSkiaSharp.dll": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/libSkiaSharp.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x86/native/libSkiaSharp.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
           }
         }
       },
@@ -636,11 +968,19 @@
           }
         }
       },
-      "System.CodeDom/4.4.0": {
+      "System.CodeDom/9.0.4": {
         "runtime": {
-          "lib/netstandard2.0/System.CodeDom.dll": {
-            "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.6.25519.3"
+          "lib/net8.0/System.CodeDom.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.425.16305"
+          }
+        }
+      },
+      "System.Collections.Immutable/9.0.4": {
+        "runtime": {
+          "lib/net8.0/System.Collections.Immutable.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.425.16305"
           }
         }
       },
@@ -761,6 +1101,14 @@
           }
         }
       },
+      "System.Numerics.Tensors/9.0.4": {
+        "runtime": {
+          "lib/net8.0/System.Numerics.Tensors.dll": {
+            "assemblyVersion": "9.0.0.4",
+            "fileVersion": "9.0.425.16305"
+          }
+        }
+      },
       "System.Runtime.Caching/6.0.0": {
         "dependencies": {
           "System.Configuration.ConfigurationManager": "6.0.1"
@@ -807,6 +1155,14 @@
           }
         }
       },
+      "System.Threading.Channels/9.0.4": {
+        "runtime": {
+          "lib/net8.0/System.Threading.Channels.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.425.16305"
+          }
+        }
+      },
       "System.Windows.Extensions/6.0.0": {
         "dependencies": {
           "System.Drawing.Common": "6.0.0"
@@ -823,6 +1179,20 @@
             "assetType": "runtime",
             "assemblyVersion": "6.0.0.0",
             "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "TensorFlow.NET/0.100.2": {
+        "dependencies": {
+          "MethodBoundaryAspect.Fody": "2.0.148",
+          "Newtonsoft.Json": "13.0.4",
+          "Protobuf.Text": "0.6.0",
+          "Serilog.Sinks.Console": "4.1.0"
+        },
+        "runtime": {
+          "lib/net6.0/Tensorflow.Binding.dll": {
+            "assemblyVersion": "0.100.2.0",
+            "fileVersion": "0.100.2.0"
           }
         }
       }
@@ -855,12 +1225,26 @@
       "path": "bcrypt.net-next/4.0.3",
       "hashPath": "bcrypt.net-next.4.0.3.nupkg.sha512"
     },
+    "Google.Protobuf/3.30.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Y2aOVLIt75yeeEWigg9V9YnjsEm53sADtLGq0gLhwaXpk3iu8tYSoauolyhenagA2sWno2TQ2WujI0HQd6s1Vw==",
+      "path": "google.protobuf/3.30.2",
+      "hashPath": "google.protobuf.3.30.2.nupkg.sha512"
+    },
     "Humanizer.Core/2.14.1": {
       "type": "package",
       "serviceable": true,
       "sha512": "sha512-lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw==",
       "path": "humanizer.core/2.14.1",
       "hashPath": "humanizer.core.2.14.1.nupkg.sha512"
+    },
+    "MethodBoundaryAspect.Fody/2.0.148": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QFZOs5SRehBbRYmuPvdsgr3PhqkoERO9YT0jxW4JzmWIZmk2nlMz4uokz+HiWtK9n+2e0eAZ0pX7om+yMbserw==",
+      "path": "methodboundaryaspect.fody/2.0.148",
+      "hashPath": "methodboundaryaspect.fody.2.0.148.nupkg.sha512"
     },
     "Microsoft.AspNetCore.Authentication.JwtBearer/8.0.1": {
       "type": "package",
@@ -890,12 +1274,12 @@
       "path": "microsoft.aspnetcore.openapi/8.0.0",
       "hashPath": "microsoft.aspnetcore.openapi.8.0.0.nupkg.sha512"
     },
-    "Microsoft.Bcl.AsyncInterfaces/6.0.0": {
+    "Microsoft.Bcl.AsyncInterfaces/9.0.4": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-UcSjPsst+DfAdJGVDsu346FX0ci0ah+lw3WRtn18NUwEqRt70HaOQ7lI72vy3+1LxtqI3T5GWwV39rQSrCzAeg==",
-      "path": "microsoft.bcl.asyncinterfaces/6.0.0",
-      "hashPath": "microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512"
+      "sha512": "sha512-9VGI5kxIvrNG2mqLQZnUR6y/3fcnygD8eNpHR+CqfbnIXvea6nehnYknDKQTxZVPMpzpNca+7DxLBmpdB3q0Bw==",
+      "path": "microsoft.bcl.asyncinterfaces/9.0.4",
+      "hashPath": "microsoft.bcl.asyncinterfaces.9.0.4.nupkg.sha512"
     },
     "Microsoft.CodeAnalysis.Common/4.5.0": {
       "type": "package",
@@ -1037,6 +1421,48 @@
       "path": "microsoft.identitymodel.tokens/7.1.2",
       "hashPath": "microsoft.identitymodel.tokens.7.1.2.nupkg.sha512"
     },
+    "Microsoft.ML/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-clHLX6bjcRpuHDRkXwkm/gSILifT0DOXXzgor4kBhjTkz5G419BCXhZ1xVk/GsMH6koqWwMONjQKzSSCSVZrIQ==",
+      "path": "microsoft.ml/5.0.0",
+      "hashPath": "microsoft.ml.5.0.0.nupkg.sha512"
+    },
+    "Microsoft.ML.CpuMath/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Qv0OeYmFkzDC9AjfJfUUTiIYcnb49K5oGtUUOIkr0BrApqWm6niHZqCrD3iJJi2BORbto/eEfP7/+uNqHxGvYg==",
+      "path": "microsoft.ml.cpumath/5.0.0",
+      "hashPath": "microsoft.ml.cpumath.5.0.0.nupkg.sha512"
+    },
+    "Microsoft.ML.DataView/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-G8onJ9msBpLYea29WyG+NRV010rg75hJDUIEK3+sSDFAR0OV5p74QjZWnpNbyhT8OkAJdSNkif4l9/iCWZ2LOQ==",
+      "path": "microsoft.ml.dataview/5.0.0",
+      "hashPath": "microsoft.ml.dataview.5.0.0.nupkg.sha512"
+    },
+    "Microsoft.ML.ImageAnalytics/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-20cFTbIlLsl+xaKANdW5tMF6rwHWcoqDmF2taxtRdmheuwv7DDlVTMhZJSs87kvWMuAg8yBXmclWe0S8ORWDVw==",
+      "path": "microsoft.ml.imageanalytics/5.0.0",
+      "hashPath": "microsoft.ml.imageanalytics.5.0.0.nupkg.sha512"
+    },
+    "Microsoft.ML.TensorFlow/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-YIWUsjwCvtq2VqnPmBQRDSvFy9pzw3FmDH6Iv5LeHfeAkuDLyfWUre0s5qENO58Uk3cU2YSHryc9D50E4FdzDQ==",
+      "path": "microsoft.ml.tensorflow/5.0.0",
+      "hashPath": "microsoft.ml.tensorflow.5.0.0.nupkg.sha512"
+    },
+    "Microsoft.ML.Vision/5.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-BRiYXDjydE4z/CPvjbno8SCS0CcT54B7KsuDncI3/OS6f8e+EumoTskWqyW5LcYpqcQdd7YWC05LkN9R4RomVA==",
+      "path": "microsoft.ml.vision/5.0.0",
+      "hashPath": "microsoft.ml.vision.5.0.0.nupkg.sha512"
+    },
     "Microsoft.OpenApi/1.4.3": {
       "type": "package",
       "serviceable": true,
@@ -1079,6 +1505,69 @@
       "path": "newtonsoft.json.bson/1.0.2",
       "hashPath": "newtonsoft.json.bson.1.0.2.nupkg.sha512"
     },
+    "Protobuf.Text/0.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-iudZZRcWRfgrVON36kSy8ZHVcu9Ov0kDd398/KwKoziq77Y5YY/XNHOW+xvNtMBULent9MQ5GZxuTMjQGx2u+w==",
+      "path": "protobuf.text/0.6.0",
+      "hashPath": "protobuf.text.0.6.0.nupkg.sha512"
+    },
+    "pythonnet/3.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Go6pLzJ0msUVISUDf4n49GFja/7PbrjfQ9Nxpz+KV0r39YB8x5lPz7sItX38a0KGLoQIsSMxkUNDRjGRvplLHw==",
+      "path": "pythonnet/3.0.3",
+      "hashPath": "pythonnet.3.0.3.nupkg.sha512"
+    },
+    "SciSharp.TensorFlow.Redist/2.16.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-2RFkGfdTIoo8ineDUhQyjTNjXzrVLvPmgI4IaRLxqXy2TeepCmRLKG4CTN71IGC2hkPnnKyPIaXv3jkN+QcTFw==",
+      "path": "scisharp.tensorflow.redist/2.16.0",
+      "hashPath": "scisharp.tensorflow.redist.2.16.0.nupkg.sha512"
+    },
+    "Serilog/2.10.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-+QX0hmf37a0/OZLxM3wL7V6/ADvC1XihXN4Kq/p6d8lCPfgkRdiuhbWlMaFjR9Av0dy5F0+MBeDmDdRZN/YwQA==",
+      "path": "serilog/2.10.0",
+      "hashPath": "serilog.2.10.0.nupkg.sha512"
+    },
+    "Serilog.Sinks.Console/4.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-K6N5q+5fetjnJPvCmkWOpJ/V8IEIoMIB1s86OzBrbxwTyHxdx3pmz4H+8+O/Dc/ftUX12DM1aynx/dDowkwzqg==",
+      "path": "serilog.sinks.console/4.1.0",
+      "hashPath": "serilog.sinks.console.4.1.0.nupkg.sha512"
+    },
+    "SkiaSharp/2.88.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-bRkp3uKp5ZI8gXYQT57uKwil1uobb2p8c69n7v5evlB/2JNcMAXVcw9DZAP5Ig3WSvgzGm2YSn27UVeOi05NlA==",
+      "path": "skiasharp/2.88.8",
+      "hashPath": "skiasharp.2.88.8.nupkg.sha512"
+    },
+    "SkiaSharp.NativeAssets.Linux.NoDependencies/2.88.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/DoKtdyvRgCC5GR/SH+ps3ZiOjmf0BYpAyrhWQELFOO1hdcqddrDVJjDNCOJ41vV+NlS5b3kcDoZZ7jLhFjyXg==",
+      "path": "skiasharp.nativeassets.linux.nodependencies/2.88.8",
+      "hashPath": "skiasharp.nativeassets.linux.nodependencies.2.88.8.nupkg.sha512"
+    },
+    "SkiaSharp.NativeAssets.macOS/2.88.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-6Kn5TSkKlfyS6azWHF3Jk2sW5C4jCE5uSshM/5AbfFrR+5n6qM5XEnz9h4VaVl7LTxBvHvMkuPb/3bpbq0vxTw==",
+      "path": "skiasharp.nativeassets.macos/2.88.8",
+      "hashPath": "skiasharp.nativeassets.macos.2.88.8.nupkg.sha512"
+    },
+    "SkiaSharp.NativeAssets.Win32/2.88.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-O9QXoWEXA+6cweR4h3BOnwMz+pO9vL9mXdjLrpDd0w1QzCgWmLQBxa1VgySDITiH7nQndrDG1h6937zm9pLj1Q==",
+      "path": "skiasharp.nativeassets.win32/2.88.8",
+      "hashPath": "skiasharp.nativeassets.win32.2.88.8.nupkg.sha512"
+    },
     "Swashbuckle.AspNetCore/6.5.0": {
       "type": "package",
       "serviceable": true,
@@ -1107,12 +1596,19 @@
       "path": "swashbuckle.aspnetcore.swaggerui/6.5.0",
       "hashPath": "swashbuckle.aspnetcore.swaggerui.6.5.0.nupkg.sha512"
     },
-    "System.CodeDom/4.4.0": {
+    "System.CodeDom/9.0.4": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-2sCCb7doXEwtYAbqzbF/8UAeDRMNmPaQbU2q50Psg1J9KzumyVVCgKQY8s53WIPTufNT0DpSe9QRvVjOzfDWBA==",
-      "path": "system.codedom/4.4.0",
-      "hashPath": "system.codedom.4.4.0.nupkg.sha512"
+      "sha512": "sha512-aJdv7Z87PoPW8ijvGIincocooYRbH3Umtlz7OrJKf6GDInbdu1bvk5X1fFlmbl7WP+9ntoIBd7NjKz+siVFdHA==",
+      "path": "system.codedom/9.0.4",
+      "hashPath": "system.codedom.9.0.4.nupkg.sha512"
+    },
+    "System.Collections.Immutable/9.0.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-wfm2NgK22MmBe5qJjp52qzpkeDZKb4l9LbdubhZSehY1z4LS+lld6R+B+UQNb2AZRHu/QJlHxEUcRst5hIEejg==",
+      "path": "system.collections.immutable/9.0.4",
+      "hashPath": "system.collections.immutable.9.0.4.nupkg.sha512"
     },
     "System.Composition/6.0.0": {
       "type": "package",
@@ -1184,6 +1680,13 @@
       "path": "system.memory.data/1.0.2",
       "hashPath": "system.memory.data.1.0.2.nupkg.sha512"
     },
+    "System.Numerics.Tensors/9.0.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ynVvqELpMWGQJ1Y90rlAmuTiSQIkXD0W5AMj7pVpEjECmrcIJLexIBblgccerHFijayfcsl1KCbkk+Sg5cS9vQ==",
+      "path": "system.numerics.tensors/9.0.4",
+      "hashPath": "system.numerics.tensors.9.0.4.nupkg.sha512"
+    },
     "System.Runtime.Caching/6.0.0": {
       "type": "package",
       "serviceable": true,
@@ -1205,12 +1708,26 @@
       "path": "system.security.permissions/6.0.0",
       "hashPath": "system.security.permissions.6.0.0.nupkg.sha512"
     },
+    "System.Threading.Channels/9.0.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-4qBn2H6/aXBpE/Pm3wY5yusY/pEvQz99NlWHrTUji0qCmOdbhhjaALcpmbfW2ksxlPM6i6S+QFLkpOQdyfeKYQ==",
+      "path": "system.threading.channels/9.0.4",
+      "hashPath": "system.threading.channels.9.0.4.nupkg.sha512"
+    },
     "System.Windows.Extensions/6.0.0": {
       "type": "package",
       "serviceable": true,
       "sha512": "sha512-IXoJOXIqc39AIe+CIR7koBtRGMiCt/LPM3lI+PELtDIy9XdyeSrwXFdWV9dzJ2Awl0paLWUaknLxFQ5HpHZUog==",
       "path": "system.windows.extensions/6.0.0",
       "hashPath": "system.windows.extensions.6.0.0.nupkg.sha512"
+    },
+    "TensorFlow.NET/0.100.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-MqFtRLeuEcvNBL5E3Fgh7ifMQ54L6kweBLuJS184/Vru4j6cd+6f27wemREBDaR3HR8IkCaxabiASrmViDmCNw==",
+      "path": "tensorflow.net/0.100.2",
+      "hashPath": "tensorflow.net.0.100.2.nupkg.sha512"
     }
   }
 }

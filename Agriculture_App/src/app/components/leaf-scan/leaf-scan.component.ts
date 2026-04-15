@@ -735,13 +735,15 @@ interface HistoriqueItem {
     }
   `]
 })
-export class LeafScanComponent  implements OnInit, OnDestroy {
+export class LeafScanComponent implements OnInit, OnDestroy {
 
   @ViewChild('fileInput')  fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('videoEl')    videoEl!: ElementRef<HTMLVideoElement>;
   @ViewChild('canvasEl')   canvasEl!: ElementRef<HTMLCanvasElement>;
 
   private readonly API = 'http://localhost:5160/api/LeafScan/analyze';
+  // 🧪 Flag pour activer le mock (true = données factices, false = appel réel)
+  private useMock: boolean = false;   // ← Passe à true pour tester sans backend
 
   // ── State ──────────────────────────────────────────────────────────────────
   imagePreview:    string | null = null;
@@ -897,32 +899,80 @@ export class LeafScanComponent  implements OnInit, OnDestroy {
   // ── Analyse ───────────────────────────────────────────────────────────────
 
   async analyser(): Promise<void> {
-    if (!this.imageBase64 || this.isAnalyzing) return;
+    if (!this.imageBase64 || this.imageBase64.length < 100) {
+      this.errorMessage = 'Veuillez sélectionner une image valide.';
+      return;
+    }
+    if (this.isAnalyzing) return;
     this.isAnalyzing  = true;
     this.errorMessage = '';
     this.result       = null;
     this.scanStep     = 1;
 
-    // Simuler les étapes visuelles
+    // Simulation visuelle des étapes
     this.stepTimer = setInterval(() => {
       if (this.scanStep < 4) this.scanStep++;
     }, 900);
 
     try {
-      const body = {
-        imageBase64: this.imageBase64,
-        mediaType:   this.imageMediaType,
-        culture:     this.selectedCulture || undefined,
-        region:      this.selectedRegion
-      };
+      // 🧪 MOCK : données de test
+      if (this.useMock) {
+        console.log('🔧 Mode MOCK actif – utilisation de données factices');
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const response = await this.http.post<DiagnosticResult>(this.API, body).toPromise();
-
-      if (response) {
-        this.result = response;
-        this.sauvegarderHistorique(response);
+        const mockResult: DiagnosticResult = {
+          estSaine: false,
+          maladie: 'Rouille jaune (Puccinia striiformis)',
+          nomScientifique: 'Puccinia striiformis f. sp. tritici',
+          gravite: 'Modéré',
+          confiance: 87,
+          description: 'Présence de pustules jaune-orangé disposées linéairement sur les feuilles. Symptômes typiques de la rouille jaune sur céréales.',
+          causesFrequentes: [
+            'Humidité relative élevée (>80%)',
+            'Températures douces (10-15°C)',
+            'Variétés sensibles',
+            'Excès d’azote'
+          ],
+          traitements: {
+            bio: [
+              'Purin d’ortie (pulvérisation tous les 10 jours)',
+              'Décoction de prêle (renforce les défenses)',
+              'Bicarbonate de soude (1 cuillère/L)'
+            ],
+            conventionnel: [
+              'Triazole (ex: Tébucanozole)',
+              'Strobilurine (ex: Azoxystrobine)',
+              'Application préventive avant la floraison'
+            ],
+            urgence: 'Retirer et brûler les feuilles fortement atteintes. Appliquer un fongicide systémique dans les 48h.'
+          },
+          prevention: [
+            'Rotation des cultures (3 ans sans céréales)',
+            'Utiliser des variétés résistantes (ex: génétique Yr)',
+            'Éviter les excès d’engrais azotés',
+            'Surveiller les conditions météo (alerte rouille)'
+          ],
+          conditionsMeteo: 'Printemps humide et frais (T° 8-15°C, pluies fréquentes) favorise le développement de la rouille.',
+          culturesConcernees: ['Blé', 'Orge', 'Seigle', 'Triticale']
+        };
+        this.result = mockResult;
+        this.sauvegarderHistorique(mockResult);
+        console.log('✅ Mock assigné avec succès', this.result);
       } else {
-        this.errorMessage = 'Réponse vide du serveur';
+        // Appel réel à l'API
+        const body = {
+          imageBase64: this.imageBase64,
+          mediaType:   this.imageMediaType,
+          culture:     this.selectedCulture || '',
+          region:      this.selectedRegion
+        };
+        const response = await this.http.post<DiagnosticResult>(this.API, body).toPromise();
+        if (response) {
+          this.result = response;
+          this.sauvegarderHistorique(response);
+        } else {
+          this.errorMessage = 'Réponse vide du serveur';
+        }
       }
     } catch (err: any) {
       console.error('Erreur analyse:', err);
