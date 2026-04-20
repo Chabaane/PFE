@@ -1,9 +1,11 @@
 {
   "ExpandedNodes": [
     "",
+    "\\Controllers",
     "\\Data",
-    "\\Models"
+    "\\Models",
+    "\\Services"
   ],
-  "SelectedNode": "\\Data\\class_indices.json",
+  "SelectedNode": "\\Program.cs",
   "PreviewInSolutionExplorer": false
 }

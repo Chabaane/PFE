@@ -47,8 +47,7 @@ builder.Services.AddControllers()
 // Chemin vers le dossier contenant saved_model.pb (pas le fichier lui-même, mais le dossier)
 string modelFolder = Path.Combine(builder.Environment.ContentRootPath, "Models");
 
-builder.Services.AddSingleton<TensorFlowModelService>(provider =>
-    new TensorFlowModelService(modelFolder));
+
 //---------------------------------------------
 // ── Météo ─────────────────────────────────────────────────────────────────────
 builder.Services.AddHttpClient<IMeteoService, MeteoService>(client =>
