@@ -18,7 +18,7 @@ export interface ChatMessage {
   template: `
     <!-- Bouton flottant -->
     <div class="chat-fab" *ngIf="!isOpen" (click)="toggleChat()">
-      <div class="fab-icon">🌾</div>
+      <div class="fab-icon">🤖</div>
       <div class="fab-pulse"></div>
       <span class="fab-badge" *ngIf="unreadCount > 0">{{unreadCount > 9 ? '9+' : unreadCount}}</span>
       <div class="fab-tooltip">AgriBot — Assistant IA</div>
@@ -31,7 +31,7 @@ export interface ChatMessage {
       <div class="chat-header">
         <div class="header-identity">
           <div class="bot-avatar">
-            <span class="bot-avatar-icon">🌾</span>
+            <span class="bot-avatar-icon">🤖</span>
             <span class="bot-status-dot" [class.online]="isOnline"></span>
           </div>
           <div class="header-info">
@@ -68,7 +68,7 @@ export interface ChatMessage {
 
         <!-- Message d'accueil -->
         <div class="msg-row bot-row" *ngIf="messages.length === 0 && !loading">
-          <div class="msg-avatar bot-av">🌾</div>
+          <div class="msg-avatar bot-av">🤖</div>
           <div class="msg-bubble-wrap">
             <div class="msg-bubble bot-bubble">
               <div class="msg-text">
@@ -92,7 +92,7 @@ export interface ChatMessage {
              [class.bot-row]="msg.sender === 'bot'">
 
           <!-- Avatar bot -->
-          <div class="msg-avatar bot-av" *ngIf="msg.sender === 'bot'">🌾</div>
+          <div class="msg-avatar bot-av" *ngIf="msg.sender === 'bot'">🤖</div>
 
           <div class="msg-bubble-wrap" [class.user-wrap]="msg.sender === 'user'">
             <div class="msg-bubble" [class.user-bubble]="msg.sender === 'user'" [class.bot-bubble]="msg.sender === 'bot'">
@@ -107,7 +107,7 @@ export interface ChatMessage {
 
         <!-- Loading / Typing indicator -->
         <div class="msg-row bot-row" *ngIf="loading">
-          <div class="msg-avatar bot-av">🌾</div>
+          <div class="msg-avatar bot-av">🤖</div>
           <div class="msg-bubble-wrap">
             <div class="msg-bubble bot-bubble loading-bubble">
               <div class="typing-indicator">

@@ -1,10 +1,10 @@
 // app.component.ts
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ChatComponent } from "./components/chat/chat.component";
 import { ChatbotComponent } from './components/chatbot/chatbot.component';
-
+import { AutoTranslatorService } from './services/auto-translator/auto-translator.service';
 
 @Component({
   selector: 'app-root',
@@ -20,6 +20,12 @@ import { ChatbotComponent } from './components/chatbot/chatbot.component';
     }
   `]
 })
-export class AppComponent {
+export class AppComponent implements OnInit{
   title = 'AgriManager';
+  constructor(private translator: AutoTranslatorService) {}
+
+  ngOnInit(): void {
+    // ✅ UNE SEULE LIGNE — toute l'app est maintenant traduite automatiquement
+    this.translator.init();
+  }
 }

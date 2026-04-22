@@ -4,285 +4,252 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/api/auth.service';
 import { ChatComponent } from '../chat/chat.component';
+import { LanguageSwitcherComponent } from 'src/app/components/language-switcher/language-switcher.component';
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink , ChatComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, ChatComponent, LanguageSwitcherComponent],
   template: `
-    <div class="app-background">
-      <div class="app-container">
-        <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
-          <div class="container">
-           <li class="nav-item">
-              <a class="nav-link" routerLink="/agriculteurs" routerLinkActive="active">
-                <img src="assets/images/logo-light.png" alt="Agriculteurs" class="nav-logo">
-              </a>
-            </li>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
-
-      <!-- Menu principal -->
-      <ul class="navbar-nav ms-auto align-items-center gap-2">
-
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/agriculteurs" routerLinkActive="active">
-            <i class="bi bi-person-fill me-1"></i> Agriculteurs
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/fermes" routerLinkActive="active">
-            <i class="bi bi-house-door-fill me-1"></i> Fermes
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/parcelles/:agriculteurId" routerLinkActive="active">
-            <i class="bi bi-geo-alt-fill me-1"></i> Parcelles
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/vue-satellite" routerLinkActive="active">
-            <i class="bi bi-globe me-1"></i> Vue Satellite
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/diagnostic" routerLinkActive="active">
-            <i class="bi bi-cloud-sun-fill me-1"></i> Agroclimatique
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/leaf-scan" routerLinkActive="active">
-            <i class="fas fa-leaf"></i>🔬 Scan Feuilles
-          </a>
-        </li>
-
-        <!-- Dropdown utilisateur -->
-        <li class="nav-item dropdown ms-3" *ngIf="isAuthenticated">
-          <a class="nav-link dropdown-toggle d-flex align-items-center"
-             href="#"
-             data-bs-toggle="dropdown">
-
-            <!-- Avatar -->
-            <div class="avatar me-2">
-              {{ getUserName()?.charAt(0) }}
-            </div>
-
-            {{ getUserName() }}
-
-            <span *ngIf="isAdmin()" ></span>
+    <div class="app-wrapper">
+      <!-- Navbar largeur normale (container, pas container-fluid) -->
+      <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow">
+        <div class="container">
+          <!-- Logo -->
+          <a class="navbar-brand" routerLink="/agriculteurs">
+            <img src="assets/images/logo-light.png" alt="AgriManager" class="nav-logo">
           </a>
 
-          <ul class="dropdown-menu dropdown-menu-end premium-dropdown">
-            <li>
-              <a class="dropdown-item" routerLink="/profile">
-                <i class="bi bi-person me-2"></i> Mon profil
-              </a>
-            </li>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+            <span class="navbar-toggler-icon"></span>
+          </button>
 
-            <li>
-              <a class="dropdown-item" routerLink="/tableau-de-bord">
-                <i class="bi bi-speedometer2 me-2 text-info"></i> Tableau de bord
-              </a>
-            </li>
+          <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-2">
 
-            <li *ngIf="isAdmin()">
-              <a class="dropdown-item" routerLink="/admin">
-                <i class="bi bi-shield-lock me-2"></i> Admin
-              </a>
-            </li>
+              <!-- Liens de navigation : icône toujours visible, texte au survol -->
+              <li class="nav-item">
+                <a class="nav-link" routerLink="/agriculteurs" routerLinkActive="active">
+                  <i class="bi bi-person-fill me-1"></i>
+                  <span class="nav-text">Agriculteurs</span>
+                </a>
+              </li>
 
-            <li><hr class="dropdown-divider"></li>
+              <li class="nav-item">
+                <a class="nav-link" routerLink="/fermes" routerLinkActive="active">
+                  <i class="bi bi-house-door-fill me-1"></i>
+                  <span class="nav-text">Fermes</span>
+                </a>
+              </li>
 
-            <li>
-              <a class="dropdown-item text-danger" (click)="logout()">
-                <i class="bi bi-box-arrow-right me-2"></i> Déconnexion
-              </a>
-            </li>
-          </ul>
-        </li>
+              <li class="nav-item">
+                <a class="nav-link" routerLink="/parcelles/:agriculteurId" routerLinkActive="active">
+                  <i class="bi bi-geo-alt-fill me-1"></i>
+                  <span class="nav-text">Parcelles</span>
+                </a>
+              </li>
 
-      </ul>
-    </div>
+             <li class="nav-item">
+                <a class="nav-link" routerLink="/vue-satellite" routerLinkActive="active">
+                  <i class="bi bi-map-fill me-1"></i>
+                  <span class="nav-text">Vue Satellite</span>
+                </a>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link" routerLink="/diagnostic" routerLinkActive="active">
+                  <i class="bi bi-cloud-sun-fill me-1"></i>
+                  <span class="nav-text">Agroclimatique</span>
+                </a>
+              </li>
+
+             <li class="nav-item">
+                <a class="nav-link" routerLink="/leaf-scan" routerLinkActive="active">
+                  <i class="bi bi-search me-1"></i>
+                  <span class="nav-text">Scan Feuilles</span>
+                </a>
+              </li>
+
+              <!-- Sélecteur de langue (comportement normal) -->
+              <li class="nav-item">
+                <app-language-switcher></app-language-switcher>
+              </li>
+
+              <!-- Dropdown utilisateur (comportement normal) -->
+              <li class="nav-item dropdown" *ngIf="isAuthenticated">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+                  <div class="avatar me-2">{{ getUserName()?.charAt(0) }}</div>
+
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end premium-dropdown">
+                  <li><a class="dropdown-item" routerLink="/profile"><i class="bi bi-person me-2"></i> Mon profil</a></li>
+                  <li><a class="dropdown-item" routerLink="/tableau-de-bord"><i class="bi bi-speedometer2 me-2 text-info"></i> Tableau de bord</a></li>
+                  <li *ngIf="isAdmin()"><a class="dropdown-item" routerLink="/admin"><i class="bi bi-shield-lock me-2"></i> Admin</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" (click)="logout()"><i class="bi bi-box-arrow-right me-2"></i> Déconnexion</a></li>
+                </ul>
+              </li>
+            </ul>
           </div>
-        </nav>
+        </div>
+      </nav>
 
-        <!-- Main Content -->
-        <main class="container mt-4">
+      <main class="main-content">
+        <div class="container mt-4 pt-2">
           <router-outlet></router-outlet>
-        </main>
+        </div>
+      </main>
 
+      <app-chat></app-chat>
 
-        <!-- Chat widget flottant en bas à droite -->
-        <app-chat></app-chat>
-
-      </div>
-
-      <!-- Footer -->
-      <footer class="mt-5 py-4 bg-dark border-top">
-        <div class="container text-center text-white">
-          <p class="mb-0">
-            AgricultureApp &copy; 2024 - Gestion des parcelles agricoles Offline/Online
-          </p>
+      <footer class="footer mt-auto py-3 bg-dark text-white text-center">
+        <div class="container">
+          <p class="mb-0">AgricultureApp &copy; 2024 - Gestion des parcelles agricoles Offline/Online</p>
           <small>Développé avec Angular 17+ et .NET 8</small>
         </div>
       </footer>
     </div>
   `,
   styles: [`
-    .app-container {
+    /* Structure globale */
+    .app-wrapper {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-    }
-
-    main {
-      flex: 1;
-    }
-
-
-    footer {
-      margin-top: auto;
-    }
-
-    .app-background {
-      min-height: 100vh;
-      background:
-        linear-gradient(rgba(37, 40, 37, 0.85), rgba(52, 80, 52, 0.9)),
-        url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+      background: linear-gradient(rgba(37, 40, 37, 0.85), rgba(52, 80, 52, 0.9)),
+                  url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
-      background-repeat: no-repeat;
-      display: flex;
-      flex-direction: column;
     }
+
+    /* Navbar fixe, largeur normale (grâce au .container) */
+    .navbar {
+      background: rgba(30, 30, 30, 0.9);
+      backdrop-filter: blur(12px);
+      padding: 0.5rem 0;
+      z-index: 1030;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
     .nav-logo {
-    height: 50px;  /* Ajustez selon la taille désirée */
-    width: auto;
-    vertical-align: middle;
-}
-
-    /* Optionnel : si vous voulez un effet au survol */
-    .nav-link:hover .nav-logo {
-        opacity: 0.8;
-        transition: opacity 0.3s ease;
+      height: 45px;
+      width: auto;
+      transition: opacity 0.2s;
     }
-    .custom-navbar {
-    background: linear-gradient(90deg, #1e3c2f, #2e5e4e);
-    padding: 10px 20px;
-}
+    .nav-logo:hover { opacity: 0.8; }
 
-.navbar-brand {
-    font-size: 1.3rem;
-    letter-spacing: 1px;
-}
+    /* Liens de navigation : texte masqué par défaut */
+    .navbar-nav .nav-link {
+      color: #f0f0f0 !important;
+      padding: 0.5rem 0.8rem;
+      border-radius: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    /* Augmentation de la taille des icônes de la navbar */
+    .navbar-nav .nav-link i {
+      font-size: 1.4rem;  /* Ajustez selon vos préférences */
+    }
+    .navbar-nav .nav-link:hover {
+      background-color: rgba(255,255,255,0.1);
+      transform: translateY(-2px);
+      color: #4caf50 !important;
+    }
+    .navbar-nav .nav-link.active {
+      background-color: rgba(76, 175, 80, 0.2);
+      color: #4caf50 !important;
+    }
 
-.nav-link {
-    margin-left: 15px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
+    /* Texte du lien : invisible par défaut, apparaît au survol */
+    .nav-text {
+      display: inline-block;
+      max-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      transition: max-width 0.3s ease;
+      vertical-align: middle;
+    }
+    .nav-link:hover .nav-text {
+      max-width: 100px; /* assez large pour le texte le plus long */
+    }
 
-.nav-link:hover {
-    color: #4caf50 !important;
-    transform: translateY(-2px);
-}
+    /* Avatar utilisateur */
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      font-size: 14px;
+    }
 
-.nav-link.active {
-    color: #4caf50 !important;
-    border-bottom: 2px solid #4caf50;
-}
+    /* Dropdown */
+    .premium-dropdown {
+      border-radius: 16px;
+      border: none;
+      padding: 8px 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      background: #fff;
+    }
+    .dropdown-item {
+      padding: 8px 20px;
+      transition: background 0.15s;
+    }
+    .dropdown-item:hover {
+      background-color: rgba(76,175,80,0.1);
+    }
+    .dropdown-item.text-danger:hover {
+      background-color: rgba(220,53,69,0.1);
+    }
 
-.nav-icon {
-    margin-right: 6px;
-    font-size: 18px;
-}
-   ////
-   /* Navbar Glass Effect */
-.premium-navbar {
-  background: rgba(30, 60, 47, 0.85);
-  backdrop-filter: blur(10px);
-  padding: 10px 25px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  z-index: 1000;
-}
+    /* Contenu principal */
+    .main-content {
+      flex: 1;
+      margin-top: 70px;
+    }
 
-/* Nav links */
-.navbar-nav .nav-link {
-  padding: 8px 15px;
-  border-radius: 12px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
+    /* Footer */
+    .footer {
+      background: rgba(30, 30, 30, 0.9);
+      backdrop-filter: blur(4px);
+      font-size: 0.85rem;
+    }
 
-.navbar-nav .nav-link:hover {
-  background-color: rgba(255,255,255,0.08);
-  transform: translateY(-2px);
-}
+    /* Responsive : sur mobile, le texte reste visible (pas de hover) */
+    @media (max-width: 991px) {
+      .navbar-nav {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 6px;
+      }
+      .nav-item {
+        width: 100%;
+        text-align: center;
+      }
+      .main-content {
+        margin-top: 60px;
+      }
+      .nav-text {
+        max-width: 100px !important;
+      }
+    }
 
-.navbar-nav .nav-link.active {
-  background-color: rgba(76, 175, 80, 0.2);
-  color: #4caf50 !important;
-}
-
-/* Avatar rond */
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4caf50, #2e7d32);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: white;
-  font-size: 14px;
-}
-
-/* Dropdown premium */
-.premium-dropdown {
-  border-radius: 15px;
-  border: none;
-  padding: 8px 0;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  animation: fadeDropdown 0.2s ease-in-out;
-}
-
-.dropdown-item {
-  padding: 10px 20px;
-  transition: all 0.2s ease;
-}
-
-.dropdown-item:hover {
-  background-color: rgba(76,175,80,0.1);
-}
-
-.dropdown-item.text-danger:hover {
-  background-color: rgba(220,53,69,0.1);
-}
-
-/* Animation */
-@keyframes fadeDropdown {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-   ///
+    /* Suppression d'éventuels textes parasites */
+    app-language-switcher::before,
+    app-language-switcher::after {
+      content: none !important;
+      display: none !important;
+    }
   `]
 })
 export class DashboardComponent {
