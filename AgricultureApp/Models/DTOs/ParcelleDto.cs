@@ -23,5 +23,6 @@ namespace AgricultureApp.Models.DTOs
         public DateTime? DateModification { get; set; }
         public bool EstSynchronise { get; set; }
         public int? FermeId { get; set; } // Ajoutez cette propriété
+        public int? RegionId { get; set; }
     }
 }

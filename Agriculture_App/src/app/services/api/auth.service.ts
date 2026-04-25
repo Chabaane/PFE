@@ -28,6 +28,7 @@ export interface AuthResponse {
   role: string;
   token: string;
   expiration: Date;
+  permissions: string[]; // Ajouter les permissions dans la réponse
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,6 +36,22 @@ export class AuthService {
   private apiUrl = 'http://localhost:5160/api/Auth';
   private currentUserSubject = new BehaviorSubject<AuthResponse | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+
+  private userPermissions: string[] = [];
+
+// Après login, stocker les permissions
+setPermissions(permissions: string[]) {
+  this.userPermissions = permissions;
+}
+
+hasPermission(permission: string): boolean {
+  return this.userPermissions.includes(permission);
+}
+
+// Lors du logout, vider
+clearPermissions() {
+  this.userPermissions = [];
+}
 
   constructor(private http: HttpClient) {
     // Récupérer l'utilisateur depuis le localStorage

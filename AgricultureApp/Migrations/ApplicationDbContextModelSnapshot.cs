@@ -55,6 +55,127 @@ namespace AgricultureApp.Migrations
                     b.ToTable("Agriculteurs");
                 });
 
+            modelBuilder.Entity("AgricultureApp.Models.Entities.AvisProduit", b =>
+                {
+                    b.Property<int>("IdAvis")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdAvis"));
+
+                    b.Property<string>("Commentaire")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("DateAvis")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IdProduit")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("IdUtilisateur")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NomAuteur")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Note")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Verifie")
+                        .HasColumnType("bit");
+
+                    b.HasKey("IdAvis");
+
+                    b.HasIndex("IdProduit");
+
+                    b.ToTable("AvisProduits");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Commande", b =>
+                {
+                    b.Property<int>("IdCommande")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdCommande"));
+
+                    b.Property<string>("AdresseLivraison")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CodePostalLivraison")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateCommande")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateExpedition")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateLivraison")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmailClient")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("FraisLivraison")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("GouvernoratLivraison")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("IdAgriculteur")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("IdUtilisateur")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ModePaiement")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NomClient")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NotesCommande")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NumeroCommande")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("SousTotal")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Statut")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TelephoneClient")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("VilleLivraison")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("IdCommande");
+
+                    b.HasIndex("NumeroCommande")
+                        .IsUnique();
+
+                    b.ToTable("Commandes");
+                });
+
             modelBuilder.Entity("AgricultureApp.Models.Entities.DiagnosticAcrique", b =>
                 {
                     b.Property<int>("IdDiagnostic")
@@ -224,6 +345,9 @@ namespace AgricultureApp.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("RegionId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Secteur")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -232,6 +356,8 @@ namespace AgricultureApp.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AgriculteurId");
+
+                    b.HasIndex("RegionId");
 
                     b.ToTable("Fermes");
                 });
@@ -275,6 +401,96 @@ namespace AgricultureApp.Migrations
                     b.HasKey("IdImage");
 
                     b.ToTable("ImagesSatellite");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.LigneCommande", b =>
+                {
+                    b.Property<int>("IdLigneCommande")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdLigneCommande"));
+
+                    b.Property<int>("IdCommande")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdProduit")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrixUnitaire")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("Quantite")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SousTotal")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("IdLigneCommande");
+
+                    b.HasIndex("IdCommande");
+
+                    b.HasIndex("IdProduit");
+
+                    b.ToTable("LignesCommande");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.LignePanier", b =>
+                {
+                    b.Property<int>("IdLignePanier")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdLignePanier"));
+
+                    b.Property<DateTime>("DateAjout")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IdPanier")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdProduit")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantite")
+                        .HasColumnType("int");
+
+                    b.HasKey("IdLignePanier");
+
+                    b.HasIndex("IdPanier");
+
+                    b.HasIndex("IdProduit");
+
+                    b.ToTable("LignesPanier");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Panier", b =>
+                {
+                    b.Property<int>("IdPanier")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdPanier"));
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateMaj")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("IdUtilisateur")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SessionId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("IdPanier");
+
+                    b.HasIndex("IdUtilisateur");
+
+                    b.HasIndex("SessionId");
+
+                    b.ToTable("Paniers");
                 });
 
             modelBuilder.Entity("AgricultureApp.Models.Entities.Parcelle", b =>
@@ -358,6 +574,9 @@ namespace AgricultureApp.Migrations
                     b.Property<decimal?>("PenteMoyenne")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int?>("RegionId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Secteur")
                         .HasColumnType("nvarchar(max)");
 
@@ -370,7 +589,171 @@ namespace AgricultureApp.Migrations
 
                     b.HasIndex("FermeId");
 
+                    b.HasIndex("RegionId");
+
                     b.ToTable("Parcelles");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Permission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Categorie")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Libelle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Produit", b =>
+                {
+                    b.Property<int>("IdProduit")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdProduit"));
+
+                    b.Property<string>("Categorie")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CulturesCompatibles")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateAjout")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("EstActif")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EstEnPromotion")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Fabricant")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MatieresActives")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("NombreAvis")
+                        .HasColumnType("int");
+
+                    b.Property<double>("NoteMoyenne")
+                        .HasColumnType("float");
+
+                    b.Property<string>("NumeroAMM")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Prix")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("PrixPromo")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("StockDisponible")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Unite")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("IdProduit");
+
+                    b.HasIndex("Categorie");
+
+                    b.HasIndex("EstActif");
+
+                    b.ToTable("Produits");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Region", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Regions");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.RolePermission", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RoleId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("RolePermissions");
                 });
 
             modelBuilder.Entity("AgricultureApp.Models.Entities.StationMeteo", b =>
@@ -444,6 +827,51 @@ namespace AgricultureApp.Migrations
                     b.ToTable("Synchronisations");
                 });
 
+            modelBuilder.Entity("AgricultureApp.Models.Entities.UserPermission", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("UserPermissions");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.UserRegionAccess", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RegionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "RegionId");
+
+                    b.HasIndex("RegionId");
+
+                    b.ToTable("UserRegionAccesses");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+                });
+
             modelBuilder.Entity("AgricultureApp.Models.Entities.Utilisateur", b =>
                 {
                     b.Property<int>("Id")
@@ -489,11 +917,6 @@ namespace AgricultureApp.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<string>("Telephone")
                         .HasColumnType("nvarchar(max)");
 
@@ -505,6 +928,17 @@ namespace AgricultureApp.Migrations
                         .IsUnique();
 
                     b.ToTable("Utilisateurs");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.AvisProduit", b =>
+                {
+                    b.HasOne("AgricultureApp.Models.Entities.Produit", "Produit")
+                        .WithMany("Avis")
+                        .HasForeignKey("IdProduit")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Produit");
                 });
 
             modelBuilder.Entity("AgricultureApp.Models.Entities.DiagnosticAcrique", b =>
@@ -539,7 +973,51 @@ namespace AgricultureApp.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("AgricultureApp.Models.Entities.Region", "Region")
+                        .WithMany("Fermes")
+                        .HasForeignKey("RegionId");
+
                     b.Navigation("Agriculteur");
+
+                    b.Navigation("Region");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.LigneCommande", b =>
+                {
+                    b.HasOne("AgricultureApp.Models.Entities.Commande", "Commande")
+                        .WithMany("Lignes")
+                        .HasForeignKey("IdCommande")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AgricultureApp.Models.Entities.Produit", "Produit")
+                        .WithMany("LignesCommande")
+                        .HasForeignKey("IdProduit")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Commande");
+
+                    b.Navigation("Produit");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.LignePanier", b =>
+                {
+                    b.HasOne("AgricultureApp.Models.Entities.Panier", "Panier")
+                        .WithMany("Lignes")
+                        .HasForeignKey("IdPanier")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AgricultureApp.Models.Entities.Produit", "Produit")
+                        .WithMany("LignesPanier")
+                        .HasForeignKey("IdProduit")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Panier");
+
+                    b.Navigation("Produit");
                 });
 
             modelBuilder.Entity("AgricultureApp.Models.Entities.Parcelle", b =>
@@ -555,9 +1033,34 @@ namespace AgricultureApp.Migrations
                         .HasForeignKey("FermeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("AgricultureApp.Models.Entities.Region", "Region")
+                        .WithMany("Parcelles")
+                        .HasForeignKey("RegionId");
+
                     b.Navigation("Agriculteur");
 
                     b.Navigation("Ferme");
+
+                    b.Navigation("Region");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.RolePermission", b =>
+                {
+                    b.HasOne("AgricultureApp.Models.Entities.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AgricultureApp.Models.Entities.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("AgricultureApp.Models.Entities.Synchronisation", b =>
@@ -567,6 +1070,63 @@ namespace AgricultureApp.Migrations
                         .HasForeignKey("UtilisateurId");
 
                     b.Navigation("Utilisateur");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.UserPermission", b =>
+                {
+                    b.HasOne("AgricultureApp.Models.Entities.Permission", "Permission")
+                        .WithMany("UserPermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AgricultureApp.Models.Entities.Utilisateur", "User")
+                        .WithMany("UserPermissions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.UserRegionAccess", b =>
+                {
+                    b.HasOne("AgricultureApp.Models.Entities.Region", "Region")
+                        .WithMany("UserRegionAccesses")
+                        .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AgricultureApp.Models.Entities.Utilisateur", "User")
+                        .WithMany("RegionAccesses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Region");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.UserRole", b =>
+                {
+                    b.HasOne("AgricultureApp.Models.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AgricultureApp.Models.Entities.Utilisateur", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("AgricultureApp.Models.Entities.Utilisateur", b =>
@@ -585,14 +1145,65 @@ namespace AgricultureApp.Migrations
                     b.Navigation("Parcelles");
                 });
 
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Commande", b =>
+                {
+                    b.Navigation("Lignes");
+                });
+
             modelBuilder.Entity("AgricultureApp.Models.Entities.Ferme", b =>
                 {
                     b.Navigation("Parcelles");
                 });
 
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Panier", b =>
+                {
+                    b.Navigation("Lignes");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserPermissions");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Produit", b =>
+                {
+                    b.Navigation("Avis");
+
+                    b.Navigation("LignesCommande");
+
+                    b.Navigation("LignesPanier");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Region", b =>
+                {
+                    b.Navigation("Fermes");
+
+                    b.Navigation("Parcelles");
+
+                    b.Navigation("UserRegionAccesses");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserRoles");
+                });
+
             modelBuilder.Entity("AgricultureApp.Models.Entities.StationMeteo", b =>
                 {
                     b.Navigation("DonneesMeteo");
+                });
+
+            modelBuilder.Entity("AgricultureApp.Models.Entities.Utilisateur", b =>
+                {
+                    b.Navigation("RegionAccesses");
+
+                    b.Navigation("UserPermissions");
+
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

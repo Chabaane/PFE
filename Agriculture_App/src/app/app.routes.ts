@@ -3,6 +3,8 @@ import { AuthGuard } from './guards/auth.guard';
 import { NoAuthGuard } from './guards/no-auth.guard';
 import { AuthLayoutComponent } from './components/auth/auth/auth.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { AdminUsersComponent } from './components/admin-users/admin-users.component';
+import { MarketplaceComponent } from './components/marketplace/marketplace.component';
 
 export const routes: Routes = [
   {
@@ -124,7 +126,22 @@ export const routes: Routes = [
           import('./components/leaf-scan/leaf-scan.component')
             .then(m => m.LeafScanComponent),
         title: 'PhytoScan — Diagnostic foliaire'
-      }
+      },
+      {
+        path: 'admin/users',
+        component: AdminUsersComponent,
+        canActivate: [AuthGuard],
+        data: { permission: 'users.view' }
+      },
+      {
+         path: 'marketplace',
+          component: MarketplaceComponent,
+          // Optionnel : protection par auth guard
+          // canActivate: [AuthGuard]
+        },
+
+
+
     ]
   },
 

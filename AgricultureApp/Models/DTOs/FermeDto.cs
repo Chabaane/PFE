@@ -18,6 +18,7 @@ namespace AgricultureApp.Models.DTOs
         public int NombreParcelles { get; set; }
         public decimal SuperficieTotale { get; set; }
         public DateTime DateCreation { get; set; }
+        public int? RegionId { get; set; }
     }
 
     public class FermeDetailDto : FermeDto
@@ -54,6 +55,7 @@ namespace AgricultureApp.Models.DTOs
         public string? Secteur { get; set; }      // Ajouter ? pour nullable
         public string? Description { get; set; }  // Ajouter ? pour nullable
         public string? Couleur { get; set; }      // Ajouter ? pour nullable
+        public int? RegionId { get; set; }
     }
 
     public class UpdateFermeDto
@@ -64,6 +66,7 @@ namespace AgricultureApp.Models.DTOs
         public string Secteur { get; set; }
         public string Description { get; set; }
         public string Couleur { get; set; }
+        public int? RegionId { get; set; }
     }
 
     public class AssignerParcellesDto

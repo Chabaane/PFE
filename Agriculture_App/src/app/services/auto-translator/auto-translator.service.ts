@@ -278,23 +278,16 @@ export class AutoTranslatorService implements OnDestroy {
   }
 
   // ── Appel API MyMemory ────────────────────────────────────────────────
-  private async fetchTranslation(text: string, from: Language, to: Language): Promise<string> {
-  try {
-    const url = `${this.API}?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    // Vérifier si la réponse contient un warning ou une limite atteinte
-    const translated = data?.responseData?.translatedText ?? text;
-    // Si le texte traduit contient "MYMEMORY WARNING" ou similaire, ignorer
-    if (translated.includes('MYMEMORY WARNING') || translated.includes('YOU USED ALL AVAILABLE FREE TRANSLATIONS')) {
-      console.warn('MyMemory quota exceeded, using original text');
+    private async fetchTranslation(text: string, from: Language, to: Language): Promise<string> {
+    try {
+      const url = `${this.API}?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return data?.responseData?.translatedText ?? text;
+    } catch {
       return text;
     }
-    return translated;
-  } catch {
-    return text;
   }
-}
 
   // ══════════════════════════════════════════════════════════════════════
   //  AJOUTER DES TRADUCTIONS PERSONNALISÉES (extensible)

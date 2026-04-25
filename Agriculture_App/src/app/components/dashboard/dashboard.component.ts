@@ -26,6 +26,14 @@ import { LanguageSwitcherComponent } from 'src/app/components/language-switcher/
 
           <div class="collapse navbar-collapse" id="mainNavbar">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-2">
+              <li class="nav-item">
+                <a class="nav-link" routerLink="/marketplace" routerLinkActive="active">
+                  <i class="bi bi-shop me-1"></i>
+                  AgriShop
+                </a>
+              </li>
+
+
 
               <!-- Liens de navigation : icône toujours visible, texte au survol -->
               <li class="nav-item">
@@ -70,6 +78,7 @@ import { LanguageSwitcherComponent } from 'src/app/components/language-switcher/
                 </a>
               </li>
 
+
               <!-- Sélecteur de langue (comportement normal) -->
               <li class="nav-item">
                 <app-language-switcher></app-language-switcher>
@@ -84,7 +93,7 @@ import { LanguageSwitcherComponent } from 'src/app/components/language-switcher/
                 <ul class="dropdown-menu dropdown-menu-end premium-dropdown">
                   <li><a class="dropdown-item" routerLink="/profile"><i class="bi bi-person me-2"></i> Mon profil</a></li>
                   <li><a class="dropdown-item" routerLink="/tableau-de-bord"><i class="bi bi-speedometer2 me-2 text-info"></i> Tableau de bord</a></li>
-                  <li *ngIf="isAdmin()"><a class="dropdown-item" routerLink="/admin"><i class="bi bi-shield-lock me-2"></i> Admin</a></li>
+                  <li><a class="dropdown-item" routerLink="/admin/users"><i class="bi bi-shield-lock me-2"></i> Admin</a></li>
                   <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item text-danger" (click)="logout()"><i class="bi bi-box-arrow-right me-2"></i> Déconnexion</a></li>
                 </ul>
@@ -255,7 +264,10 @@ import { LanguageSwitcherComponent } from 'src/app/components/language-switcher/
 export class DashboardComponent {
   constructor(private authService: AuthService) {}
 
-  get isAuthenticated(): boolean {
+  hasPermission(permission: string): boolean {
+    return this.authService.hasPermission(permission);
+  }
+    get isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
   }
 

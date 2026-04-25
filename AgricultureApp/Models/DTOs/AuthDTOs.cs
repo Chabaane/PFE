@@ -1,5 +1,5 @@
+// Fichier : Models/DTOs/AuthDTOs.cs
 using System.ComponentModel.DataAnnotations;
-using System;
 using System.Collections.Generic;
 
 namespace AgricultureApp.Models.DTOs
@@ -44,7 +44,9 @@ namespace AgricultureApp.Models.DTOs
         public string Nom { get; set; } = string.Empty;
         public string Prenom { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;          // Premier rôle (principal)
+        public List<string> Roles { get; set; } = new();
+        public List<string> Permissions { get; set; } = new();// Tous les rôles
         public string? Token { get; set; }
         public DateTime Expiration { get; set; }
     }

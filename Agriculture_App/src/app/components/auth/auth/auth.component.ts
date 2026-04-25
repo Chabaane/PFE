@@ -334,4 +334,8 @@ import { RouterOutlet, RouterLink } from '@angular/router';
     }
   `]
 })
-export class AuthLayoutComponent {}
+
+export class AuthLayoutComponent {
+
+
+}

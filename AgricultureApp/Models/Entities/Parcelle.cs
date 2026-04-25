@@ -20,6 +20,10 @@ namespace AgricultureApp.Models.Entities
         [Required]
         public int AgriculteurId { get; set; }
 
+        public int? RegionId { get; set; }
+        [ForeignKey(nameof(RegionId))]
+        public virtual Region? Region { get; set; }
+
         public decimal? AltitudeMin { get; set; }    // Altitude minimale (m)
         public decimal? AltitudeMax { get; set; }    // Altitude maximale (m)
         public decimal? AltitudeMoyenne { get; set; } // Altitude moyenne (m)
@@ -93,8 +97,9 @@ namespace AgricultureApp.Models.Entities
         public DateTime? DateRecolte { get; set; }
         public string? Geometrie { get; set; }
         public int? FermeId { get; set; }
+        public int? RegionId { get; set; }
 
-        
+
         public decimal? AltitudeMin { get; set; }
         public decimal? AltitudeMax { get; set; }
         public decimal? AltitudeMoyenne { get; set; }

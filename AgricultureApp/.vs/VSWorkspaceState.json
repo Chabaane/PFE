@@ -1,9 +1,13 @@
 {
   "ExpandedNodes": [
     "",
+    "\\Authorization",
+    "\\Controllers",
+    "\\Data",
     "\\Models",
+    "\\Models\\DTOs",
+    "\\Models\\Entities",
     "\\Services"
   ],
-  "SelectedNode": "\\Controllers",
   "PreviewInSolutionExplorer": false
 }

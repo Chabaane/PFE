@@ -37,6 +37,10 @@ namespace AgricultureApp.Models.Entities
 
         public DateTime? DateModification { get; set; }
 
+        public int? RegionId { get; set; }
+        [ForeignKey(nameof(RegionId))]
+        public virtual Region? Region { get; set; }
+
         // Propriétés calculées (non mappées en DB)
         [NotMapped]
         public int NombreParcelles => Parcelles?.Count ?? 0;

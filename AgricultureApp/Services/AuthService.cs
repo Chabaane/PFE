@@ -24,29 +24,37 @@ namespace AgricultureApp.Services
 
         public string GenerateJwtToken(Utilisateur user)
         {
-            var claims = new[]
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "VotreCleSecreteSuperLonguePourLaSecurite123456789");
+
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.Name, $"{user.Prenom} {user.Nom}".Trim())
+    };
+
+            // Ajouter tous les rôles comme claims
+            if (user.UserRoles != null)
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, $"{user.Prenom} {user.Nom}"),
-                new Claim(ClaimTypes.Role, user.Role),
-                new Claim("AgriculteurId", user.AgriculteurId?.ToString() ?? "")
+                foreach (var userRole in user.UserRoles)
+                {
+                    if (userRole.Role != null)
+                        claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Nom));
+                }
+            }
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddHours(3),
+                Issuer = _configuration["Jwt:Issuer"] ?? "AgricultureApp",
+                Audience = _configuration["Jwt:Audience"] ?? "AgricultureAppUsers",
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                _configuration["Jwt:Key"] ?? "VotreCleSecreteSuperLonguePourLaSecurite123456789"));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(3),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
 
         public string HashPassword(string password)

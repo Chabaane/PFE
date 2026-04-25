@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+
 
 namespace AgricultureApp.Models.Entities
 {
@@ -24,9 +26,23 @@ namespace AgricultureApp.Models.Entities
         [Required]
         public string MotDePasseHash { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(20)]
-        public string Role { get; set; } = "AGRICULTEUR"; // Valeur par défaut
+        [NotMapped]
+        public string Role
+        {
+            get
+            {
+                return UserRoles?.FirstOrDefault()?.Role?.Nom
+                    ?? AgricultureApp.Models.Entities.UserRoles.Agriculteur;
+            }
+        }
+
+        //[Required]
+        //[StringLength(20)]
+        //public string Role { get; set; } = "AGRICULTEUR"; // Valeur par défaut
+
+        public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        public virtual ICollection<UserPermission> UserPermissions { get; set; } = new List<UserPermission>();
+        public virtual ICollection<UserRegionAccess> RegionAccesses { get; set; } = new List<UserRegionAccess>();
 
         public string? Telephone { get; set; }
 

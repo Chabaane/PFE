@@ -2,10 +2,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using AgricultureApp.Data; 
+using AgricultureApp.Data;
 using AgricultureApp.Models.Entities;
 using System.Text.Json;
 using AgricultureApp.Models.DTOs;
+using AgricultureApp.Services;
+using System.Security.Claims;
 
 namespace AgricultureApp.Controllers
 {
@@ -16,17 +18,58 @@ namespace AgricultureApp.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<ParcellesController> _logger;
+        private readonly IPermissionService _permissionService;
 
-        public ParcellesController(ApplicationDbContext context, ILogger<ParcellesController> logger)
+        public ParcellesController(
+            ApplicationDbContext context,
+            ILogger<ParcellesController> logger,
+            IPermissionService permissionService)
         {
             _context = context;
             _logger = logger;
+            _permissionService = permissionService;
         }
-        // Dans ParcellesController.cs
+
+        // ??? Helpers ???????????????????????????????????????????????????????????
+
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+                return userId;
+            throw new UnauthorizedAccessException("Utilisateur non authentifié");
+        }
+
+        private async Task<List<int>> GetAuthorizedRegionIdsAsync()
+        {
+            var userId = GetCurrentUserId();
+            var userRegions = await _permissionService.GetUserRegionsAsync(userId);
+            return userRegions.Select(r => r.Id).ToList();
+        }
+
+        private async Task<IQueryable<Parcelle>> ApplyRegionFilterAsync(IQueryable<Parcelle> query)
+        {
+            var userId = GetCurrentUserId();
+            if (await _permissionService.UserHasPermissionAsync(userId, "regions.all"))
+                return query;
+
+            var regionIds = await GetAuthorizedRegionIdsAsync();
+            if (regionIds.Any())
+                query = query.Where(p => p.RegionId != null && regionIds.Contains(p.RegionId.Value));
+            else
+                query = query.Where(p => false);
+            return query;
+        }
+
+        // ??? Endpoints ?????????????????????????????????????????????????????????
+
         [HttpGet("all")]
         public async Task<ActionResult<List<ParcelleDto>>> GetAllParcelles()
         {
-            var parcelles = await _context.Parcelles
+            var query = _context.Parcelles.AsQueryable();
+            query = await ApplyRegionFilterAsync(query);
+
+            var parcelles = await query
                 .Select(p => new ParcelleDto
                 {
                     Id = p.Id,
@@ -37,12 +80,12 @@ namespace AgricultureApp.Controllers
                     Couleur = p.Couleur,
                     AgriculteurId = p.AgriculteurId,
                     FermeId = p.FermeId,
-                    Latitude = p.Latitude,      
-                    Longitude = p.Longitude,    
+                    Latitude = p.Latitude,
+                    Longitude = p.Longitude,
                     Gouvernorat = p.Gouvernorat,
                     Delegation = p.Delegation,
                     Secteur = p.Secteur,
-                    Geometrie = p.Geometrie,  
+                    Geometrie = p.Geometrie,
                     DateCreation = p.DateCreation,
                     EstSynchronise = p.EstSynchronise
                 })
@@ -50,15 +93,16 @@ namespace AgricultureApp.Controllers
 
             return Ok(parcelles);
         }
-        // GET: api/parcelles/agriculteur/{agriculteurId}
-        // GET: api/parcelles/agriculteur/{agriculteurId}
+
         [HttpGet("agriculteur/{agriculteurId}")]
         public async Task<ActionResult<IEnumerable<ParcelleDto>>> GetParcellesByAgriculteur(int agriculteurId)
         {
             try
             {
-                var parcelles = await _context.Parcelles
-                    .Where(p => p.AgriculteurId == agriculteurId)
+                var query = _context.Parcelles.Where(p => p.AgriculteurId == agriculteurId);
+                query = await ApplyRegionFilterAsync(query);
+
+                var parcelles = await query
                     .Select(p => new ParcelleDto
                     {
                         Id = p.Id,
@@ -90,39 +134,36 @@ namespace AgricultureApp.Controllers
             }
         }
 
-        // GET: api/parcelles/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<Parcelle>> GetParcelle(int id)
         {
             var parcelle = await _context.Parcelles.FindAsync(id);
+            if (parcelle == null) return NotFound();
 
-            if (parcelle == null)
+            var userId = GetCurrentUserId();
+            if (!await _permissionService.UserHasPermissionAsync(userId, "regions.all"))
             {
-                return NotFound();
+                if (parcelle.RegionId == null ||
+                    !await _permissionService.UserHasRegionAccessAsync(userId, parcelle.RegionId.Value))
+                {
+                    return Forbid();
+                }
             }
 
             return parcelle;
         }
 
-        // POST: api/parcelles/agriculteur/{agriculteurId}
         [HttpPost("agriculteur/{agriculteurId}")]
         public async Task<ActionResult<Parcelle>> CreateParcelle(int agriculteurId, DessinParcelleDto dto)
         {
             try
             {
-                // Vérifier que l'agriculteur existe
                 var agriculteur = await _context.Agriculteurs.FindAsync(agriculteurId);
-                if (agriculteur == null)
-                {
-                    return NotFound("Agriculteur non trouvé");
-                }
+                if (agriculteur == null) return NotFound("Agriculteur non trouvé");
 
-                // Calculer la surface si elle n'est pas fournie
                 decimal surface = dto.Surface;
                 if (surface == 0 && !string.IsNullOrEmpty(dto.Geometrie))
-                {
                     surface = CalculerSurface(dto.Geometrie);
-                }
 
                 var parcelle = new Parcelle
                 {
@@ -152,11 +193,22 @@ namespace AgricultureApp.Controllers
                     FermeId = dto.FermeId
                 };
 
+                // Vérifier l'accès à la région si elle est fournie
+                if (dto.RegionId.HasValue)
+                {
+                    var userId = GetCurrentUserId();
+                    if (!await _permissionService.UserHasPermissionAsync(userId, "regions.all") &&
+                        !await _permissionService.UserHasRegionAccessAsync(userId, dto.RegionId.Value))
+                    {
+                        return Forbid();
+                    }
+                    parcelle.RegionId = dto.RegionId;
+                }
+
                 _context.Parcelles.Add(parcelle);
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation($"Parcelle créée: {parcelle.Id} pour l'agriculteur {agriculteurId}");
-
                 return CreatedAtAction(nameof(GetParcelle), new { id = parcelle.Id }, parcelle);
             }
             catch (Exception ex)
@@ -166,17 +218,23 @@ namespace AgricultureApp.Controllers
             }
         }
 
-        // PUT: api/parcelles/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateParcelle(int id, DessinParcelleDto dto)
         {
             var parcelle = await _context.Parcelles.FindAsync(id);
-            if (parcelle == null)
+            if (parcelle == null) return NotFound();
+
+            // Vérifier l'accès région
+            var userId = GetCurrentUserId();
+            if (!await _permissionService.UserHasPermissionAsync(userId, "regions.all"))
             {
-                return NotFound();
+                if (parcelle.RegionId == null ||
+                    !await _permissionService.UserHasRegionAccessAsync(userId, parcelle.RegionId.Value))
+                {
+                    return Forbid();
+                }
             }
 
-            // Mettre à jour les propriétés
             parcelle.Nom = dto.Nom ?? parcelle.Nom;
             parcelle.Description = dto.Description;
             parcelle.Surface = dto.Surface;
@@ -194,6 +252,17 @@ namespace AgricultureApp.Controllers
             parcelle.EstSynchronise = true;
             parcelle.DerniereSynchronisation = DateTime.UtcNow;
 
+            // Mise à jour éventuelle de la région
+            if (dto.RegionId.HasValue)
+            {
+                if (!await _permissionService.UserHasPermissionAsync(userId, "regions.all") &&
+                    !await _permissionService.UserHasRegionAccessAsync(userId, dto.RegionId.Value))
+                {
+                    return Forbid();
+                }
+                parcelle.RegionId = dto.RegionId;
+            }
+
             _context.Entry(parcelle).State = EntityState.Modified;
 
             try
@@ -202,39 +271,40 @@ namespace AgricultureApp.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ParcelleExists(id))
-                {
-                    return NotFound();
-                }
+                if (!ParcelleExists(id)) return NotFound();
                 throw;
             }
 
             return NoContent();
         }
 
-        // DELETE: api/parcelles/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteParcelle(int id)
         {
             var parcelle = await _context.Parcelles.FindAsync(id);
-            if (parcelle == null)
+            if (parcelle == null) return NotFound();
+
+            var userId = GetCurrentUserId();
+            if (!await _permissionService.UserHasPermissionAsync(userId, "regions.all"))
             {
-                return NotFound();
+                if (parcelle.RegionId == null ||
+                    !await _permissionService.UserHasRegionAccessAsync(userId, parcelle.RegionId.Value))
+                {
+                    return Forbid();
+                }
             }
 
             _context.Parcelles.Remove(parcelle);
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
-        // GET: api/parcelles/agriculteur/{agriculteurId}/statistiques
         [HttpGet("agriculteur/{agriculteurId}/statistiques")]
         public async Task<ActionResult<StatistiquesAgriculteurDto>> GetStatistiques(int agriculteurId)
         {
-            var parcelles = await _context.Parcelles
-                .Where(p => p.AgriculteurId == agriculteurId)
-                .ToListAsync();
+            var query = _context.Parcelles.Where(p => p.AgriculteurId == agriculteurId);
+            query = await ApplyRegionFilterAsync(query);
+            var parcelles = await query.ToListAsync();
 
             var statistiques = new StatistiquesAgriculteurDto
             {
@@ -242,40 +312,28 @@ namespace AgricultureApp.Controllers
                 SurfaceTotale = parcelles.Sum(p => p.Surface)
             };
 
-            // Parcourir les parcelles pour remplir les dictionnaires
             foreach (var parcelle in parcelles)
             {
-                // Par gouvernorat
                 if (!string.IsNullOrEmpty(parcelle.Gouvernorat))
                 {
                     if (statistiques.ParcellesParGouvernorat.ContainsKey(parcelle.Gouvernorat))
-                    {
                         statistiques.ParcellesParGouvernorat[parcelle.Gouvernorat]++;
-                    }
                     else
-                    {
                         statistiques.ParcellesParGouvernorat[parcelle.Gouvernorat] = 1;
-                    }
                 }
 
-                // Par culture
                 if (!string.IsNullOrEmpty(parcelle.Culture))
                 {
                     if (statistiques.SurfaceParCulture.ContainsKey(parcelle.Culture))
-                    {
                         statistiques.SurfaceParCulture[parcelle.Culture] += parcelle.Surface;
-                    }
                     else
-                    {
                         statistiques.SurfaceParCulture[parcelle.Culture] = parcelle.Surface;
-                    }
                 }
             }
 
             return statistiques;
         }
 
-        // POST: api/parcelles/synchroniser
         [HttpPost("synchroniser")]
         public async Task<IActionResult> SynchroniserParcelles([FromBody] List<Parcelle> parcellesOffline)
         {
@@ -283,30 +341,28 @@ namespace AgricultureApp.Controllers
             {
                 foreach (var parcelleOffline in parcellesOffline)
                 {
-                    if (parcelleOffline.Id == 0) // Nouvelle parcelle
+                    if (parcelleOffline.Id == 0)
                     {
                         parcelleOffline.DateCreation = DateTime.UtcNow;
                         parcelleOffline.EstSynchronise = true;
                         parcelleOffline.DerniereSynchronisation = DateTime.UtcNow;
                         _context.Parcelles.Add(parcelleOffline);
                     }
-                    else // Parcelle existante
+                    else
                     {
-                        var parcelleExistante = await _context.Parcelles.FindAsync(parcelleOffline.Id);
-                        if (parcelleExistante != null)
+                        var existante = await _context.Parcelles.FindAsync(parcelleOffline.Id);
+                        if (existante != null)
                         {
-                            // Mettre à jour
-                            parcelleExistante.Nom = parcelleOffline.Nom;
-                            parcelleExistante.Description = parcelleOffline.Description;
-                            parcelleExistante.Surface = parcelleOffline.Surface;
-                            parcelleExistante.Geometrie = parcelleOffline.Geometrie;
-                            parcelleExistante.DateModification = DateTime.UtcNow;
-                            parcelleExistante.EstSynchronise = true;
-                            parcelleExistante.DerniereSynchronisation = DateTime.UtcNow;
+                            existante.Nom = parcelleOffline.Nom;
+                            existante.Description = parcelleOffline.Description;
+                            existante.Surface = parcelleOffline.Surface;
+                            existante.Geometrie = parcelleOffline.Geometrie;
+                            existante.DateModification = DateTime.UtcNow;
+                            existante.EstSynchronise = true;
+                            existante.DerniereSynchronisation = DateTime.UtcNow;
                         }
                     }
                 }
-
                 await _context.SaveChangesAsync();
                 return Ok(new { message = "Synchronisation réussie", count = parcellesOffline.Count });
             }
@@ -317,35 +373,21 @@ namespace AgricultureApp.Controllers
             }
         }
 
-        private bool ParcelleExists(int id)
-        {
-            return _context.Parcelles.Any(e => e.Id == id);
-        }
+        private bool ParcelleExists(int id) => _context.Parcelles.Any(e => e.Id == id);
 
         private decimal CalculerSurface(string geojson)
         {
             try
             {
-                // Implémentation simplifiée du calcul de surface
-                // Pour une implémentation réelle, utiliser une bibliothèque comme NetTopologySuite
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 var geoJson = JsonSerializer.Deserialize<GeoJsonFeature>(geojson, options);
-
                 if (geoJson?.Geometry?.Coordinates != null)
-                {
-                    // Calcul approximatif (à remplacer par un vrai calcul)
-                    return 1.0m; // Valeur par défaut
-                }
-
-                return 0.5m; // Valeur par défaut minimale
-            }
-            catch
-            {
+                    return 1.0m;
                 return 0.5m;
             }
+            catch { return 0.5m; }
         }
 
-        // Classes pour le parsing GeoJSON
         private class GeoJsonFeature
         {
             public string Type { get; set; } = string.Empty;
