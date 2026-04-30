@@ -5,6 +5,7 @@ import { AuthLayoutComponent } from './components/auth/auth/auth.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { AdminUsersComponent } from './components/admin-users/admin-users.component';
 import { MarketplaceComponent } from './components/marketplace/marketplace.component';
+import { DiagnosticImageComponent } from './components/diagnostic-image/diagnostic-image.component';
 
 export const routes: Routes = [
   {
@@ -138,6 +139,12 @@ export const routes: Routes = [
           component: MarketplaceComponent,
           // Optionnel : protection par auth guard
           // canActivate: [AuthGuard]
+        },
+
+        {
+          path: 'marketplace/diagnostic',
+          component: DiagnosticImageComponent,
+          title: 'Diagnostic plante — AgriManager'
         },
 
 

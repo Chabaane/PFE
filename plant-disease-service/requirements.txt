@@ -1,0 +1,17 @@
+# requirements.txt — Service de détection de maladies des plantes
+# Compatible avec plant_disease_prediction_model.h5 (Keras/TensorFlow)
+#
+# Installation:
+#   pip install -r requirements.txt
+#
+# Puis lancer:
+#   uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+
+tensorflow==2.15.0          # CPU; remplacer par tensorflow-gpu==2.15.0 si GPU disponible
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+Pillow==10.4.0
+numpy==1.26.4
+pydantic==2.9.2
+python-multipart==0.0.12
+h5py==3.11.0                # Lecture des fichiers .h5

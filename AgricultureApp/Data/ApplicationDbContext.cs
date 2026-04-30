@@ -37,6 +37,7 @@ namespace AgricultureApp.Data
         public DbSet<Commande> Commandes { get; set; }
         public DbSet<LigneCommande> LignesCommande { get; set; }
         public DbSet<AvisProduit> AvisProduits { get; set; }
+        public DbSet<DiagnosticImage> DiagnosticsImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

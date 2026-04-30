@@ -40,6 +40,9 @@ type Vue = 'catalogue' | 'detail' | 'panier' | 'checkout' | 'confirmation' | 'me
 
       <!-- Actions header -->
       <div class="mp-header-actions">
+        <a routerLink="/marketplace/diagnostic" class="btn-diagnostic">
+          🔬 Identifier une maladie par photo
+        </a>
         <button class="mp-nav-btn" [class.active]="vueActive==='mescommandes'" (click)="goTo('mescommandes')">
           📦 Mes commandes
         </button>

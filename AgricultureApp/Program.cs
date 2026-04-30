@@ -131,6 +131,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddHttpClient("PythonCNN", client => {
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
 // NOW build the app (AFTER all services are registered)
 // ──────────────────────────────────────────────────────────────────────────────

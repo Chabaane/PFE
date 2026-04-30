@@ -116,6 +116,29 @@ export interface FiltresProduit {
   enPromotion?: boolean;
   enStock?: boolean;
 }
+export interface DiagnosticPrediction {
+  plante: string;
+  maladie: string;
+  confiance: number;
+  estSain: boolean;
+}
+
+export interface DiagnosticResultat {
+  prediction: DiagnosticPrediction;
+  top3: DiagnosticPrediction[];
+  confiant: boolean;
+  messageConseils: string;
+  produitsRecommandes: any[]; // Produit[]
+}
+
+export interface DiagnosticHistorique {
+  idDiagnostic: number;
+  planteDetectee: string;
+  maladieDetectee: string;
+  confiance: number;
+  estSain: boolean;
+  dateDiagnostic: string;
+}
 
 // ── Service ───────────────────────────────────────────────────────────────────
 @Injectable({ providedIn: 'root' })
@@ -268,4 +291,29 @@ export class MarketplaceService {
       headers: { 'Content-Type': 'application/json' }
     });
   }
+  // ── Diagnostic ────────────────────────────────────────────────────────────────
+   analyserImage(image: File, idUtilisateur?: number): Observable<DiagnosticResultat> {
+    const formData = new FormData();
+    formData.append('image', image);
+    if (idUtilisateur) formData.append('idUtilisateur', idUtilisateur.toString());
+    return this.http.post<DiagnosticResultat>(`${this.BASE}/diagnostic/analyser-image`, formData);
+  }
+
+  of(value: DiagnosticHistorique[]): Observable<DiagnosticHistorique[]> {
+    return new Observable(subscriber => {
+      subscriber.next(value);
+      subscriber.complete();
+    });
+  }
+  getHistoriqueDiagnostics(): Observable<DiagnosticHistorique[]> {
+    const userId = this.getUserId();
+    if (!userId) return this.of([]);
+    return this.http.get<DiagnosticHistorique[]>(
+      `${this.BASE}/diagnostic/historique?userId=${userId}`
+    );
+  }
+
+
 }
+
+
