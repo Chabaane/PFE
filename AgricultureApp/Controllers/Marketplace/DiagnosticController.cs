@@ -30,31 +30,29 @@ namespace AgricultureApp.Controllers.Marketplace
             _logger = logger;
         }
 
-        // ?????????????????????????????????????????????????????????????????????
-        // POST api/marketplace/diagnostic/analyser-image
-        // Body: multipart/form-data  { image: File, idUtilisateur?: int }
-        // ?????????????????????????????????????????????????????????????????????
+        // ?? POST api/marketplace/diagnostic/analyser-image ???????????????????
+        // multipart/form-data : { image: File, idUtilisateur?: int }
         [HttpPost("analyser-image")]
-        [RequestSizeLimit(10_000_000)] // 10 MB max
+        [RequestSizeLimit(10_000_000)]
         public async Task<ActionResult<DiagnosticResultatDto>> AnalyserImage(
             IFormFile image,
             [FromForm] int? idUtilisateur)
         {
+            // ?? Validation entrée ????????????????????????????????????????????
             if (image == null || image.Length == 0)
-                return BadRequest("Image requise");
+                return BadRequest(new { message = "Image requise." });
 
-            // Vérifier le type MIME
             var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
             if (!allowedTypes.Contains(image.ContentType.ToLower()))
-                return BadRequest("Format accepté: JPEG, PNG ou WEBP");
+                return BadRequest(new { message = "Format accepté : JPEG, PNG ou WEBP." });
 
-            // Convertir en base64
+            // ?? Encodage base64 ??????????????????????????????????????????????
             using var ms = new MemoryStream();
             await image.CopyToAsync(ms);
             var imageBase64 = Convert.ToBase64String(ms.ToArray());
 
-            // ?? Appel au microservice Python CNN ????????????????????????????
-            PythonPredictResponse? pythonResult = null;
+            // ?? Appel microservice Python ?????????????????????????????????????
+            PythonPredictResponse? pythonResult;
             try
             {
                 var pythonUrl = _config["PythonCnnService:Url"] ?? "http://localhost:8001";
@@ -64,11 +62,17 @@ namespace AgricultureApp.Controllers.Marketplace
                     image_base64 = imageBase64,
                     filename = image.FileName
                 });
-                var content = new StringContent(payload, Encoding.UTF8, "application/json");
-                var response = await client.PostAsync($"{pythonUrl}/predict", content);
+                var response = await client.PostAsync(
+                    $"{pythonUrl}/predict",
+                    new StringContent(payload, Encoding.UTF8, "application/json")
+                );
 
                 if (!response.IsSuccessStatusCode)
-                    return StatusCode(502, "Service de détection indisponible");
+                {
+                    var errBody = await response.Content.ReadAsStringAsync();
+                    _logger.LogWarning("Python CNN HTTP {Code}: {Body}", response.StatusCode, errBody);
+                    return StatusCode(502, new { message = "Service de détection indisponible." });
+                }
 
                 var json = await response.Content.ReadAsStringAsync();
                 pythonResult = JsonSerializer.Deserialize<PythonPredictResponse>(json,
@@ -77,117 +81,116 @@ namespace AgricultureApp.Controllers.Marketplace
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "Impossible de joindre le service Python CNN");
-                return StatusCode(503, "Service de détection temporairement indisponible");
+                return StatusCode(503, new { message = "Service de détection temporairement indisponible." });
             }
 
             if (pythonResult == null)
-                return StatusCode(500, "Réponse invalide du service de détection");
+                return StatusCode(500, new { message = "Réponse invalide du service de détection." });
 
-            // ?? Rechercher les produits recommandés en DB ????????????????????
-            List<ProduitDto> produitsRecommandes = new();
+            // ?? Recherche produits en DB ??????????????????????????????????????
+            var produitsRecommandes = new List<ProduitDto>();
+
             if (!pythonResult.Prediction.EstSain && pythonResult.Recommendation != null)
             {
                 var categorie = pythonResult.Recommendation.Categorie;
-                var motsCles = pythonResult.Recommendation.MotsCles ?? new List<string>();
+                var motsCles = (pythonResult.Recommendation.MotsCles ?? new List<string>())
+                                .Select(m => m.ToLower()).ToList();
 
-                var query = _ctx.Produits
+                var baseQuery = _ctx.Produits
                     .Where(p => p.EstActif && p.StockDisponible > 0);
 
-                if (!string.IsNullOrEmpty(categorie))
-                    query = query.Where(p => p.Categorie == categorie);
-
-                if (motsCles.Any())
+                // ?? Tier 1 : catégorie EXACTE + mots-clés ?????????????????????
+                // Fonctionne si votre DB a des catégories comme "Fongicide", "Insecticide", etc.
+                if (!string.IsNullOrEmpty(categorie) && motsCles.Any())
                 {
-                    var premiers = motsCles.Take(2).ToList();
-                    query = query.Where(p =>
-                        premiers.Any(m =>
-                            p.Nom.ToLower().Contains(m.ToLower()) ||
-                            (p.MatieresActives != null && p.MatieresActives.ToLower().Contains(m.ToLower())) ||
-                            (p.Description != null && p.Description.ToLower().Contains(m.ToLower()))
-                        )
-                    );
+                    produitsRecommandes = await baseQuery
+                        .Where(p => p.Categorie == categorie)
+                        .Where(p => motsCles.Any(m =>
+                            p.Nom.ToLower().Contains(m) ||
+                            (p.MatieresActives != null && p.MatieresActives.ToLower().Contains(m)) ||
+                            (p.Description != null && p.Description.ToLower().Contains(m))
+                        ))
+                        .OrderByDescending(p => p.NoteMoyenne)
+                        .Take(6)
+                        .Select(p => MapProduitDto(p))
+                        .ToListAsync();
                 }
 
-                produitsRecommandes = await query
-                    .OrderByDescending(p => p.NoteMoyenne)
-                    .Take(6)
-                    .Select(p => new ProduitDto
-                    {
-                        IdProduit = p.IdProduit,
-                        Nom = p.Nom,
-                        Description = p.Description,
-                        Categorie = p.Categorie,
-                        Prix = p.Prix,
-                        PrixPromo = p.PrixPromo,
-                        EstEnPromotion = p.EstEnPromotion,
-                        Unite = p.Unite,
-                        StockDisponible = p.StockDisponible,
-                        ImageUrl = p.ImageUrl,
-                        Fabricant = p.Fabricant,
-                        MatieresActives = p.MatieresActives,
-                        NoteMoyenne = p.NoteMoyenne,
-                        NombreAvis = p.NombreAvis,
-                        DateAjout = p.DateAjout
-                    })
-                    .ToListAsync();
-
-                // Fallback: si aucun produit trouvé avec filtres stricts, prendre la catégorie seule
+                // ?? Tier 2 : catégorie exacte seule (sans filtre mots-clés) ???
+                // Utile si les descriptions produits ne contiennent pas les mots-clés
                 if (!produitsRecommandes.Any() && !string.IsNullOrEmpty(categorie))
                 {
-                    produitsRecommandes = await _ctx.Produits
-                        .Where(p => p.EstActif && p.StockDisponible > 0 && p.Categorie == categorie)
+                    produitsRecommandes = await baseQuery
+                        .Where(p => p.Categorie == categorie)
                         .OrderByDescending(p => p.NoteMoyenne)
-                        .Take(4)
-                        .Select(p => new ProduitDto
-                        {
-                            IdProduit = p.IdProduit,
-                            Nom = p.Nom,
-                            Description = p.Description,
-                            Categorie = p.Categorie,
-                            Prix = p.Prix,
-                            PrixPromo = p.PrixPromo,
-                            EstEnPromotion = p.EstEnPromotion,
-                            Unite = p.Unite,
-                            StockDisponible = p.StockDisponible,
-                            ImageUrl = p.ImageUrl,
-                            Fabricant = p.Fabricant,
-                            MatieresActives = p.MatieresActives,
-                            NoteMoyenne = p.NoteMoyenne,
-                            NombreAvis = p.NombreAvis,
-                            DateAjout = p.DateAjout
-                        })
+                        .Take(6)
+                        .Select(p => MapProduitDto(p))
                         .ToListAsync();
+
+                    _logger.LogInformation(
+                        "Tier 2 pour '{Cat}': {N} produits trouvés par catégorie seule",
+                        categorie, produitsRecommandes.Count);
+                }
+
+                // ?? Tier 3 : mots-clés seuls toutes catégories ?????????????????
+                // Utile si les catégories en DB ont des noms différents
+                // ex: "Traitement fongique" au lieu de "Fongicide"
+                if (!produitsRecommandes.Any() && motsCles.Any())
+                {
+                    produitsRecommandes = await baseQuery
+                        .Where(p => motsCles.Any(m =>
+                            p.Nom.ToLower().Contains(m) ||
+                            p.Categorie.ToLower().Contains(m) ||
+                            (p.MatieresActives != null && p.MatieresActives.ToLower().Contains(m)) ||
+                            (p.Description != null && p.Description.ToLower().Contains(m))
+                        ))
+                        .OrderByDescending(p => p.NoteMoyenne)
+                        .Take(6)
+                        .Select(p => MapProduitDto(p))
+                        .ToListAsync();
+
+                    _logger.LogInformation(
+                        "Tier 3 pour '{Cat}': {N} produits trouvés par mots-clés seuls",
+                        categorie, produitsRecommandes.Count);
+                }
+
+                // ?? Tier 4 : meilleurs produits toutes catégories ??????????????
+                // Ne retourne rien de trompeur — log un warning clair
+                if (!produitsRecommandes.Any())
+                {
+                    _logger.LogWarning(
+                        "Aucun produit trouvé pour catégorie='{Cat}' motsCles=[{Mots}]. " +
+                        "Vérifiez que des produits existent dans cette catégorie en DB.",
+                        categorie, string.Join(", ", motsCles));
                 }
             }
 
-            // ?? Sauvegarder le diagnostic en historique ??????????????????????
+            // ?? Historique ????????????????????????????????????????????????????
             if (idUtilisateur.HasValue && pythonResult.Confiant)
             {
                 try
                 {
-                    var diagnostic = new DiagnosticImage
+                    _ctx.DiagnosticsImages.Add(new DiagnosticImage
                     {
                         IdUtilisateur = idUtilisateur,
                         NomFichier = image.FileName,
-                        MaladieDetectee = pythonResult.Prediction.Maladie,
                         PlanteDetectee = pythonResult.Prediction.Plante,
+                        MaladieDetectee = pythonResult.Prediction.Maladie,
                         Confiance = pythonResult.Prediction.Confiance,
                         EstSain = pythonResult.Prediction.EstSain,
                         ProduitsRecommandes = string.Join(",",
                             produitsRecommandes.Select(p => p.IdProduit.ToString()))
-                    };
-                    _ctx.DiagnosticsImages.Add(diagnostic);
+                    });
                     await _ctx.SaveChangesAsync();
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Impossible de sauvegarder le diagnostic");
-                    // Ne pas faire échouer la requête pour ça
                 }
             }
 
-            // ?? Construire la réponse ????????????????????????????????????????
-            var resultat = new DiagnosticResultatDto
+            // ?? Réponse ???????????????????????????????????????????????????????
+            return Ok(new DiagnosticResultatDto
             {
                 Prediction = new PredictionDto
                 {
@@ -204,16 +207,12 @@ namespace AgricultureApp.Controllers.Marketplace
                     EstSain = t.EstSain,
                 }).ToList() ?? new(),
                 Confiant = pythonResult.Confiant,
-                ProduitsRecommandes = produitsRecommandes,
-                MessageConseils = BuildAdviceMessage(pythonResult)
-            };
-
-            return Ok(resultat);
+                MessageConseils = BuildAdviceMessage(pythonResult),
+                ProduitsRecommandes = produitsRecommandes
+            });
         }
 
-        // ?????????????????????????????????????????????????????????????????????
-        // GET api/marketplace/diagnostic/historique?userId=X
-        // ?????????????????????????????????????????????????????????????????????
+        // ?? GET api/marketplace/diagnostic/historique?userId=X ???????????????
         [HttpGet("historique")]
         public async Task<ActionResult<List<DiagnosticHistoriqueDto>>> GetHistorique([FromQuery] int userId)
         {
@@ -235,24 +234,46 @@ namespace AgricultureApp.Controllers.Marketplace
             return Ok(historique);
         }
 
-        // ?? Helpers ??????????????????????????????????????????????????????????
+        // ?? Helpers ???????????????????????????????????????????????????????????
+        private static ProduitDto MapProduitDto(Produit p) => new()
+        {
+            IdProduit = p.IdProduit,
+            Nom = p.Nom,
+            Description = p.Description,
+            Categorie = p.Categorie,
+            Prix = p.Prix,
+            PrixPromo = p.PrixPromo,
+            EstEnPromotion = p.EstEnPromotion,
+            Unite = p.Unite,
+            StockDisponible = p.StockDisponible,
+            ImageUrl = p.ImageUrl,
+            Fabricant = p.Fabricant,
+            MatieresActives = p.MatieresActives,
+            NoteMoyenne = p.NoteMoyenne,
+            NombreAvis = p.NombreAvis,
+            DateAjout = p.DateAjout
+        };
+
         private static string BuildAdviceMessage(PythonPredictResponse result)
         {
             if (!result.Confiant)
                 return "La qualité ou l'angle de la photo ne permet pas une détection fiable. " +
-                       "Veuillez prendre une photo nette de la feuille affectée en pleine lumière.";
+                       "Prenez une photo nette de la feuille affectée en pleine lumière, " +
+                       "de préférence sur fond uniforme.";
 
             if (result.Prediction.EstSain)
-                return $"La plante semble en bonne santé ! Continuez votre programme de prévention.";
+                return $"? La plante ({result.Prediction.Plante}) semble en bonne santé ! " +
+                       "Continuez votre programme de prévention habituel.";
 
             var plante = result.Prediction.Plante;
-            var maladie = result.Prediction.Maladie.Replace("_", " ");
-            var categorie = result.Recommendation?.Categorie ?? "traitement";
+            var maladie = result.Prediction.Maladie;
+            var categorie = result.Recommendation?.Categorie?.ToLower() ?? "traitement";
+            var conf = result.Prediction.Confiance;
 
-            return $"Maladie détectée : {maladie} sur {plante} " +
-                   $"(confiance : {result.Prediction.Confiance:F0}%). " +
-                   $"Nous vous recommandons un traitement à base de {categorie.ToLower()}. " +
-                   "Consultez les produits ci-dessous et traitez dès que possible pour limiter la propagation.";
+            return $"Maladie détectée : {maladie} sur {plante} (confiance {conf:F0}%). " +
+                   $"Un traitement à base de {categorie} est recommandé. " +
+                   "Intervenez rapidement pour limiter la propagation. " +
+                   "Les produits adaptés sont listés ci-dessous.";
         }
     }
 }

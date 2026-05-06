@@ -1,1 +1,195 @@
-<p>dashboard works!</p>
+<div class="app-wrapper">
+
+  <!-- Navbar supérieure -->
+  <nav class="navbar fixed-top">
+    <div class="navbar-inner">
+
+      <!-- Logo + toggle -->
+      <div class="brand-zone">
+        <button class="toggle-btn" (click)="toggleSidebar()" title="Toggle sidebar">
+          <span class="toggle-bar"></span>
+          <span class="toggle-bar"></span>
+          <span class="toggle-bar"></span>
+        </button>
+        <a class="navbar-brand" routerLink="/agriculteurs">
+          <img src="assets/images/logo-light.png" alt="AgriManager" class="nav-logo">
+        </a>
+      </div>
+
+      <!-- Zone droite -->
+      <div class="nav-actions">
+
+        <!-- Notifications (décoratif) -->
+        <button class="icon-btn" title="Notifications">
+          <i class="bi bi-bell"></i>
+          <span class="badge-dot"></span>
+        </button>
+
+         <!-- Langue -->
+        <div class="nav-action-item">
+          <app-language-switcher></app-language-switcher>
+        </div>
+
+        <!-- Profil -->
+        <div class="user-menu" *ngIf="isAuthenticated">
+          <button class="user-trigger" data-bs-toggle="dropdown">
+            <div class="user-avatar">
+              <img src="assets/images/user-logo.jpg" alt="User" />
+            </div>
+            <div class="user-info">
+              <span class="user-name">{{ getUserName() }}</span>
+              <span class="user-role">Administrateur</span>
+            </div>
+            <i class="bi bi-chevron-down chevron-icon"></i>
+          </button>
+          <ul class="dropdown-panel dropdown-menu dropdown-menu-end">
+            <li class="panel-header">
+                <div class="user-avatar">
+                  <img src="assets/images/user-logo.jpg" alt="User" />
+                </div>
+              <div>
+                <div class="panel-name">{{ getUserName() }}</div>
+                <div class="panel-email">admin&#64;agrimanager.com</div>
+              </div>
+            </li>
+            <li><hr class="panel-divider"></li>
+            <li>
+              <a class="panel-item" routerLink="/profile">
+                <div class="item-icon"><i class="bi bi-person-circle"></i></div>
+                <span>Mon profil</span>
+              </a>
+            </li>
+            <li>
+              <a class="panel-item" routerLink="/tableau-de-bord">
+                <div class="item-icon accent"><i class="bi bi-speedometer2"></i></div>
+                <span>Tableau de bord</span>
+              </a>
+            </li>
+            <li>
+              <a class="panel-item" routerLink="/admin/users">
+                <div class="item-icon warning"><i class="bi bi-shield-lock"></i></div>
+                <span>Administration</span>
+              </a>
+            </li>
+            <li><hr class="panel-divider"></li>
+            <li>
+              <a class="panel-item danger" (click)="logout()">
+                <div class="item-icon danger"><i class="bi bi-box-arrow-right"></i></div>
+                <span>Déconnexion</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed" [class.mobile-open]="mobileSidebarOpen">
+
+    <!-- Overlay mobile -->
+    <div class="sidebar-overlay" *ngIf="mobileSidebarOpen" (click)="closeMobileSidebar()"></div>
+
+    <div class="sidebar-content">
+
+      <!-- Section principale -->
+      <div class="nav-section">
+        <span class="section-label">Principal</span>
+        <ul class="sidebar-nav">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/marketplace" routerLinkActive="active">
+              <div class="link-icon shop"><i class="bi bi-shop-window"></i></div>
+              <span class="nav-text">AgriShop</span>
+              <span class="nav-badge new">Nouveau</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/agriculteurs" routerLinkActive="active">
+              <div class="link-icon people"><i class="bi bi-people-fill"></i></div>
+              <span class="nav-text">Agriculteurs</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/fermes" routerLinkActive="active">
+              <div class="link-icon farm"><i class="bi bi-house-heart-fill"></i></div>
+              <span class="nav-text">Fermes</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Section cartographie -->
+      <div class="nav-section">
+        <span class="section-label">Cartographie</span>
+        <ul class="sidebar-nav">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/parcelles/:agriculteurId" routerLinkActive="active">
+              <div class="link-icon geo"><i class="bi bi-geo-alt-fill"></i></div>
+              <span class="nav-text">Parcelles</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/vue-satellite" routerLinkActive="active">
+              <div class="link-icon satellite"><i class="bi bi-map-fill"></i></div>
+              <span class="nav-text">Vue Satellite</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Section analyse -->
+      <div class="nav-section">
+        <span class="section-label">Analyse</span>
+        <ul class="sidebar-nav">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/diagnostic" routerLinkActive="active">
+              <div class="link-icon climate"><i class="bi bi-cloud-sun-fill"></i></div>
+              <span class="nav-text">Agroclimatique</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/leaf-scan" routerLinkActive="active">
+              <div class="link-icon scan"><i class="bi bi-camera-fill"></i></div>
+              <span class="nav-text">Scan Feuilles</span>
+              <span class="nav-badge ai">IA</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Footer sidebar -->
+      <div class="sidebar-footer">
+        <div class="version-info">
+          <i class="bi bi-check-circle-fill text-success"></i>
+          <span class="nav-text">v2.4.1 · Stable</span>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
+    <div class="content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  <!-- Chat flottant -->
+  <app-chat></app-chat>
+
+  <!-- Footer -->
+  <footer class="app-footer" [class.sidebar-collapsed]="sidebarCollapsed">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <i class="bi bi-leaf-fill"></i>
+        <span>AgriManager &copy; 2024</span>
+      </div>
+      <span class="footer-sep">·</span>
+      <span class="footer-tech">Angular 17+ &amp; .NET 8</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-desc">Gestion des parcelles agricoles</span>
+    </div>
+  </footer>
+
+</div>

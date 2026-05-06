@@ -19,7 +19,7 @@ interface LangOption {
     <div class="ls-wrap">
       <!-- Bouton trigger avec libellé "Langue" + drapeau actuel -->
       <button class="ls-btn" [class.ls-btn--open]="open" (click)="toggle()" [attr.aria-expanded]="open">
-        <span class="ls-label">🌐Langue</span>
+        <span class="ls-label">🌐</span>
 
         <svg class="ls-arrow" [class.ls-arrow--up]="open" width="10" height="6" viewBox="0 0 10 6">
           <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>

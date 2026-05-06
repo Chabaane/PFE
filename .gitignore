@@ -1,6 +1,25 @@
+# IDE / éditeur
+.vs/
+.vscode/
+
+# Build .NET
 AgricultureApp/bin/
 AgricultureApp/obj/
-C:\Users\chaba\OneDrive\Desktop\PFE\AgricultureApp\appsettings.json
-C:\Users\chaba\OneDrive\Desktop\PFE\plant-disease-service\trained_model
-C:\Users\chaba\OneDrive\Desktop\PFE\plant-disease-service\venv
+
+# Environnement Python
+plant-disease-service/venv/
+plant-disease-service/__pycache__/
+*.pyc
+
+# Fichiers notebooks (si tu ne veux pas les versionner)
+*.ipynb
+
+# Modèles entraînés (volumineux)
+plant-disease-service/trained_model/
+
+# Fichiers temporaires ou d’exécution
+*.suo
+*.user
+*.sqlite
+
 
