@@ -12,350 +12,353 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [ReactiveFormsModule, CommonModule, RouterModule],
   template: `
-    <div class="login-container">
-  <div class="login-card">
-    <!-- Login Header -->
-    <div class="login-header">
-      <h1>Login</h1>
-      <p class="welcome-text">Welcome back! Please login to your account.</p>
+    <div class="login-page">
+      <div class="login-wrapper">
+        <!-- Section Image (Gauche) -->
+        <div class="login-aside">
+          <div class="aside-bg"></div>
+          <div class="aside-overlay">
+            <div class="brand">
+              <div class="brand-logo">
+                <img
+                  src="assets/images/logo-light.png"
+                  alt="AgriManager Logo"
+                  class="logo-img"
+                >
+              </div>
+            </div>
+            <div class="aside-footer">
+              <h3 class="fade-in-up">Cultivons l'avenir ensemble</h3>
+              <p class="fade-in-up delay-1">La plateforme intelligente pour la gestion de vos exploitations agricoles et le suivi de vos récoltes en temps réel.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Formulaire (Droite) -->
+        <div class="login-main">
+          <div class="login-container">
+            <div class="login-header">
+              <h1>Connexion</h1>
+              <p class="welcome-text">Heureux de vous revoir ! Veuillez vous connecter à votre compte.</p>
+            </div>
+
+            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+              <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">✉️</span>
+                  <input
+                    type="email"
+                    id="email"
+                    formControlName="email"
+                    class="form-control"
+                    [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+                    placeholder="nom@exemple.com">
+                </div>
+                <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="error-messages">
+                  <small *ngIf="loginForm.get('email')?.errors?.['required']" class="text-danger">L'email est requis</small>
+                  <small *ngIf="loginForm.get('email')?.errors?.['email']" class="text-danger">Format email invalide</small>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="motDePasse" class="form-label">Mot de passe</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">🔒</span>
+                  <input
+                    [type]="showPassword ? 'text' : 'password'"
+                    id="motDePasse"
+                    formControlName="motDePasse"
+                    class="form-control"
+                    [class.is-invalid]="loginForm.get('motDePasse')?.invalid && loginForm.get('motDePasse')?.touched"
+                    placeholder="Votre mot de passe">
+                  <button type="button" class="password-toggle" (click)="togglePasswordVisibility()">
+                    {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+                  </button>
+                </div>
+                <div *ngIf="loginForm.get('motDePasse')?.invalid && loginForm.get('motDePasse')?.touched" class="error-messages">
+                  <small *ngIf="loginForm.get('motDePasse')?.errors?.['required']" class="text-danger">Mot de passe requis</small>
+                </div>
+              </div>
+
+              <div class="form-options">
+                <label class="remember-me">
+                  <input type="checkbox" formControlName="rememberMe">
+                  <span>Se souvenir de moi</span>
+                </label>
+                <a (click)="forgotPassword()" class="forgot-link">Mot de passe oublié ?</a>
+              </div>
+
+              <div *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</div>
+
+              <button type="submit" class="btn-submit" [disabled]="loginForm.invalid || isLoading">
+                <span *ngIf="isLoading" class="loader"></span>
+                {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
+              </button>
+
+              <div class="register-section">
+                <p>Pas encore de compte ? <a routerLink="/auth/register" class="register-link">S'inscrire gratuitement</a></p>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <!-- Login Form -->
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-      <!-- Email Field -->
-      <div class="form-group">
-        <label for="email" class="form-label">Email</label>
-        <input
-          type="email"
-          id="email"
-          formControlName="email"
-          class="form-control"
-          [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-          placeholder="Entrez votre email"
-          autocomplete="email">
-
-        <!-- Email Validation Messages -->
-        <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-             class="error-messages">
-          <small *ngIf="loginForm.get('email')?.errors?.['required']" class="text-danger">
-            L'email est requis
-          </small>
-          <small *ngIf="loginForm.get('email')?.errors?.['email']" class="text-danger">
-            Veuillez entrer un email valide
-          </small>
-        </div>
-      </div>
-
-      <!-- Password Field -->
-      <div class="form-group">
-        <label for="motDePasse" class="form-label">Mot de passe</label>
-        <div class="password-input-container">
-          <input
-            [type]="showPassword ? 'text' : 'password'"
-            id="motDePasse"
-            formControlName="motDePasse"
-            class="form-control"
-            [class.is-invalid]="loginForm.get('motDePasse')?.invalid && loginForm.get('motDePasse')?.touched"
-            placeholder="Entrez votre mot de passe"
-            autocomplete="current-password">
-
-          <button
-            type="button"
-            class="password-toggle"
-            (click)="togglePasswordVisibility()">
-            <span class="password-toggle-icon">{{ showPassword ? '👁️' : '👁️‍🗨️' }}</span>
-          </button>
-        </div>
-
-        <!-- Password Validation Messages -->
-        <div *ngIf="loginForm.get('motDePasse')?.invalid && loginForm.get('motDePasse')?.touched"
-             class="error-messages">
-          <small *ngIf="loginForm.get('motDePasse')?.errors?.['required']" class="text-danger">
-            Le mot de passe est requis
-          </small>
-          <small *ngIf="loginForm.get('motDePasse')?.errors?.['minlength']" class="text-danger">
-            Le mot de passe doit contenir au moins 6 caractères
-          </small>
-        </div>
-      </div>
-
-      <!-- Remember Me & Forgot Password -->
-      <div class="form-options">
-        <div class="remember-me">
-          <input
-            type="checkbox"
-            id="rememberMe"
-            formControlName="rememberMe"
-            class="form-check-input">
-          <label for="rememberMe" class="form-check-label">
-            Se souvenir de moi
-          </label>
-        </div>
-
-        <a href="javascript:void(0)" class="forgot-password-link" (click)="forgotPassword()">
-          Mot de passe oublié ?
-        </a>
-      </div>
-
-      <!-- Error Message -->
-      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
-        {{ errorMessage }}
-      </div>
-
-      <!-- Login Button -->
-      <button
-        type="submit"
-        class="btn btn-primary w-100 login-button"
-        [disabled]="loginForm.invalid || isLoading">
-        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-        {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
-      </button>
-
-      <!-- Register Link -->
-      <div class="register-section text-center mt-3">
-        <p class="mb-0">
-          Vous n'avez pas de compte ?
-          <a routerLink="/auth/register" class="register-link">S'inscrire</a>
-        </p>
-      </div>
-    </form>
-  </div>
-</div>
   `,
   styles: [`
-    /* Main Container */
+    :host {
+      display: block;
+      height: 100vh;
+      width: 100%;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .login-page {
+      height: 100vh;
+      width: 100%;
+      display: flex;
+      background: #ffffff;
+    }
+
+    .login-wrapper {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* --- SECTION GAUCHE (IMAGE) --- */
+    .login-aside {
+      flex: 1.2;
+      position: relative;
+      overflow: hidden;
+      display: none;
+    }
+
+    @media (min-width: 992px) {
+      .login-aside { display: block; }
+    }
+
+    .aside-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    .aside-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(45, 90, 39, 0.75) 0%, rgba(26, 46, 26, 0.6) 100%);
+      z-index: 2;
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: white;
+    }
+
+    .brand {
+      margin-top: -20px;
+    }
+
+    .logo-img {
+      width: 280px; /* Taille ajustée pour être plus élégante */
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    }
+
+    .aside-footer h3 {
+      font-size: 42px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      line-height: 1.1;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .aside-footer p {
+      font-size: 19px;
+      opacity: 0.95;
+      line-height: 1.6;
+      max-width: 480px;
+    }
+
+    /* --- SECTION DROITE (FORMULAIRE) --- */
+    .login-main {
+      flex: 1;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
     .login-container {
       width: 100%;
       max-width: 420px;
-      margin: 0 auto;
+      animation: fadeInRight 0.8s ease-out;
     }
 
-    /* Login Card */
-    .login-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      padding: 40px;
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Header */
-    .login-header {
-      text-align: center;
-      margin-bottom: 30px;
+    @keyframes fadeInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
     }
 
     .login-header h1 {
-      color: #333;
-      font-size: 28px;
-      font-weight: 600;
-      margin-bottom: 10px;
+      font-size: 36px;
+      color: #1a2e1a;
+      margin-bottom: 12px;
+      font-weight: 800;
+      letter-spacing: -1px;
     }
+    .welcome-text { color: #64748b; margin-bottom: 45px; font-size: 16px; }
 
-    .welcome-text {
-      color: #666;
-      font-size: 14px;
-      margin: 0;
-    }
-
-    /* Form Groups */
-    .form-group {
-      margin-bottom: 20px;
-    }
-
+    .form-group { margin-bottom: 24px; }
     .form-label {
       display: block;
-      color: #333;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #334155;
       font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 8px;
     }
 
-    /* Form Controls */
+    .input-wrapper { position: relative; }
+    .input-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      opacity: 0.6;
+    }
+
     .form-control {
       width: 100%;
-      padding: 12px 15px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      transition: all 0.3s;
+      padding: 16px 16px 16px 52px;
+      border: 2px solid #f1f5f9;
+      background: #f8fafc;
+      border-radius: 14px;
+      font-size: 15px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-sizing: border-box;
+      color: #1e293b;
     }
 
     .form-control:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #2d5a27;
+      background: white;
+      box-shadow: 0 10px 15px -3px rgba(45, 90, 39, 0.1);
     }
 
-    .form-control.is-invalid {
-      border-color: #dc3545;
-    }
-
-    .form-control.is-invalid:focus {
-      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
-    }
-
-    /* Password Input Container */
-    .password-input-container {
-      position: relative;
-    }
+    .form-control.is-invalid { border-color: #ef4444; background: #fffafb; }
 
     .password-toggle {
       position: absolute;
-      right: 10px;
+      right: 18px;
       top: 50%;
       transform: translateY(-50%);
       background: none;
       border: none;
       cursor: pointer;
-      padding: 5px;
+      font-size: 18px;
+      opacity: 0.6;
     }
 
-    .password-toggle-icon {
-      font-size: 16px;
-    }
-
-    /* Error Messages */
-    .error-messages {
-      margin-top: 5px;
-    }
-
-    .text-danger {
-      color: #dc3545 !important;
-      font-size: 12px;
-    }
-
-    /* Form Options */
     .form-options {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 25px;
+      margin: 30px 0;
+      font-size: 14px;
     }
 
     .remember-me {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      cursor: pointer;
+      color: #475569;
+      font-weight: 500;
     }
-
-    .form-check-input {
-      width: 16px;
-      height: 16px;
+    .remember-me input {
+      width: 18px;
+      height: 18px;
+      accent-color: #2d5a27;
       cursor: pointer;
     }
 
-    .form-check-label {
-      color: #666;
-      font-size: 14px;
+    .forgot-link {
+      color: #2d5a27;
+      font-weight: 700;
       cursor: pointer;
-      user-select: none;
-    }
-
-    /* Forgot Password */
-    .forgot-password-link {
-      color: #667eea;
-      font-size: 14px;
       text-decoration: none;
-      transition: color 0.3s;
-      cursor: pointer;
     }
 
-    .forgot-password-link:hover {
-      color: #764ba2;
-      text-decoration: underline;
-    }
-
-    /* Alert */
-    .alert-danger {
-      background-color: #ffeaea;
-      border-color: #ffcccc;
-      color: #dc3545;
-      padding: 12px 15px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-
-    /* Login Button */
-    .login-button {
-      background: linear-gradient(135deg, #1e1f24 0%, #4ba293 100%);
+    .btn-submit {
+      width: 100%;
+      padding: 18px;
+      background: #2d5a27;
+      color: white;
       border: none;
-      padding: 14px;
+      border-radius: 14px;
       font-size: 16px;
-      font-weight: 600;
-      border-radius: 6px;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.3s;
-      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 4px 6px -1px rgba(45, 90, 39, 0.2);
     }
 
-    .login-button:hover:not(:disabled) {
+    .btn-submit:hover:not(:disabled) {
+      background: #1e3a1a;
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 20px 25px -5px rgba(45, 90, 39, 0.2);
     }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    .login-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    /* Register Section */
     .register-section {
-      padding-top: 20px;
-      border-top: 1px solid #eee;
+      text-align: center;
+      margin-top: 35px;
+      padding-top: 25px;
+      border-top: 1px solid #f1f5f9;
     }
+    .register-section p { color: #64748b; font-size: 15px; }
+    .register-link { color: #2d5a27; font-weight: 700; text-decoration: none; margin-left: 5px; }
 
-    .register-section p {
-      color: #666;
+    .alert-error {
+      background: #fff1f2;
+      color: #be123c;
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 25px;
       font-size: 14px;
+      border: 1px solid #ffe4e6;
     }
 
-    .register-link {
-      color: #667eea;
-      font-weight: 600;
-      text-decoration: none;
-      transition: color 0.3s;
+    .loader {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
 
-    .register-link:hover {
-      color: #764ba2;
-      text-decoration: underline;
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .fade-in-up {
+      animation: fadeInUp 1s ease-out forwards;
+      opacity: 0;
     }
-
-    /* Responsive Design */
-    @media (max-width: 480px) {
-      .login-card {
-        padding: 30px 20px;
-        margin: 0 15px;
-      }
-
-      .login-header h1 {
-        font-size: 24px;
-      }
-
-      .form-options {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-      }
-
-      .forgot-password-link {
-        align-self: flex-end;
-      }
+    .delay-1 { animation-delay: 0.3s; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   `]
 })
@@ -377,9 +380,7 @@ export class LoginComponent {
     });
   }
 
-  // Soumettre le formulaire
   onSubmit(): void {
-    // Marquer tous les champs comme touchés pour afficher les erreurs
     if (this.loginForm.invalid) {
       Object.keys(this.loginForm.controls).forEach(key => {
         const control = this.loginForm.get(key);
@@ -396,56 +397,25 @@ export class LoginComponent {
       motDePasse: this.loginForm.value.motDePasse
     };
 
-    // Appel au service d'authentification
     this.authService.login(credentials).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
-
-        // Gérer "Se souvenir de moi"
-        if (this.loginForm.value.rememberMe) {
-          // Déjà géré par AuthService
-        }
-
-        // Redirection après login réussi
         this.router.navigate(['/agriculteurs']);
       },
       error: (error) => {
         this.isLoading = false;
-
-        // Gérer différents types d'erreurs
-        if (error.status === 401) {
-          this.errorMessage = 'Email ou mot de passe incorrect';
-        } else if (error.status === 0) {
-          this.errorMessage = 'Erreur de connexion au serveur';
-        } else {
-          this.errorMessage = error.error?.message || 'Une erreur est survenue';
-        }
-
-        // Réinitialiser le mot de passe
+        this.errorMessage = error.status === 401 ? 'Email ou mot de passe incorrect' : 'Une erreur est survenue';
         this.loginForm.get('motDePasse')?.reset();
       },
-      complete: () => {
-        this.isLoading = false;
-      }
+      complete: () => this.isLoading = false
     });
   }
 
-  // Afficher/cacher le mot de passe
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
   }
 
-  // Mot de passe oublié
   forgotPassword(): void {
-    alert('Fonctionnalité de réinitialisation de mot de passe à venir !');
-  }
-
-  // Raccourci pour accéder aux contrôles du formulaire
-  get email() {
-    return this.loginForm.get('email');
-  }
-
-  get motDePasse() {
-    return this.loginForm.get('motDePasse');
+    alert('Fonctionnalité à venir !');
   }
 }

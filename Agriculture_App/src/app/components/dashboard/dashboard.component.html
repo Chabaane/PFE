@@ -16,6 +16,18 @@
         </a>
       </div>
 
+      <!-- Zone centrale - Indicateurs agricoles -->
+      <div class="agri-indicators">
+        <div class="season-badge">
+          <i class="bi bi-sun-fill"></i>
+          <span>Printemps</span>
+        </div>
+        <div class="weather-indicator">
+          <i class="bi bi-cloud-sun"></i>
+          <span>24°C</span>
+        </div>
+      </div>
+
       <!-- Zone droite -->
       <div class="nav-actions">
 
@@ -92,6 +104,38 @@
 
     <div class="sidebar-content">
 
+      <!-- Décoration supérieure agricole -->
+      <div class="agri-decoration">
+        <div class="wheat-stalk left">
+          <svg viewBox="0 0 24 60" class="wheat-svg">
+            <path d="M12 55V10" stroke="#8b7355" stroke-width="2" stroke-linecap="round"/>
+            <ellipse cx="8" cy="8" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="16" cy="10" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="6" cy="18" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="18" cy="20" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="8" cy="28" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="16" cy="30" rx="4" ry="6" fill="#d4a574"/>
+          </svg>
+        </div>
+        <div class="leaf-pattern">
+          <svg viewBox="0 0 100 50" class="leaf-svg">
+            <path d="M10 45C10 45 30 10 50 10C70 10 90 45 90 45" stroke="#22c55e" stroke-width="2" fill="none" opacity="0.3"/>
+            <path d="M20 40C20 40 35 20 50 20C65 20 80 40 80 40" stroke="#4ade80" stroke-width="1.5" fill="none" opacity="0.2"/>
+          </svg>
+        </div>
+        <div class="wheat-stalk right">
+          <svg viewBox="0 0 24 60" class="wheat-svg flipped">
+            <path d="M12 55V10" stroke="#8b7355" stroke-width="2" stroke-linecap="round"/>
+            <ellipse cx="8" cy="8" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="16" cy="10" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="6" cy="18" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="18" cy="20" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="8" cy="28" rx="4" ry="6" fill="#d4a574"/>
+            <ellipse cx="16" cy="30" rx="4" ry="6" fill="#d4a574"/>
+          </svg>
+        </div>
+      </div>
+
       <!-- Section principale -->
       <div class="nav-section">
         <span class="section-label">Principal</span>
@@ -157,11 +201,39 @@
         </ul>
       </div>
 
+      <!-- Stats rapides agricoles -->
+      <div class="agri-quick-stats">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">12</span>
+            <span class="stat-label">Parcelles</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon harvest">
+            <i class="bi bi-basket3-fill"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">85%</span>
+            <span class="stat-label">Récolte</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Footer sidebar -->
       <div class="sidebar-footer">
         <div class="version-info">
           <i class="bi bi-check-circle-fill text-success"></i>
           <span class="nav-text">v2.4.1 · Stable</span>
+        </div>
+        <div class="growth-indicator">
+          <div class="growth-bar">
+            <div class="growth-fill" style="width: 75%"></div>
+          </div>
+          <span class="growth-label">Croissance active</span>
         </div>
       </div>
 
@@ -182,8 +254,11 @@
   <footer class="app-footer" [class.sidebar-collapsed]="sidebarCollapsed">
     <div class="footer-inner">
       <div class="footer-brand">
-        <i class="bi bi-leaf-fill"></i>
-        <span>AgriManager &copy; 2024</span>
+        <svg viewBox="0 0 20 20" class="footer-leaf-svg">
+          <path d="M10 2C10 2 4 6 4 12c0 3.314 2.686 6 6 6s6-2.686 6-6C16 6 10 2 10 2z" fill="#4ade80"/>
+          <line x1="10" y1="6" x2="10" y2="16" stroke="#14532d" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span>AgriManager &copy; 2026</span>
       </div>
       <span class="footer-sep">·</span>
       <span class="footer-tech">Angular 17+ &amp; .NET 8</span>

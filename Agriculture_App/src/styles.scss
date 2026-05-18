@@ -1,1 +1,25 @@
 /* You can add global styles to this file, and also import other style files */
+/* styles.scss (global) */
+:root {
+  --green-950: #0a1a0d;
+  --green-900: #14290f;
+  --green-800: #1e4016;
+  --green-700: #2a5c1f;
+  --green-600: #357a28;
+  --green-500: #47a336;
+  --green-400: #66c24f;
+  --green-300: #8ed876;
+  --green-200: #b8eaa6;
+  --green-100: #dff5d8;
+  --green-50: #f2fced;
+  --sand: #f5f0e8;
+  --sand-dark: #e8e0d0;
+  --gold: #c9a84c;
+  --gold-light: #f0d080;
+  --text-dark: #0f1e0a;
+  --text-mid: #2d4a24;
+  --text-muted: #5a7a50;
+  --white: #ffffff;
+  --radius: 16px;
+  --radius-sm: 8px;
+}

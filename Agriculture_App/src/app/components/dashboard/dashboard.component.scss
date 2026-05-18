@@ -1,14 +1,14 @@
 // ============================================================
-// AgriManager Dashboard — SCSS Premium
+// AgriManager Dashboard — SCSS Premium Agricultural Theme
 // ============================================================
 
 // --- Variables fondamentales ---
 $navbar-height: 68px;
-$sidebar-width: 272px;
-$sidebar-collapsed-width: 72px;
+$sidebar-width: 280px;
+$sidebar-collapsed-width: 76px;
 $transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-// --- Palette AgriManager ---
+// --- Palette Agricole Naturelle ---
 $green-50:  #f0fdf4;
 $green-100: #dcfce7;
 $green-400: #4ade80;
@@ -18,14 +18,23 @@ $green-700: #15803d;
 $green-800: #166534;
 $green-900: #14532d;
 
+// Couleurs terre et agriculture
+$earth-brown: #8b7355;
+$earth-tan: #d4a574;
+$earth-sand: #c2b280;
+$earth-olive: #6b7c3f;
 $earth-800: #1c1917;
 $earth-900: #0c0a09;
+$gold-harvest: #d4a017;
+$sky-blue: #87ceeb;
 
-$surface-dark:    rgba(15, 20, 15, 0.96);
-$surface-medium:  rgba(22, 30, 22, 0.94);
-$surface-light:   rgba(30, 42, 30, 0.90);
-$border-subtle:   rgba(255, 255, 255, 0.07);
+// Thème agricole sombre mais chaleureux
+$surface-dark:    rgba(18, 24, 14, 0.97);
+$surface-medium:  rgba(24, 32, 20, 0.95);
+$surface-light:   rgba(32, 42, 28, 0.92);
+$border-subtle:   rgba(255, 255, 255, 0.06);
 $border-accent:   rgba(74, 222, 128, 0.25);
+$border-earth:     rgba(139, 115, 85, 0.2);
 $text-primary:    #f1f5f1;
 $text-secondary:  #9ca3af;
 $text-muted:      #6b7280;
@@ -42,6 +51,10 @@ $text-muted:      #6b7280;
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.15), 0 0 60px rgba(34, 197, 94, 0.05);
 }
 
+@mixin organic-border {
+  border-radius: 12px 8px 14px 10px;
+}
+
 // ============================================================
 // Base
 // ============================================================
@@ -52,24 +65,53 @@ $text-muted:      #6b7280;
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(ellipse 80% 50% at 10% 20%, rgba(22, 163, 74, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 90% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 55%),
-    linear-gradient(160deg, #0a0f0a 0%, #0f1a10 40%, #0b140c 100%);
+    radial-gradient(ellipse 80% 50% at 10% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 80%, rgba(212, 160, 23, 0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 50% 10%, rgba(139, 115, 85, 0.04) 0%, transparent 50%),
+    linear-gradient(165deg, #0a0f08 0%, #0f1a0c 40%, #0b140a 100%);
   background-attachment: fixed;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: $text-primary;
+  position: relative;
+
+  // Texture subtile de terre
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23165428' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 // ============================================================
 // NAVBAR
 // ============================================================
 .navbar {
-  @include glass($surface-dark, $border-subtle);
+  @include glass($surface-dark, $border-earth);
   height: $navbar-height;
   padding: 0;
   z-index: 1030;
-  border-bottom: 1px solid $border-subtle;
-  box-shadow: 0 1px 40px rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid $border-earth;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+
+  // Ligne décorative supérieure
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+      $green-600 0%,
+      $green-400 25%,
+      $gold-harvest 50%,
+      $green-400 75%,
+      $green-600 100%
+    );
+  }
 }
 
 .navbar-inner {
@@ -79,7 +121,7 @@ $text-muted:      #6b7280;
   width: 100%;
   height: 100%;
   padding: 0 1.25rem 0 1rem;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 // --- Brand ---
@@ -100,6 +142,52 @@ $text-muted:      #6b7280;
 .navbar-brand {
   padding: 0;
   margin: 0;
+}
+
+// --- Indicateurs agricoles ---
+.agri-indicators {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 2rem;
+}
+
+.season-badge,
+.weather-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all $transition-smooth;
+}
+
+.season-badge {
+  background: linear-gradient(135deg, rgba(212, 160, 23, 0.15), rgba(212, 160, 23, 0.08));
+  border: 1px solid rgba(212, 160, 23, 0.25);
+  color: $gold-harvest;
+
+  i { font-size: 0.85rem; }
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(212, 160, 23, 0.2), rgba(212, 160, 23, 0.12));
+    box-shadow: 0 0 12px rgba(212, 160, 23, 0.15);
+  }
+}
+
+.weather-indicator {
+  background: rgba(135, 206, 235, 0.1);
+  border: 1px solid rgba(135, 206, 235, 0.2);
+  color: $sky-blue;
+
+  i { font-size: 0.85rem; }
+
+  &:hover {
+    background: rgba(135, 206, 235, 0.15);
+    box-shadow: 0 0 12px rgba(135, 206, 235, 0.1);
+  }
 }
 
 // --- Toggle ---
@@ -203,7 +291,7 @@ $text-muted:      #6b7280;
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #f59e0b;
+  background: $gold-harvest;
   border: 1.5px solid $earth-900;
 }
 
@@ -248,7 +336,7 @@ $text-muted:      #6b7280;
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover; // 👈 évite la déformation
+    object-fit: cover;
   }
 }
 
@@ -279,7 +367,7 @@ $text-muted:      #6b7280;
 
 // --- Dropdown Panel ---
 .dropdown-panel {
-  @include glass(rgba(14, 22, 14, 0.98), $border-subtle);
+  @include glass(rgba(14, 22, 14, 0.98), $border-earth);
   border-radius: 16px !important;
   padding: 8px !important;
   min-width: 230px;
@@ -386,18 +474,19 @@ $text-muted:      #6b7280;
   width: $sidebar-width;
   z-index: 1020;
   transition: width $transition-smooth, left $transition-smooth;
-  @include glass($surface-medium, $border-subtle);
-  border-right: 1px solid $border-subtle;
+  @include glass($surface-medium, $border-earth);
+  border-right: 1px solid $border-earth;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 
+  // Dégradé supérieur avec nuance de terre
   &::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.3), transparent);
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(139, 115, 85, 0.4), rgba(34, 197, 94, 0.3), rgba(139, 115, 85, 0.4), transparent);
   }
 
   &.collapsed {
@@ -407,6 +496,9 @@ $text-muted:      #6b7280;
     .nav-text            { opacity: 0; max-width: 0; }
     .nav-badge           { opacity: 0; }
     .sidebar-footer .nav-text { opacity: 0; max-width: 0; }
+    .agri-decoration     { opacity: 0; height: 0; }
+    .agri-quick-stats    { opacity: 0; }
+    .growth-indicator    { opacity: 0; }
 
     .nav-link {
       padding: 0.7rem 0;
@@ -430,13 +522,50 @@ $text-muted:      #6b7280;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 1rem 0.75rem 0.75rem;
+  padding: 0.75rem 0.75rem 0.75rem;
   gap: 0.25rem;
 
   // scrollbar
   &::-webkit-scrollbar { width: 3px; }
   &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  &::-webkit-scrollbar-thumb { background: rgba(139, 115, 85, 0.2); border-radius: 2px; }
+}
+
+// --- Décoration agricole ---
+.agri-decoration {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  transition: all $transition-smooth;
+  overflow: hidden;
+}
+
+.wheat-stalk {
+  width: 24px;
+  height: 50px;
+  opacity: 0.6;
+
+  &.right .wheat-svg {
+    transform: scaleX(-1);
+  }
+}
+
+.wheat-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.leaf-pattern {
+  flex: 1;
+  margin: 0 0.5rem;
+  opacity: 0.5;
+}
+
+.leaf-svg {
+  width: 100%;
+  height: auto;
 }
 
 // --- Sections ---
@@ -449,7 +578,7 @@ $text-muted:      #6b7280;
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: $text-muted;
+  color: $earth-tan;
   font-weight: 600;
   padding: 0.6rem 0.5rem 0.35rem;
   white-space: nowrap;
@@ -483,6 +612,7 @@ $text-muted:      #6b7280;
   position: relative;
   overflow: hidden;
 
+  // Effet de croissance subtil
   &::before {
     content: '';
     position: absolute;
@@ -490,6 +620,7 @@ $text-muted:      #6b7280;
     border-radius: 10px;
     opacity: 0;
     transition: opacity $transition-smooth;
+    background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.05), transparent);
   }
 
   &:hover {
@@ -501,8 +632,8 @@ $text-muted:      #6b7280;
 
   &.active {
     color: $green-400;
-    background: rgba(34, 197, 94, 0.1);
-    border: 1px solid rgba(34, 197, 94, 0.15);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(34, 197, 94, 0.06));
+    border: 1px solid rgba(34, 197, 94, 0.18);
     font-weight: 600;
 
     .link-icon {
@@ -514,7 +645,7 @@ $text-muted:      #6b7280;
   }
 }
 
-// --- Icônes colorées ---
+// --- Icônes colorées avec thème agricole ---
 .link-icon {
   width: 30px;
   height: 30px;
@@ -526,13 +657,14 @@ $text-muted:      #6b7280;
   flex-shrink: 0;
   transition: all $transition-smooth;
 
+  // Palette agricole nature
   &.shop      { background: rgba(139, 92, 246, 0.12); color: #a78bfa; }
   &.people    { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
-  &.farm      { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
-  &.geo       { background: rgba(239, 68, 68, 0.12);  color: #f87171; }
+  &.farm      { background: rgba(212, 160, 23, 0.12); color: $gold-harvest; } // Changé pour thème agricole
+  &.geo       { background: rgba(34, 197, 94, 0.12); color: $green-400; } // Changé pour parcelles
   &.satellite { background: rgba(20, 184, 166, 0.12); color: #2dd4bf; }
   &.climate   { background: rgba(249, 115, 22, 0.12); color: #fb923c; }
-  &.scan      { background: rgba(34, 197, 94, 0.12);  color: #4ade80; }
+  &.scan      { background: rgba(34, 197, 94, 0.12); color: $green-400; }
 }
 
 .nav-text {
@@ -556,11 +688,77 @@ $text-muted:      #6b7280;
   &.ai  { background: rgba(34, 197, 94, 0.15); color: $green-400; border: 1px solid rgba(34, 197, 94, 0.25); }
 }
 
+// --- Stats rapides agricoles ---
+.agri-quick-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  background: rgba(139, 115, 85, 0.08);
+  border: 1px solid $border-earth;
+  border-radius: 12px;
+  transition: opacity $transition-smooth;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  transition: all $transition-smooth;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.15);
+  color: $green-400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+
+  &.harvest {
+    background: rgba(212, 160, 23, 0.15);
+    color: $gold-harvest;
+  }
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.stat-label {
+  font-size: 0.62rem;
+  color: $text-muted;
+  font-weight: 500;
+}
+
 // --- Sidebar Footer ---
 .sidebar-footer {
   margin-top: auto;
   padding-top: 0.75rem;
-  border-top: 1px solid $border-subtle;
+  border-top: 1px solid $border-earth;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .version-info {
@@ -572,6 +770,33 @@ $text-muted:      #6b7280;
   color: $text-muted;
   overflow: hidden;
   white-space: nowrap;
+}
+
+.growth-indicator {
+  padding: 0 0.5rem;
+  transition: opacity $transition-smooth;
+}
+
+.growth-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.growth-fill {
+  height: 100%;
+  background: linear-gradient(90deg, $green-600, $green-400, $gold-harvest);
+  border-radius: 2px;
+  transition: width 1s ease-out;
+}
+
+.growth-label {
+  font-size: 0.58rem;
+  color: $earth-tan;
+  font-weight: 500;
 }
 
 // --- Overlay mobile ---
@@ -592,6 +817,8 @@ $text-muted:      #6b7280;
   transition: margin-left $transition-smooth;
   flex: 1;
   min-height: calc(100vh - #{$navbar-height} - 52px);
+  position: relative;
+  z-index: 1;
 
   &.sidebar-collapsed {
     margin-left: $sidebar-collapsed-width;
@@ -610,9 +837,11 @@ $text-muted:      #6b7280;
 .app-footer {
   margin-left: $sidebar-width;
   transition: margin-left $transition-smooth;
-  @include glass(rgba(10, 16, 10, 0.85), $border-subtle);
-  border-top: 1px solid $border-subtle;
+  @include glass(rgba(10, 14, 8, 0.9), $border-earth);
+  border-top: 1px solid $border-earth;
   padding: 0.85rem 1.5rem;
+  position: relative;
+  z-index: 1;
 
   &.sidebar-collapsed {
     margin-left: $sidebar-collapsed-width;
@@ -637,6 +866,11 @@ $text-muted:      #6b7280;
   font-size: 0.78rem;
 
   i { font-size: 0.75rem; }
+}
+
+.footer-leaf-svg {
+  width: 18px;
+  height: 18px;
 }
 
 .footer-sep {
@@ -666,7 +900,8 @@ $text-muted:      #6b7280;
   }
 
   .status-pill,
-  .user-info {
+  .user-info,
+  .agri-indicators {
     display: none;
   }
 

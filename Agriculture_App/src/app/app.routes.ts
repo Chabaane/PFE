@@ -6,11 +6,14 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { AdminUsersComponent } from './components/admin-users/admin-users.component';
 import { MarketplaceComponent } from './components/marketplace/marketplace.component';
 import { DiagnosticImageComponent } from './components/diagnostic-image/diagnostic-image.component';
+import { AccueilComponent } from './components/accueil/accueil.component';
 
 export const routes: Routes = [
+  { path: 'accueil', component: AccueilComponent },
+
   {
     path: '',
-    redirectTo: 'auth',
+    redirectTo: 'accueil',
     pathMatch: 'full'
   },
 
