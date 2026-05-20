@@ -1,99 +1,169 @@
-<div class="agriculteurs-container">
-<div class="card shadow">
-  <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-      <h2 class="mb-0 logo-header">
-        Liste des Agriculteurs
-      </h2>
-    <div>
-      <button class="btn btn-light btn-sm me-2" (click)="refresh()" [disabled]="loading">
+<div class="ag-page">
+
+  <!-- Toolbar: search + filters -->
+  <div class="ag-toolbar">
+    <div class="ag-toolbar-left">
+      <h2 class="ag-title">Agriculteurs <span class="ag-count" id="ag-count">{{ agriculteurs.length }}</span></h2>
+    </div>
+    <div class="ag-toolbar-right">
+      <button class="ag-btn ag-btn-ghost" (click)="refresh()" [disabled]="loading">
         <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Actualiser
       </button>
-      <a routerLink="/agriculteurs/nouveau" class="btn btn-light btn-sm">
+      <a routerLink="/agriculteurs/nouveau" class="ag-btn ag-btn-primary">
         <i class="fas fa-plus"></i> Ajouter
       </a>
     </div>
   </div>
 
-  <div class="card-body">
-    <!-- Loading -->
-    <div *ngIf="loading" class="text-center py-5">
-      <div class="spinner-border text-success" role="status">
-        <span class="visually-hidden">Chargement...</span>
-      </div>
-      <p class="mt-2 text-muted">Chargement des agriculteurs...</p>
-    </div>
-
-    <!-- Error -->
-    <div *ngIf="error" class="alert alert-danger">
-      <strong>Erreur:</strong> {{ error }}
-      <button class="btn btn-sm btn-outline-danger ms-3" (click)="refresh()">
-        Réessayer
+  <!-- Search + filter bar -->
+  <div class="ag-searchbar">
+    <div class="ag-search-wrap">
+      <i class="fas fa-search ag-search-icon"></i>
+      <input
+        type="text"
+        class="ag-search-input"
+        placeholder="Rechercher par nom, prénom…"
+        [(ngModel)]="searchQuery"
+        (input)="applyFilters()"
+      />
+      <button *ngIf="searchQuery" class="ag-search-clear" (click)="searchQuery=''; applyFilters()">
+        <i class="fas fa-times"></i>
       </button>
     </div>
 
-    <!-- Liste -->
-    <div *ngIf="!loading && !error" class="row">
-      <div *ngFor="let agriculteur of agriculteurs" class="col-md-6 col-lg-4 mb-4">
-        <div class="card h-100 border-success border-top-3 agriculteur-card">
-          <div class="card-body">
-            <h5 class="card-title text-success">
-              {{ agriculteur.prenom }} <strong>{{ agriculteur.nom }}</strong>
-            </h5>
+    <div class="ag-filter-wrap">
+      <select class="ag-select" [(ngModel)]="filterLocalisation" (change)="applyFilters()">
+        <option value="">Toutes les localisations</option>
+        <option *ngFor="let loc of localisations" [value]="loc">{{ loc }}</option>
+      </select>
 
-            <div class="mb-3">
-              <div class="d-flex align-items-center mb-2">
-                <i class="fas fa-phone text-muted me-2"></i>
-                <span>{{ agriculteur.telephone || 'Non renseigné' }}</span>
-              </div>
-              <div class="d-flex align-items-center">
-                <i class="fas fa-map-marker-alt text-muted me-2"></i>
-                <span>{{ agriculteur.localisation || 'Non renseigné' }}</span>
-              </div>
+      <button class="ag-btn ag-btn-ghost ag-btn-sm"
+              *ngIf="searchQuery || filterLocalisation"
+              (click)="resetFilters()">
+        <i class="fas fa-filter-slash"></i> Effacer
+      </button>
+    </div>
+  </div>
+
+  <!-- Results count -->
+  <p class="ag-results-info" *ngIf="!loading && !error">
+    {{ filteredAgriculteurs.length }} résultat(s) sur {{ agriculteurs.length }}
+  </p>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="ag-state">
+    <div class="ag-spinner"></div>
+    <p>Chargement des agriculteurs…</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="ag-alert">
+    <i class="fas fa-exclamation-circle"></i>
+    <span><strong>Erreur :</strong> {{ error }}</span>
+    <button class="ag-btn ag-btn-ghost ag-btn-sm" (click)="refresh()">Réessayer</button>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && !error" class="ag-table-wrap">
+    <table class="ag-table">
+      <thead>
+        <tr>
+          <th class="th-chk"><input type="checkbox" (change)="toggleAll($event)"></th>
+          <th class="th-sort" (click)="sort('nom')">
+            Agriculteur
+            <i class="fas" [ngClass]="sortIcon('nom')"></i>
+          </th>
+          <th>Téléphone</th>
+          <th class="th-sort" (click)="sort('localisation')">
+            Localisation
+            <i class="fas" [ngClass]="sortIcon('localisation')"></i>
+          </th>
+          <th>ID</th>
+          <th>Parcelles</th>
+          <th class="th-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of filteredAgriculteurs"
+            class="ag-row"
+            [class.ag-selected]="isSelected(a.idAgriculteur)">
+
+          <td class="td-chk" (click)="$event.stopPropagation()">
+            <input type="checkbox"
+                   [checked]="isSelected(a.idAgriculteur)"
+                   (change)="toggleSelect(a.idAgriculteur)">
+          </td>
+
+          <td class="td-person">
+            <div class="ag-av" [style.background]="avatarColor(a.nom)">
+              {{ initials(a.prenom, a.nom) }}
             </div>
-
-            <div class="d-grid gap-2">
-              <a [routerLink]="['/dessiner-parcelle', agriculteur.idAgriculteur]"
-                 class="btn btn-outline-success">
-                <i class="fas fa-map me-1"></i> Voir parcelles
-              </a>
-              <a [routerLink]="['/carte-parcelle', agriculteur.idAgriculteur]"
-                 class="btn btn-success">
-                <i class="fas fa-draw-polygon me-1"></i> Ajouter parcelle
-              </a>
+            <div class="ag-person-info">
+              <span class="ag-person-name">{{ a.prenom }} {{ a.nom }}</span>
             </div>
-          </div>
+          </td>
 
-          <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
-              <small class="text-white">
-                  ID: {{ agriculteur.idAgriculteur }}
-              </small>
-              <div class="btn-group btn-group-sm">
-                  <a [routerLink]="['/agriculteurs/modifier', agriculteur.idAgriculteur]"
-                    class="btn btn-primary">
-                      <i class="fas fa-edit">modifier</i>
-                  </a>
-                  <button class="btn btn-danger"
-                          (click)="delete(agriculteur.idAgriculteur)"
-                          title="Supprimer">supprimer
-                      <i class="fas fa-trash"></i>
-                  </button>
-              </div>
-          </div>
-        </div>
-      </div>
+          <td class="td-phone">
+            <span *ngIf="a.telephone">{{ a.telephone }}</span>
+            <span *ngIf="!a.telephone" class="ag-nil">—</span>
+          </td>
+
+          <td class="td-loc">
+            <span *ngIf="a.localisation" class="ag-loc-pill">
+              <i class="fas fa-map-marker-alt"></i> {{ a.localisation }}
+            </span>
+            <span *ngIf="!a.localisation" class="ag-nil">—</span>
+          </td>
+
+          <td class="td-id">
+            <span class="ag-id">#{{ a.idAgriculteur }}</span>
+          </td>
+
+          <td class="td-parc">
+            <a [routerLink]="['/carte-parcelle', a.idAgriculteur]"
+               class="ag-pb ag-pb-solid" (click)="$event.stopPropagation()">
+              <i class="fas fa-draw-polygon"></i> Voir/Ajouter
+            </a>
+          </td>
+
+         <td class="td-actions" (click)="$event.stopPropagation()">
+            <!-- Bouton Modifier -->
+            <a [routerLink]="['/agriculteurs/modifier', a.idAgriculteur]"
+              class="ag-act ag-act-edit"
+              title="Modifier">
+              <i class="fas fa-edit"></i>
+              <span>Modifier</span>
+            </a>
+
+            <!-- Bouton Supprimer -->
+            <button class="ag-act ag-act-del"
+                    (click)="delete(a.idAgriculteur)"
+                    title="Supprimer">
+              <i class="fas fa-trash"></i>
+              <span>Supprimer</span>
+            </button>
+
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty filtered -->
+    <div *ngIf="filteredAgriculteurs.length === 0 && agriculteurs.length > 0" class="ag-empty">
+      <i class="fas fa-search-minus"></i>
+      <p>Aucun résultat pour <strong>« {{ searchQuery || filterLocalisation }} »</strong></p>
+      <button class="ag-btn ag-btn-ghost ag-btn-sm" (click)="resetFilters()">
+        Effacer les filtres
+      </button>
     </div>
 
-    <!-- Aucun résultat -->
-    <div *ngIf="!loading && !error && agriculteurs.length === 0" class="text-center py-5">
-      <div class="mb-3">
-        <i class="fas fa-users fa-3x text-muted"></i>
-      </div>
-      <h4 class="text-muted">Aucun agriculteur</h4>
-      <p class="text-muted">Commencez par ajouter un agriculteur</p>
-      <a routerLink="/agriculteurs/nouveau" class="btn btn-success">
-        <i class="fas fa-plus me-1"></i> Ajouter un agriculteur
+    <!-- Truly empty -->
+    <div *ngIf="!loading && !error && agriculteurs.length === 0" class="ag-empty">
+      <i class="fas fa-users"></i>
+      <p>Aucun agriculteur enregistré</p>
+      <a routerLink="/agriculteurs/nouveau" class="ag-btn ag-btn-primary">
+        <i class="fas fa-plus"></i> Ajouter un agriculteur
       </a>
     </div>
   </div>
-</div>
 </div>

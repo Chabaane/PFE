@@ -1,409 +1,544 @@
+<!-- accueil.component.html -->
+<!-- ══════════════════════════════════════════════════════
+     AGRIMANAGER — Landing Page Template (ENHANCED)
+     Angular 17 Standalone Component
+     ══════════════════════════════════════════════════════ -->
 
-<!-- NAVBAR -->
-<nav>
-  <div class="nav-logo">Agri<span>Manager</span></div>
-  <ul class="nav-links">
-    <li><a href="#impact">À propos</a></li>
-    <li><a href="#features">Fonctionnalités</a></li>
-    <li><a href="#marketplace">AgriShop</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ul>
-  <div style="display:flex;gap:1rem;align-items:center;">
-    <div class="nav-langs">
-      <button class="lang-btn active">FR</button>
-      <button class="lang-btn">AR</button>
-      <button class="lang-btn">EN</button>
+<!-- ── NAVBAR ─────────────────────────────────────────── -->
+<nav class="navbar" [class.navbar-scrolled]="isNavScrolled">
+    <div class="nav-logo">
+      <img src="assets/images/logo-light.png" alt="AgriManager Logo" class="logo-img" />
     </div>
-    <a href="/auth" class="nav-cta">Se connecter →</a>
+
+  <ul class="nav-links">
+    <li><a (click)="scrollTo('fonctionnalites')" class="nav-link-item">Fonctionnalités</a></li>
+    <li><a (click)="scrollTo('modules')" class="nav-link-item">Modules</a></li>
+    <li><a (click)="scrollTo('marketplace')" class="nav-link-item">AgriShop</a></li>
+    <li><a (click)="scrollTo('diagnostic')" class="nav-link-item">Diagnostic IA</a></li>
+    <li><a (click)="scrollTo('temoignages')" class="nav-link-item">Témoignages</a></li>
+  </ul>
+
+  <div class="nav-right">
+    <div class="lang-switcher">
+      @for (lang of languages; track lang.code) {
+        <button
+          class="lang-btn"
+          [class.active]="activeLanguage === lang.code"
+          (click)="setLanguage(lang.code)">
+          {{ lang.code }}
+        </button>
+      }
+    </div>
+    <a routerLink="/auth/login" class="nav-cta">Se connecter →</a>
   </div>
 </nav>
 
-<!-- HERO -->
+
+<!-- ══════════════════════════════════════════════════════
+     HERO SECTION WITH VIDEO BACKGROUND
+     ══════════════════════════════════════════════════════ -->
 <section class="hero">
-  <div class="hero-orb hero-orb-1"></div>
-  <div class="hero-orb hero-orb-2"></div>
-  <div class="hero-content">
-    <div class="hero-badge">
-      <div class="badge-dot"></div>
-      Plateforme agricole tunisienne — Mai 2026
-    </div>
-    <h1>Gérez votre exploitation<br>avec <em>intelligence</em></h1>
-    <p>AgriManager centralise la gestion de vos agriculteurs, fermes, récoltes et intrants agricoles dans une seule plateforme multilingue conçue pour la Tunisie.</p>
-    <div class="hero-actions">
-      <a href="#" class="btn-primary">🌿 Commencer gratuitement</a>
-      <a href="#features" class="btn-secondary">Découvrir les fonctionnalités</a>
-    </div>
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <strong>1 200+</strong>
-        <span>Agriculteurs inscrits</span>
-      </div>
-      <div class="hero-stat">
-        <strong>340+</strong>
-        <span>Fermes gérées</span>
-      </div>
-      <div class="hero-stat">
-        <strong>16</strong>
-        <span>Intrants sur AgriShop</span>
-      </div>
-      <div class="hero-stat">
-        <strong>3</strong>
-        <span>Langues supportées</span>
-      </div>
-    </div>
+  <!-- Video Background -->
+  <div class="hero-video-container">
+    <video autoplay muted loop playsinline class="hero-video">
+      <source src="assets/videos/hero-bg.mp4" type="video/mp4">
+    </video>
+    <div class="hero-video-overlay"></div>
   </div>
-  <div class="hero-scroll">
-    <span>Scroll</span>
-    <div class="scroll-arrow"></div>
-  </div>
-</section>
 
-<!-- IMPACT -->
-<section class="impact" id="impact">
   <div class="container">
-    <div class="impact-grid fade-in">
-      <div>
-        <div class="section-label">Notre mission</div>
-        <h2 class="section-title">L'agriculture tunisienne entre dans <em>l'ère numérique</em></h2>
-        <p class="section-sub">AgriManager combine les outils modernes de gestion avec la connaissance du terrain pour aider chaque exploitant à prendre de meilleures décisions.</p>
-        <div class="impact-numbers">
-          <div class="impact-card">
-            <div class="num">100%</div>
-            <div class="label">Données agricoles centralisées</div>
+    <div class="hero-inner">
+
+      <!-- Left: Content -->
+      <div class="hero-content reveal">
+        <div class="hero-badge">
+          <span class="badge-pulse"></span>
+          🌱 Plateforme agricole intelligente
+        </div>
+
+        <h1 class="hero-title">
+          Gérez votre exploitation<br>
+          avec <em>précision</em> et<br>
+          <em>intelligence</em>
+        </h1>
+
+        <p class="hero-desc">
+          AgriManager centralise la cartographie Leaflet/3D, le diagnostic IA,
+          la marketplace AgriShop et le pilotage analytique dans une seule
+          application Angular multilingue conçue pour l'agriculture tunisienne.
+        </p>
+
+        <div class="hero-actions">
+          <a routerLink="/dashboard" class="btn-primary">
+            🌿 Accéder au tableau de bord
+          </a>
+          <a (click)="scrollTo('fonctionnalites')" class="btn-outline">
+            Voir les fonctionnalités
+          </a>
+        </div>
+
+        <!-- Stats Pills -->
+        <div class="hero-stats-pills">
+          <div class="stat-pill">
+            <span class="pill-value">1200+</span>
+            <span class="pill-label">Agriculteurs</span>
           </div>
-          <div class="impact-card">
-            <div class="num">24/7</div>
-            <div class="label">Accès à votre tableau de bord</div>
+          <div class="stat-pill">
+            <span class="pill-value">340+</span>
+            <span class="pill-label">Fermes</span>
           </div>
-          <div class="impact-card">
-            <div class="num">3×</div>
-            <div class="label">Plus rapide que la paperasse</div>
-          </div>
-          <div class="impact-card">
-            <div class="num">100 TND</div>
-            <div class="label">Livraison gratuite AgriShop</div>
+          <div class="stat-pill">
+            <span class="pill-value">24</span>
+            <span class="pill-label">Gouvernorats</span>
           </div>
         </div>
       </div>
-      <div class="impact-visual">
-        <div class="impact-visual-inner">
-          <div class="impact-icon-large">🌾</div>
-        </div>
-        <div class="impact-badge-float">
-          <div class="dot"></div>
+
+      <!-- Right: Map Mockup with Animation -->
+      <div class="hero-visual reveal">
+        <div class="hero-card-float float-tl animate-float-tl">
+          <span class="float-icon">🌤️</span>
           <div>
-            <strong>Tableau de bord actif</strong>
-            <span style="display:block">Données en temps réel</span>
+            <div class="float-val">24°C</div>
+            <div class="float-lbl">Sfax • Aujourd'hui</div>
+          </div>
+        </div>
+
+        <div class="hero-card-main animate-card-main">
+          <!-- SVG Map Mockup -->
+          <div class="map-mockup">
+            <svg viewBox="0 0 460 280" xmlns="http://www.w3.org/2000/svg">
+              <!-- Background terrain -->
+              <defs>
+                <linearGradient id="terrainGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#d4f0d4"/>
+                  <stop offset="100%" stop-color="#a8dfa8"/>
+                </linearGradient>
+                <filter id="blur2">
+                  <feGaussianBlur stdDeviation="2"/>
+                </filter>
+              </defs>
+              <rect width="460" height="280" fill="url(#terrainGrad)" rx="10"/>
+
+              <!-- Grid lines (roads) -->
+              <line x1="0" y1="140" x2="460" y2="140" stroke="#b8e4b8" stroke-width="2"/>
+              <line x1="230" y1="0" x2="230" y2="280" stroke="#b8e4b8" stroke-width="2"/>
+              <line x1="0" y1="70" x2="460" y2="70" stroke="#cceacc" stroke-width="1" stroke-dasharray="6,4"/>
+              <line x1="0" y1="210" x2="460" y2="210" stroke="#cceacc" stroke-width="1" stroke-dasharray="6,4"/>
+              <line x1="115" y1="0" x2="115" y2="280" stroke="#cceacc" stroke-width="1" stroke-dasharray="6,4"/>
+              <line x1="345" y1="0" x2="345" y2="280" stroke="#cceacc" stroke-width="1" stroke-dasharray="6,4"/>
+
+              <!-- Parcelle 1 - Blé (good NDVI - bright green) -->
+              <polygon points="45,55 165,60 170,130 40,128" fill="#4aaa4a" fill-opacity="0.75" stroke="#2d8c2d" stroke-width="1.5" class="ndvi-animate"/>
+              <text x="105" y="97" text-anchor="middle" font-size="11" fill="#1f6e1f" font-weight="700" font-family="sans-serif">Blé</text>
+              <text x="105" y="112" text-anchor="middle" font-size="9" fill="#1f6e1f" font-family="sans-serif">NDVI: 0.78</text>
+
+              <!-- Parcelle 2 - Oliviers (medium NDVI) -->
+              <polygon points="175,45 340,50 345,135 172,138" fill="#72c472" fill-opacity="0.65" stroke="#4aaa4a" stroke-width="1.5" class="ndvi-animate"/>
+              <text x="258" y="95" text-anchor="middle" font-size="11" fill="#1f6e1f" font-weight="700" font-family="sans-serif">Oliviers</text>
+              <text x="258" y="110" text-anchor="middle" font-size="9" fill="#1f6e1f" font-family="sans-serif">NDVI: 0.65</text>
+
+              <!-- Parcelle 3 - Tomates (stress hydrique) -->
+              <polygon points="350,55 440,58 438,130 348,128" fill="#e8c440" fill-opacity="0.72" stroke="#c9a84c" stroke-width="1.5" class="ndvi-animate"/>
+              <text x="394" y="92" text-anchor="middle" font-size="10" fill="#8a6a00" font-weight="700" font-family="sans-serif">Tomates</text>
+              <text x="394" y="107" text-anchor="middle" font-size="9" fill="#8a6a00" font-family="sans-serif">NDVI: 0.42</text>
+
+              <!-- Parcelle 4 - Jachère (low NDVI) -->
+              <polygon points="42,150 160,148 162,220 38,222" fill="#e87040" fill-opacity="0.55" stroke="#c95820" stroke-width="1.5" class="ndvi-animate"/>
+              <text x="100" y="188" text-anchor="middle" font-size="10" fill="#7a3010" font-weight="700" font-family="sans-serif">Jachère</text>
+              <text x="100" y="203" text-anchor="middle" font-size="9" fill="#7a3010" font-family="sans-serif">NDVI: 0.18</text>
+
+              <!-- Parcelle 5 - Agrumes -->
+              <polygon points="172,150 340,148 342,225 170,228" fill="#4aaa4a" fill-opacity="0.7" stroke="#2d8c2d" stroke-width="1.5" class="ndvi-animate"/>
+              <text x="256" y="190" text-anchor="middle" font-size="11" fill="#1f6e1f" font-weight="700" font-family="sans-serif">Agrumes</text>
+              <text x="256" y="205" text-anchor="middle" font-size="9" fill="#1f6e1f" font-family="sans-serif">NDVI: 0.71</text>
+
+              <!-- Water accumulation zone -->
+              <ellipse cx="394" cy="185" rx="42" ry="28" fill="#4a90d9" fill-opacity="0.38" stroke="#2d70b9" stroke-width="1.5" stroke-dasharray="5,3" class="water-pulse"/>
+              <text x="394" y="183" text-anchor="middle" font-size="9" fill="#1a4f8a" font-weight="700" font-family="sans-serif">⚠ Zone eau</text>
+              <text x="394" y="196" text-anchor="middle" font-size="8" fill="#1a4f8a" font-family="sans-serif">Risque inond.</text>
+
+              <!-- Map pins -->
+              <circle cx="105" cy="60" r="5" fill="#2d8c2d" stroke="white" stroke-width="1.5" class="pin-bounce"/>
+              <circle cx="258" cy="55" r="5" fill="#2d8c2d" stroke="white" stroke-width="1.5" class="pin-bounce"/>
+
+              <!-- Compass rose -->
+              <g transform="translate(424,18)">
+                <circle r="13" fill="white" fill-opacity="0.9" stroke="#ccc" stroke-width="0.5"/>
+                <text text-anchor="middle" y="-4" font-size="7" fill="#555" font-family="sans-serif" font-weight="700">N</text>
+                <line x1="0" y1="-8" x2="0" y2="8" stroke="#2d8c2d" stroke-width="1.5"/>
+                <line x1="-8" y1="0" x2="8" y2="0" stroke="#888" stroke-width="1"/>
+              </g>
+
+              <!-- Scale bar -->
+              <g transform="translate(24,258)">
+                <rect width="60" height="5" fill="#2d8c2d" rx="2"/>
+                <text y="16" font-size="8" fill="#555" font-family="sans-serif">0    500 m</text>
+              </g>
+
+              <!-- Attribution -->
+              <text x="380" y="272" font-size="7.5" fill="#888" font-family="sans-serif">AgriManager © Leaflet</text>
+            </svg>
+          </div>
+
+          <div class="map-legend">
+            <div class="legend-item"><div class="dot g"></div> NDVI élevé</div>
+            <div class="legend-item"><div class="dot y"></div> NDVI moyen</div>
+            <div class="legend-item"><div class="dot o"></div> NDVI faible</div>
+          </div>
+        </div>
+
+        <div class="hero-card-float float-br animate-float-br">
+          <span class="float-icon">📍</span>
+          <div>
+            <div class="float-val">5 Parcelles</div>
+            <div class="float-lbl">Ferme Tlili • Sfax</div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </section>
 
-<!-- FONCTIONNALITÉS -->
-<section class="features" id="features">
+
+<!-- ── STATS BAR ────────────────────────────────────────── -->
+<div class="hero-stats-bar">
   <div class="container">
-    <div class="section-label">Fonctionnalités clés</div>
-    <h2 class="section-title">Tout ce dont vous avez besoin<br>pour <em>gérer votre exploitation</em></h2>
-    <div class="features-intro fade-in" style="margin-top:3rem;">
-      <div class="features-list">
-        <div class="feature-item">
-          <div class="feature-num">01</div>
-          <div class="feature-content">
-            <h3>Gestion des agriculteurs & fermes</h3>
-            <p>Enregistrez, suivez et gérez tous vos agriculteurs et leurs exploitations. Fiches complètes, localisation, historique des activités et statuts.</p>
-          </div>
+    <div class="stats-inner">
+      @for (stat of stats; track stat.label) {
+        <div class="stat-item reveal">
+          <span class="stat-icon">{{ stat.icon }}</span>
+          <span class="stat-value">{{ stat.value }}</span>
+          <span class="stat-label">{{ stat.label }}</span>
         </div>
-        <div class="feature-item">
-          <div class="feature-num">02</div>
-          <div class="feature-content">
-            <h3>Suivi des récoltes & cultures</h3>
-            <p>Calendrier cultural, suivi des rendements, alertes saisonnières et rapports de production pour chaque parcelle et chaque saison.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-num">03</div>
-          <div class="feature-content">
-            <h3>Tableau de bord analytique</h3>
-            <p>KPIs en temps réel, statistiques de gestion, graphiques de performance et rapports exportables pour piloter votre activité.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-num">04</div>
-          <div class="feature-content">
-            <h3>Interface multilingue FR/AR/EN</h3>
-            <p>Basculez entre le français, l'arabe (RTL automatique) et l'anglais. Traduction instantanée via dictionnaire agricole intégré + MyMemory API.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-num">05</div>
-          <div class="feature-content">
-            <h3>Marketplace AgriShop intégrée</h3>
-            <p>Commandez fongicides, insecticides, engrais et régulateurs de croissance directement depuis la plateforme, livrés dans vos 24 gouvernorats.</p>
-          </div>
-        </div>
-      </div>
-      <div class="features-visual">
-        <div class="features-visual-text">
-          <div class="icon">📊</div>
-          <p style="color:rgba(255,255,255,0.4);font-size:0.9rem;">Dashboard AgriManager<br>Angular 17 · .NET 8</p>
-        </div>
-      </div>
+      }
     </div>
   </div>
-</section>
+</div>
 
-<!-- SERVICES DÉTAIL -->
-<section class="services">
+
+<!-- ══════════════════════════════════════════════════════
+     FONCTIONNALITÉS PRINCIPALES
+     ══════════════════════════════════════════════════════ -->
+<section class="features-section" id="fonctionnalites">
   <div class="container">
-    <div class="services-header fade-in">
-      <div>
-        <div class="section-label">Nos modules</div>
-        <h2 class="section-title">Des outils conçus pour<br><em>l'agriculteur tunisien</em></h2>
-      </div>
-      <a href="#" class="btn-primary">Voir tous les modules</a>
+    <div class="features-header reveal">
+      <div class="section-label">Fonctionnalités</div>
+      <h2 class="section-title">Tout ce dont vous avez besoin pour<br><em>gérer votre exploitation</em></h2>
+      <p class="section-sub" style="margin:0.8rem auto 0; text-align:center;">
+        De la cartographie satellite au diagnostic IA en passant par la marketplace, AgriManager couvre l'ensemble du cycle agricole.
+      </p>
     </div>
-    <div class="services-grid fade-in">
-      <div class="service-card">
-        <div class="service-icon">🌱</div>
-        <h3>Gestion des exploitations</h3>
-        <p class="service-desc">Création et suivi complet des fermes : superficie, type de culture, localisation GPS, et historique de chaque exploitation.</p>
-        <div class="service-arrow">→</div>
+
+    <div class="features-grid">
+      @for (feat of heroFeatures; track feat.title; let i = $index) {
+        <div class="feat-card reveal" [style.--accent-color]="
+          feat.color === 'green'  ? 'var(--green-400)' :
+          feat.color === 'blue'   ? 'var(--blue-500)'  :
+          feat.color === 'amber'  ? 'var(--amber-500)' :
+          feat.color === 'coral'  ? 'var(--coral-500)' :
+          feat.color === 'purple' ? 'var(--purple-500)': 'var(--teal-500)'">
+          <span class="feat-icon">{{ feat.icon }}</span>
+          <span class="feat-tag">{{ feat.tag }}</span>
+          <h3>{{ feat.title }}</h3>
+          <p>{{ feat.description }}</p>
+          <div class="feat-hover-indicator"></div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     MODULES DÉTAIL
+     ══════════════════════════════════════════════════════ -->
+<section class="modules-section" id="modules">
+  <div class="container">
+    <div class="modules-header reveal">
+      <div class="section-label">Modules Techniques</div>
+      <h2 class="section-title">Explorer chaque<br><em>module en profondeur</em></h2>
+    </div>
+
+    <!-- Tabs -->
+    <div class="modules-tabs reveal">
+      @for (mod of appModules; track mod.title; let i = $index) {
+        <button
+          class="module-tab"
+          [class.active]="activeModuleIndex === i"
+          (click)="setModuleIndex(i)">
+          {{ mod.category }}
+        </button>
+      }
+    </div>
+
+    <!-- Panel -->
+    <div class="module-panel">
+      <div class="module-info reveal">
+        <span class="module-badge">{{ appModules[activeModuleIndex].badge }}</span>
+        <h3>{{ appModules[activeModuleIndex].title }}</h3>
+        <p>{{ appModules[activeModuleIndex].description }}</p>
+        <div class="module-features">
+          @for (f of appModules[activeModuleIndex].features; track f) {
+            <div class="mf-item">✓ {{ f }}</div>
+          }
+        </div>
       </div>
-      <div class="service-card">
-        <div class="service-icon">👨‍🌾</div>
-        <h3>Registre des agriculteurs</h3>
-        <p class="service-desc">Base de données complète des agriculteurs avec fiches détaillées, coordonnées, documents et statut de chaque exploitant.</p>
-        <div class="service-arrow">→</div>
-      </div>
-      <div class="service-card">
-        <div class="service-icon">🚁</div>
-        <h3>Suivi & rapports</h3>
-        <p class="service-desc">Rapports automatiques de production, alertes de stock, bilans de campagnes agricoles et statistiques exportables.</p>
-        <div class="service-arrow">→</div>
-      </div>
-      <div class="service-card">
-        <div class="service-icon">🛒</div>
-        <h3>Marketplace AgriShop</h3>
-        <p class="service-desc">Commandez médicaments agricoles et intrants directement. 16 produits disponibles, livraison dans toute la Tunisie.</p>
-        <div class="service-arrow">→</div>
-      </div>
-      <div class="service-card">
-        <div class="service-icon">🌍</div>
-        <h3>Interface multilingue</h3>
-        <p class="service-desc">Utilisez AgriManager en français, arabe ou anglais. Changement de langue instantané avec support RTL complet pour l'arabe.</p>
-        <div class="service-arrow">→</div>
+
+      <div class="module-visual reveal">
+        <!-- Adaptive SVG per module -->
+        @if (activeModuleIndex === 0) {
+          <!-- Cartographie -->
+          <svg viewBox="0 0 420 380" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="380" fill="#e8f5e8" rx="12"/>
+            <rect x="20" y="20" width="380" height="340" rx="10" fill="#d4f0d4"/>
+            <polygon points="60,200 160,160 260,175 360,145 360,300 260,320 160,310 60,340" fill="#4aaa4a" fill-opacity="0.3" stroke="#2d8c2d" stroke-width="1"/>
+            <polygon points="60,200 160,160 160,220 60,260" fill="#2d8c2d" fill-opacity="0.5"/>
+            <polygon points="160,160 260,175 260,240 160,220" fill="#4aaa4a" fill-opacity="0.6"/>
+            <polygon points="260,175 360,145 360,210 260,240" fill="#72c472" fill-opacity="0.5"/>
+            <defs>
+              <linearGradient id="ndviBar" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#e87040"/>
+                <stop offset="50%" stop-color="#e8c440"/>
+                <stop offset="100%" stop-color="#2d8c2d"/>
+              </linearGradient>
+            </defs>
+            <rect x="30" y="330" width="160" height="12" rx="6" fill="url(#ndviBar)"/>
+            <text x="30" y="358" font-size="9" fill="#555" font-family="sans-serif">0.0</text>
+            <text x="100" y="358" text-anchor="middle" font-size="9" fill="#555" font-family="sans-serif">NDVI</text>
+            <text x="190" y="358" text-anchor="end" font-size="9" fill="#555" font-family="sans-serif">1.0</text>
+            <rect x="270" y="328" width="130" height="22" rx="4" fill="white" fill-opacity="0.8"/>
+            <text x="335" y="343" text-anchor="middle" font-size="9" fill="#888" font-family="sans-serif">🗺 Leaflet + Three.js 3D</text>
+            <text x="110" y="240" text-anchor="middle" font-size="13" fill="#1f6e1f" font-weight="700" font-family="sans-serif">Parcelle A</text>
+            <text x="210" y="215" text-anchor="middle" font-size="13" fill="#1f6e1f" font-weight="700" font-family="sans-serif">Parcelle B</text>
+            <text x="310" y="190" text-anchor="middle" font-size="13" fill="#1f6e1f" font-weight="700" font-family="sans-serif">Parcelle C</text>
+          </svg>
+        } @else if (activeModuleIndex === 1) {
+          <!-- Satellite -->
+          <svg viewBox="0 0 420 380" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="380" fill="#e8f5ff" rx="12"/>
+            <rect x="20" y="20" width="380" height="340" rx="10" fill="#d4e8ff"/>
+            <defs>
+              <linearGradient id="elevGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#1e3a8a"/>
+                <stop offset="50%" stop-color="#3b82f6"/>
+                <stop offset="100%" stop-color="#93c5fd"/>
+              </linearGradient>
+            </defs>
+            <rect x="30" y="30" width="360" height="280" fill="url(#elevGrad)" rx="8"/>
+            <circle cx="150" cy="120" r="40" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"/>
+            <circle cx="300" cy="200" r="50" fill="rgba(255,255,255,0.2)" stroke="#fff" stroke-width="2"/>
+            <text x="210" y="360" text-anchor="middle" font-size="10" fill="#1e3a8a" font-family="sans-serif" font-weight="700">Analyse Altimétrique</text>
+          </svg>
+        } @else if (activeModuleIndex === 2) {
+          <!-- Fermes -->
+          <svg viewBox="0 0 420 380" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="380" fill="#fef3e8" rx="12"/>
+            <rect x="20" y="20" width="380" height="340" rx="10" fill="#fde8cc"/>
+            <polygon points="60,150 210,80 360,150 360,300 60,300" fill="#d97706" fill-opacity="0.6" stroke="#b45309" stroke-width="2"/>
+            <polygon points="80,150 80,280 140,280 140,150" fill="#92400e"/>
+            <polygon points="280,150 280,280 340,280 340,150" fill="#92400e"/>
+            <rect x="150" y="200" width="120" height="100" fill="#f59e0b" stroke="#b45309" stroke-width="1.5"/>
+            <text x="210" y="360" text-anchor="middle" font-size="10" fill="#92400e" font-family="sans-serif" font-weight="700">Gestion des Fermes</text>
+          </svg>
+        } @else if (activeModuleIndex === 3) {
+          <!-- Analytique -->
+          <svg viewBox="0 0 420 380" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="380" fill="#f3e8ff" rx="12"/>
+            <rect x="20" y="20" width="380" height="340" rx="10" fill="#e9d5ff"/>
+            <rect x="40" y="280" width="30" height="60" fill="#8b5cf6"/>
+            <rect x="90" y="220" width="30" height="120" fill="#a78bfa"/>
+            <rect x="140" y="160" width="30" height="180" fill="#c4b5fd"/>
+            <rect x="190" y="200" width="30" height="140" fill="#ddd6fe"/>
+            <rect x="240" y="140" width="30" height="200" fill="#ede9fe"/>
+            <rect x="290" y="100" width="30" height="240" fill="#f3e8ff"/>
+            <line x1="30" y1="340" x2="330" y2="340" stroke="#8b5cf6" stroke-width="2"/>
+            <text x="210" y="360" text-anchor="middle" font-size="10" fill="#6d28d9" font-family="sans-serif" font-weight="700">Tableau de Bord Analytics</text>
+          </svg>
+        } @else if (activeModuleIndex === 4) {
+          <!-- Commerce -->
+          <svg viewBox="0 0 420 380" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="380" fill="#fef2f2" rx="12"/>
+            <rect x="20" y="20" width="380" height="340" rx="10" fill="#fee2e2"/>
+            <rect x="50" y="60" width="80" height="100" fill="#f97316" rx="4"/>
+            <rect x="170" y="60" width="80" height="100" fill="#f97316" rx="4"/>
+            <rect x="290" y="60" width="80" height="100" fill="#f97316" rx="4"/>
+            <rect x="50" y="200" width="80" height="100" fill="#fb923c" rx="4"/>
+            <rect x="170" y="200" width="80" height="100" fill="#fb923c" rx="4"/>
+            <rect x="290" y="200" width="80" height="100" fill="#fb923c" rx="4"/>
+            <text x="210" y="360" text-anchor="middle" font-size="10" fill="#7c2d12" font-family="sans-serif" font-weight="700">Marketplace AgriShop</text>
+          </svg>
+        } @else {
+          <!-- Infrastructure -->
+          <svg viewBox="0 0 420 380" xmlns="http://www.w3.org/2000/svg">
+            <rect width="420" height="380" fill="#e8f5e9" rx="12"/>
+            <rect x="20" y="20" width="380" height="340" rx="10" fill="#c8e6c9"/>
+            <circle cx="100" cy="100" r="30" fill="#2d8c2d" stroke="#1f6e1f" stroke-width="2"/>
+            <circle cx="210" cy="80" r="30" fill="#4aaa4a" stroke="#2d8c2d" stroke-width="2"/>
+            <circle cx="320" cy="100" r="30" fill="#72c472" stroke="#4aaa4a" stroke-width="2"/>
+            <line x1="130" y1="100" x2="180" y2="80" stroke="#2d8c2d" stroke-width="2"/>
+            <line x1="240" y1="80" x2="290" y2="100" stroke="#2d8c2d" stroke-width="2"/>
+            <rect x="60" y="200" width="300" height="100" fill="#a8dfa8" stroke="#2d8c2d" stroke-width="2" rx="4"/>
+            <text x="210" y="360" text-anchor="middle" font-size="10" fill="#1f6e1f" font-family="sans-serif" font-weight="700">Infrastructure & Utilitaires</text>
+          </svg>
+        }
       </div>
     </div>
   </div>
 </section>
 
-<!-- MARKETPLACE -->
-<section class="marketplace" id="marketplace">
-  <div class="container" style="position:relative;z-index:1;">
-    <div class="marketplace-grid fade-in">
-      <div>
-        <div class="section-label">AgriShop</div>
-        <h2 class="section-title">Médicaments & Intrants<br>Agricoles</h2>
-        <p class="section-sub">Commandez vos produits phytosanitaires directement depuis AgriManager. Livraison gratuite dès 100 TND dans les 24 gouvernorats tunisiens.</p>
-        <div class="marketplace-features">
-          <div class="mf-item">
-            <div class="mf-icon">🍄</div>
-            <div>
-              <div class="mf-label">Fongicides & Insecticides</div>
-              <div class="mf-desc">Score 250 EC, Karate Zeon, Confidor, Topsin M, Switch…</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MARKETPLACE SECTION
+     ══════════════════════════════════════════════════════ -->
+<section class="marketplace-section" id="marketplace">
+  <div class="container">
+    <div class="marketplace-header reveal">
+      <div class="section-label">Marketplace</div>
+      <h2 class="section-title">AgriShop — Intrants<br><em>directement accessibles</em></h2>
+      <p class="section-sub">Commandez vos produits agricoles en quelques clics, avec livraison gratuite dès 100 TND.</p>
+    </div>
+
+    <div class="products-grid">
+      @for (prod of products; track prod.name) {
+        <div class="product-card reveal">
+          <div class="product-badge" [class]="'badge-' + prod.badgeClass">{{ prod.badge }}</div>
+          <div class="product-emoji">{{ prod.emoji }}</div>
+          <h4>{{ prod.name }}</h4>
+          <p class="product-category">{{ prod.category }}</p>
+          <div class="product-price">
+            <span class="price-value">{{ prod.price }}</span>
+            <span class="price-unit">TND/{{ prod.unit }}</span>
+          </div>
+          <button class="btn-product">Ajouter au panier</button>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     DIAGNOSTIC IA SECTION
+     ══════════════════════════════════════════════════════ -->
+<section class="diagnostic-section" id="diagnostic">
+  <div class="container">
+    <div class="diagnostic-inner">
+      <div class="diagnostic-content reveal">
+        <div class="section-label">Diagnostic IA</div>
+        <h2 class="section-title">Identifiez les maladies<br><em>en 5 secondes</em></h2>
+        <p class="section-desc">
+          Prenez une photo de votre feuille, notre IA analyse l'image et vous recommande automatiquement les produits disponibles sur AgriShop pour traiter le problème.
+        </p>
+        <ul class="diagnostic-features">
+          <li>✓ Reconnaissance par image IA</li>
+          <li>✓ Diagnostic instantané</li>
+          <li>✓ Recommandations produits</li>
+          <li>✓ Historique des diagnostics</li>
+        </ul>
+        <button class="btn-primary">Essayer le diagnostic</button>
+      </div>
+      <div class="diagnostic-visual reveal">
+        <div class="diagnostic-card">
+          <div class="diagnostic-placeholder">📸</div>
+          <p>Prenez une photo</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════
+     TESTIMONIALS SECTION
+     ══════════════════════════════════════════════════════ -->
+<section class="testimonials-section" id="temoignages">
+  <div class="container">
+    <div class="testimonials-header reveal">
+      <div class="section-label">Témoignages</div>
+      <h2 class="section-title">Ce que disent nos<br><em>utilisateurs</em></h2>
+    </div>
+
+    <div class="testimonials-grid">
+      @for (testi of testimonials; track testi.name) {
+        <div class="testimonial-card reveal">
+          <div class="testimonial-stars">
+            @for (star of getStarArray(testi.stars); track $index) {
+              <span class="star">⭐</span>
+            }
+          </div>
+          <p class="testimonial-text">{{ testi.text }}</p>
+          <div class="testimonial-author">
+            <div class="author-avatar" [class]="testi.avatarClass">{{ testi.initials }}</div>
+            <div class="author-info">
+              <div class="author-name">{{ testi.name }}</div>
+              <div class="author-role">{{ testi.role }} • {{ testi.location }}</div>
             </div>
           </div>
-          <div class="mf-item">
-            <div class="mf-icon">🌿</div>
-            <div>
-              <div class="mf-label">Herbicides & Engrais</div>
-              <div class="mf-desc">Roundup 360, Stomp Aqua, NPK 20-20-20, Nitrate d'Ammonium…</div>
-            </div>
-          </div>
-          <div class="mf-item">
-            <div class="mf-icon">📦</div>
-            <div>
-              <div class="mf-label">Catalogue de 16 produits</div>
-              <div class="mf-desc">Avis clients, notation, numéros AMM certifiés</div>
-            </div>
-          </div>
-          <div class="mf-item">
-            <div class="mf-icon">🚚</div>
-            <div>
-              <div class="mf-label">Livraison express</div>
-              <div class="mf-desc">Gratuite ≥ 100 TND · Paiement à la livraison ou CB</div>
-            </div>
-          </div>
         </div>
-        <div style="margin-top:2rem;">
-          <a href="#" class="btn-primary" style="background:var(--green-500);">Visiter AgriShop →</a>
-        </div>
-      </div>
-      <div class="marketplace-cards">
-        <div class="product-card">
-          <div class="product-cat">Fongicide</div>
-          <div class="product-name">Score 250 EC</div>
-          <div class="product-price">45,90 TND / L</div>
-          <span class="product-badge">✓ En stock</span>
-        </div>
-        <div class="product-card">
-          <div class="product-cat">Insecticide</div>
-          <div class="product-name">Karate Zeon</div>
-          <div class="product-price">89,00 TND / L</div>
-          <span class="product-badge" style="background:rgba(201,168,76,0.2);color:#f0d080;">⭐ Promo</span>
-        </div>
-        <div class="product-card">
-          <div class="product-cat">Engrais</div>
-          <div class="product-name">NPK 20-20-20</div>
-          <div class="product-price">32,50 TND / Kg</div>
-          <span class="product-badge">✓ En stock</span>
-        </div>
-        <div class="product-card">
-          <div class="product-cat">Herbicide</div>
-          <div class="product-name">Roundup 360</div>
-          <div class="product-price">28,00 TND / L</div>
-          <span class="product-badge">✓ En stock</span>
-        </div>
-        <div class="product-card" style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;border:1px dashed rgba(255,255,255,0.15);cursor:pointer;">
-          <span style="color:rgba(255,255,255,0.3);font-size:0.85rem;">+ 12 autres produits disponibles →</span>
-        </div>
-      </div>
+      }
     </div>
   </div>
 </section>
 
-<!-- MULTILANGUE -->
-<section class="multilang" id="multilang">
-  <div class="container">
-    <div class="fade-in" style="text-align:center;max-width:520px;margin:0 auto 0;">
-      <div class="section-label">Interface multilingue</div>
-      <h2 class="section-title">Parlez votre langue,<br><em>gérez mieux</em></h2>
-      <p class="section-sub" style="margin:0 auto;">AgriManager s'adapte automatiquement à votre langue, y compris l'affichage de droite à gauche pour l'arabe.</p>
-    </div>
-    <div class="lang-grid fade-in">
-      <div class="lang-card">
-        <div class="lang-flag">🇫🇷</div>
-        <div class="lang-name">Français</div>
-        <div class="lang-dir">LTR · Langue principale</div>
-        <div class="lang-sample">Bienvenue sur AgriManager — Gérez vos agriculteurs, fermes et récoltes en toute simplicité.</div>
-      </div>
-      <div class="lang-card rtl">
-        <div class="lang-flag">🇹🇳</div>
-        <div class="lang-name">العربية</div>
-        <div class="lang-dir">RTL · دعم كامل من اليمين إلى اليسار</div>
-        <div class="lang-sample">مرحبًا بك في AgriManager — أدر مزارعيك وحقولك بسهولة تامة.</div>
-      </div>
-      <div class="lang-card">
-        <div class="lang-flag">🇬🇧</div>
-        <div class="lang-name">English</div>
-        <div class="lang-dir">LTR · International</div>
-        <div class="lang-sample">Welcome to AgriManager — Manage your farmers, farms and harvests with ease.</div>
-      </div>
-    </div>
-    <p style="text-align:center;margin-top:1.5rem;font-size:0.82rem;color:var(--text-muted);">Traduction instantanée par dictionnaire agricole intégré · MyMemory API (5 000 mots/jour gratuit)</p>
-  </div>
-</section>
 
-<!-- TÉMOIGNAGES -->
-<section class="testimonials" id="contact">
-  <div class="container">
-    <div class="fade-in" style="text-align:center;max-width:500px;margin:0 auto 1rem;">
-      <div class="section-label">Ce qu'ils en disent</div>
-      <h2 class="section-title">Les agriculteurs<br><em>nous font confiance</em></h2>
-    </div>
-    <div class="testi-grid fade-in">
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">AgriManager m'a permis de gérer mes 3 fermes depuis un seul écran. La commande d'intrants via AgriShop est un gain de temps énorme.</p>
-        <div class="testi-author">
-          <div class="testi-avatar">KT</div>
-          <div>
-            <div class="testi-name">Karim Tlili</div>
-            <div class="testi-role">Agriculteur, Sfax</div>
-          </div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">L'interface en arabe fonctionne parfaitement. Je peux basculer entre les langues et tout s'affiche correctement, de droite à gauche.</p>
-        <div class="testi-author">
-          <div class="testi-avatar">RM</div>
-          <div>
-            <div class="testi-name">Rania Mansouri</div>
-            <div class="testi-role">Agricultrice, Nabeul</div>
-          </div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★☆</div>
-        <p class="testi-text">Le tableau de bord analytique donne une vue claire sur toute l'exploitation. Les rapports automatiques nous font gagner des heures chaque semaine.</p>
-        <div class="testi-author">
-          <div class="testi-avatar">AB</div>
-          <div>
-            <div class="testi-name">Ali Brahmi</div>
-            <div class="testi-role">Coopérative agricole, Béja</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
+<!-- ══════════════════════════════════════════════════════
+     CTA SECTION
+     ══════════════════════════════════════════════════════ -->
 <section class="cta-section">
   <div class="container">
-    <div class="section-label" style="color:var(--green-400);">Commencez aujourd'hui</div>
-    <h2 class="section-title">Prêt à moderniser<br>votre exploitation ?</h2>
-    <p class="section-sub">Rejoignez les agriculteurs tunisiens qui gèrent leurs exploitations intelligemment avec AgriManager.</p>
-    <div class="cta-actions">
-      <a href="#" class="btn-primary">🌿 Accéder au tableau de bord</a>
-      <a href="#" class="btn-secondary">📦 Visiter AgriShop</a>
+    <div class="cta-inner reveal">
+      <h2>Prêt à transformer votre exploitation ?</h2>
+      <p>Rejoignez les 1200+ agriculteurs qui font confiance à AgriManager</p>
+      <div class="cta-actions">
+        <a routerLink="/auth/signup" class="btn-primary">Démarrer gratuitement</a>
+        <a href="#" class="btn-outline">Demander une démo</a>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-grid">
-    <div class="footer-brand">
-      <span class="footer-logo">Agri<span>Manager</span></span>
-      <p class="footer-desc">Plateforme de gestion agricole intelligente pour la Tunisie. Angular 17 · .NET 8 · Multilingue FR/AR/EN.</p>
+
+<!-- ══════════════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>AgriManager</h4>
+        <p>Plateforme intelligente pour la gestion agricole tunisienne.</p>
+      </div>
+      <div class="footer-section">
+        <h4>Produit</h4>
+        <ul>
+          <li><a href="#">Cartographie</a></li>
+          <li><a href="#">Diagnostic IA</a></li>
+          <li><a href="#">AgriShop</a></li>
+          <li><a href="#">Analytique</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Entreprise</h4>
+        <ul>
+          <li><a href="#">À propos</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Carrières</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Légal</h4>
+        <ul>
+          <li><a href="#">Conditions</a></li>
+          <li><a href="#">Confidentialité</a></li>
+          <li><a href="#">Cookies</a></li>
+        </ul>
+      </div>
     </div>
-    <div class="footer-col">
-      <h4>Application</h4>
-      <ul>
-        <li><a href="#">Tableau de bord</a></li>
-        <li><a href="#">Agriculteurs</a></li>
-        <li><a href="#">Fermes</a></li>
-        <li><a href="#">Récoltes</a></li>
-      </ul>
+    <div class="footer-bottom">
+      <p>&copy; 2026 AgriManager. Tous droits réservés. 🌱</p>
     </div>
-    <div class="footer-col">
-      <h4>AgriShop</h4>
-      <ul>
-        <li><a href="#">Catalogue</a></li>
-        <li><a href="#">Fongicides</a></li>
-        <li><a href="#">Insecticides</a></li>
-        <li><a href="#">Engrais</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Support</h4>
-      <ul>
-        <li><a href="#">Guide d'intégration</a></li>
-        <li><a href="#">API REST</a></li>
-        <li><a href="#">Contact</a></li>
-        <li><a href="#">À propos</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <span>© 2026 AgriManager — Tous droits réservés</span>
-    <span>Angular 17+ · .NET 8 · Entity Framework Core · MyMemory API</span>
   </div>
 </footer>
-
-
-
